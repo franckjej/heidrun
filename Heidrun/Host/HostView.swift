@@ -48,6 +48,7 @@ struct HostView: View {
                 .overlay(alignment: .bottom) {
                     if let state {
                         StatusBar(state: state, userCount: userListVM?.users.count, transferCount: activeTransferCount)
+                            .padding(.xsmall)
                     }
                 }
         }
@@ -197,10 +198,13 @@ struct HostView: View {
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
             serverBannerHeader
+                .padding(.top, (Spacing.small.rawValue - Spacing.xxsmall.rawValue))
+                .ignoresSafeArea(.container)
+            Spacer()
             FeatureSidebarTableView(features: features, selection: $selectedIdentifier)
-                .padding(.top, handle?.serverBanner == nil ? .large : .small)
+            Spacer()
         }
-        .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 300)
+        .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 303)
     }
 
     /// Server banner (JPEG/GIF/BMP/PICT from TX 212). Empty for no
@@ -213,10 +217,9 @@ struct HostView: View {
             Image(nsImage: nsImage)
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: 80)
+                .frame(maxWidth: .infinity, maxHeight: 100)
                 .padding(.horizontal, .small)
-                .padding(.top, .small)
-                .padding(.bottom, .xsmall)
+                .padding(.vertical, .xxxsmall)
                 .accessibilityLabel("Server banner")
         }
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import CommonTools
 
 /// Single-row status strip rendered at the bottom of HostView via
 /// `.safeAreaInset(edge: .bottom)`. Read-only; reflects whatever
@@ -22,8 +23,8 @@ struct StatusBar: View {
             Text("\(userCount.map { "\($0)" } ?? "—") users · \(transferCount) transfers")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .padding(.trailing, .small)
         }
-        .padding(.small)
         .frame(maxWidth: .infinity)
         .background(.clear)
     }
