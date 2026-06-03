@@ -1,0 +1,83 @@
+# Xcode
+#
+# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+
+## User settings
+xcuserdata/
+
+## Obj-C/Swift specific
+*.hmap
+
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Swift Package Manager
+#
+# Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
+# Packages/
+# Package.pins
+# Package.resolved
+#
+
+# The Xcode project is generated from project.yml by xcodegen — it's a build
+# artifact, not source. Run `xcodegen generate` after cloning or pulling.
+# Keeping it untracked avoids churn and stops local scheme tweaks (e.g. the
+# -UseProductionData run argument) from being committed.
+Heidrun.xcodeproj/
+#
+# Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
+# hence it is not needed unless you have added a package configuration file to your project
+# .swiftpm
+
+.build/
+
+
+# Carthage
+#
+# Add this line if you want to avoid checking in source code from Carthage dependencies.
+# Carthage/Checkouts
+
+Carthage/Build/
+
+# fastlane
+#
+# It is recommended to not store the screenshots in the git repo.
+# Instead, use fastlane to re-generate the screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://docs.fastlane.tools/best-practices/source-control/#source-control
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# we dont want the legacy code on git
+legacy/
+
+# Local-only AI / MCP / XcodeBuildMCP config (per-checkout)
+.claude/
+CLAUDE.local.md
+AGENTS.local.md
+.mcp.json
+.swiftpm/
+.xcodebuildmcp/
+.aider*
+.cursor/
+build/
+
+# macOS noise
+.DS_Store
+
+# Git worktrees used for isolated feature work
+.worktrees/
+
+# Distribution artifacts (DMGs and friends). Published via GitHub Releases,
+# not the source tree — keep the repo light.
+Releases/
+.venv/

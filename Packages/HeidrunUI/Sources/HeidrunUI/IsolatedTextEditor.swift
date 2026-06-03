@@ -1,0 +1,142 @@
+import SwiftUI
+import AppKit
+
+/// Multi-line text input that doesn't dirty the enclosing
+/// `DocumentGroup` document on typing.
+///
+/// `SwiftUI.TextEditor` wraps `NSTextView`, and `NSTextView` walks the
+/// AppKit responder chain — `view → window → window controller →
+/// NSDocument` — to find an `UndoManager` to register typing undos
+/// against. Inside a `DocumentGroup`-hosted window that resolves to
+/// the document's own manager, so every keystroke marks the document
+/// "edited" and AppKit appends "— Edited" to the navigation subtitle
+/// + autosaves to a UUID-named file + prompts "Save changes?" on
+/// close. That's the wrong UX for every text input in Heidrun
+/// (chat, news editor, file-info comment), where the document is just
+/// a launch vehicle for the bookmark rather than an editable document.
+///
+/// `SwiftUI` won't let us swap the `\.undoManager` environment value
+/// from inside a view — the env key is read-only on Swift 6. So we
+/// drop a level and own the NSTextView directly: the subclass below
+/// overrides `undoManager` to return a private instance, breaking
+/// the responder-chain walk.
+public struct IsolatedTextEditor: NSViewRepresentable {
+    @Binding public var text: String
+    public var font: NSFont
+    public var minHeight: CGFloat
+    public var maxHeight: CGFloat?
+    public var isRichText: Bool
+    /// Invoked when the user presses ⌘↵ inside the text view. Use for
+    /// "send on Cmd+Enter" semantics in chat composers etc. `nil`
+    /// leaves the key combination unhandled.
+    public var onSubmit: (() -> Void)?
+    /// When `true` the text view becomes first responder once it's
+    /// installed in a window. Match `TextEditor` + `.focused($flag)`
+    /// + `.onAppear { flag = true }` for callers that want the input
+    /// ready to type into immediately on view appear.
+    public var autoFocus: Bool
+
+    public init(
+        text: Binding<String>,
+        font: NSFont = .preferredFont(forTextStyle: .body),
+        minHeight: CGFloat = 50,
+        maxHeight: CGFloat? = nil,
+        isRichText: Bool = false,
+        autoFocus: Bool = false,
+        onSubmit: (() -> Void)? = nil
+    ) {
+        self._text = text
+        self.font = font
+        self.minHeight = minHeight
+        self.maxHeight = maxHeight
+        self.isRichText = isRichText
+        self.autoFocus = autoFocus
+        self.onSubmit = onSubmit
+    }
+
+    public func makeNSView(context: Context) -> NSScrollView {
+        let textView = IsolatedNSTextView()
+        textView.delegate = context.coordinator
+        textView.isRichText = isRichText
+        textView.allowsUndo = true
+        textView.font = font
+        textView.isEditable = true
+        textView.isSelectable = true
+        textView.drawsBackground = false
+        textView.textContainer?.widthTracksTextView = true
+        textView.autoresizingMask = [.width]
+        textView.string = text
+        textView.onCommandSubmit = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onSubmit?()
+        }
+
+        let scrollView = NSScrollView()
+        scrollView.documentView = textView
+        scrollView.hasVerticalScroller = true
+        scrollView.drawsBackground = false
+
+        if autoFocus {
+            // Defer until the view is in a window — `makeFirstResponder`
+            // before the view is attached is a no-op.
+            DispatchQueue.main.async { [weak textView] in
+                textView?.window?.makeFirstResponder(textView)
+            }
+        }
+        return scrollView
+    }
+
+    public func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        guard let textView = scrollView.documentView as? IsolatedNSTextView else { return }
+        if textView.string != text {
+            textView.string = text
+        }
+        textView.font = font
+        textView.onCommandSubmit = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onSubmit?()
+        }
+    }
+
+    public func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    public final class Coordinator: NSObject, NSTextViewDelegate {
+        var parent: IsolatedTextEditor
+
+        init(_ parent: IsolatedTextEditor) {
+            self.parent = parent
+        }
+
+        public func textDidChange(_ notification: Notification) {
+            guard let textView = notification.object as? NSTextView else { return }
+            parent.text = textView.string
+        }
+    }
+}
+
+/// `NSTextView` that owns its `UndoManager` rather than borrowing the
+/// responder chain's. This is what stops chat / news / file-comment
+/// typing from dirtying the `DocumentGroup` document. Also catches
+/// ⌘↵ so a chat composer can wire "send on Cmd+Enter" without
+/// installing a global key monitor.
+final class IsolatedNSTextView: NSTextView {
+    private let privateUndoManager = UndoManager()
+    /// Called when the user presses ⌘↵. Assigned by `IsolatedTextEditor`.
+    var onCommandSubmit: (() -> Void)?
+
+    override var undoManager: UndoManager? {
+        privateUndoManager
+    }
+
+    override func keyDown(with event: NSEvent) {
+        // ⌘↵ (Return with Command held) → invoke the submit closure;
+        // anything else falls through to NSTextView's default
+        // (newline insertion, navigation keys, etc).
+        if event.modifierFlags.contains(.command),
+           event.keyCode == 36 || event.keyCode == 76 {
+            onCommandSubmit?()
+            return
+        }
+        super.keyDown(with: event)
+    }
+}

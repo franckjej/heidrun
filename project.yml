@@ -1,0 +1,287 @@
+name: Heidrun
+options:
+  bundleIdPrefix: org.tastybytes
+  deploymentTarget:
+    macOS: "15.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  groupSortPosition: top
+  defaultConfig: Debug
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    DEAD_CODE_STRIPPING: YES
+    GCC_NO_COMMON_BLOCKS: YES
+
+packages:
+  HeidrunCore:
+    url: https://github.com/franckjej/heidrun-protocol.git
+    # `exact:` rather than `from:` because pre-release tags compare
+    # lexically in SemVer (`"rc10" < "rc9"` since '1' < '9'), so a
+    # `from:` constraint at this version would resolve back to rc9.
+    exactVersion: "1.0.0-rc15"
+  HeidrunUI:
+    path: Packages/HeidrunUI
+  HeidrunModules:
+    path: Packages/HeidrunModules
+  CommonTools:
+    path: Packages/CommonTools
+
+targets:
+  Heidrun:
+    type: application
+    platform: macOS
+    sources:
+      - path: Heidrun
+        excludes:
+          - "ExportOptions.plist"
+          - "Heidrun.entitlements"
+    info:
+      path: Heidrun/Info.plist
+      properties:
+        # Pull the version values through build-setting substitution so
+        # there's one source of truth (MARKETING_VERSION / CURRENT_PROJECT_VERSION
+        # below). The postBuildScripts phase then overwrites CFBundleVersion
+        # in the *built* Info.plist with the git commit count — the source
+        # file stays clean.
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        LSMinimumSystemVersion: "15.0"
+        NSHumanReadableCopyright: "© 2026 Jens Francke. Originally © 2002 Göran Granström."
+        CFBundleDisplayName: Heidrun
+        NSPrincipalClass: NSApplication
+        LSApplicationCategoryType: public.app-category.social-networking
+        # Suppress macOS's auto-injected File → Open Recent submenu.
+        # `NSDocumentController` reads this at launch and shows no
+        # recents UI when it's zero. We surface our own File →
+        # Recent Servers (server history, not document history) which
+        # is the canonical list.
+        NSRecentDocumentsLimit: 0
+        # Localization. The .xcstrings catalogs in the app + module
+        # sources carry the actual translations; this just tells the
+        # OS / launch services which languages we ship.
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, de, ja]
+        # Finder integration: partial downloads carry the .heidrunpart
+        # extension while in flight. UTExportedTypeDeclarations claims
+        # the type, CFBundleDocumentTypes attaches the icon and routes
+        # double-clicks through Heidrun (handled by the host's
+        # .onOpenURL — Task 8).
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: org.tastybytes.heidrun.partial-download
+            UTTypeDescription: Heidrun Partial Download
+            UTTypeConformsTo: [public.data]
+            UTTypeIconFile: HeidrunPartialDownload
+            UTTypeTagSpecification:
+              public.filename-extension: [heidrunpart]
+          - UTTypeIdentifier: org.tastybytes.heidrun.bookmarks
+            UTTypeDescription: Heidrun Bookmarks
+            UTTypeConformsTo: [public.data, public.archive]
+            # macOS resolves `UTTypeIconFile: Bookmark` against the
+            # bundle: first as a literal `Bookmark.icns`, then through
+            # the asset catalog by image-set name. Asset-catalog
+            # resolution picks up the dark-mode variant automatically.
+            # `UTTypeIconName` is iOS-only, hence the file-key form.
+            UTTypeIconFile: Bookmark
+            UTTypeTagSpecification:
+              public.filename-extension: [heidrunbookmarks]
+          - UTTypeIdentifier: org.tastybytes.heidrun.bookmark
+            UTTypeDescription: Heidrun Bookmark
+            UTTypeConformsTo: [public.data, public.content]
+            UTTypeIconFile: Bookmark
+            UTTypeTagSpecification:
+              public.filename-extension: [heidrunbookmark]
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Heidrun Partial Download
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes: [org.tastybytes.heidrun.partial-download]
+            CFBundleTypeIconFile: HeidrunPartialDownload
+          - CFBundleTypeName: Heidrun Bookmarks
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Owner
+            LSItemContentTypes: [org.tastybytes.heidrun.bookmarks]
+            CFBundleTypeIconFile: Bookmark
+          - CFBundleTypeName: Heidrun Bookmark
+            # Editor role: the DocumentGroup edits this type — Open,
+            # Save, Save As all map to it.
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Owner
+            LSItemContentTypes: [org.tastybytes.heidrun.bookmark]
+            CFBundleTypeIconFile: Bookmark
+        # URL scheme handlers. Both registered under a single Owner-rank
+        # entry so a click on a `hotline://` or `heidrun://` link launches
+        # Heidrun (or focuses it) and routes the URL through the app's
+        # `.onOpenURL` handler. The two schemes are equivalent — `hotline://`
+        # is the de-facto standard from the original Hotline community;
+        # `heidrun://` is a Heidrun-flavoured alias for our own bookmarks
+        # and links.
+        CFBundleURLTypes:
+          - CFBundleURLName: org.tastybytes.heidrun.hotline-url
+            CFBundleTypeRole: Viewer
+            CFBundleURLSchemes: [hotline, heidrun]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.tastybytes.heidrun
+        PRODUCT_NAME: Heidrun
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS: Heidrun/Heidrun.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_EMIT_LOC_STRINGS: YES
+      configs:
+        Debug:
+          # Apple Development identity + automatic signing lets Xcode
+          # fetch (or generate) a Mac App Development provisioning
+          # profile for team 6QDCK94P7Y. That profile is what permits
+          # `keychain-access-groups`, which is the gate for Touch ID-
+          # protected saved passwords.
+          CODE_SIGN_IDENTITY: "Apple Development"
+          CODE_SIGN_STYLE: Automatic
+          DEVELOPMENT_TEAM: "6QDCK94P7Y"
+        Release:
+          # Manual Developer ID signing for notarized distribution.
+          # The Developer ID profile is what permits
+          # `keychain-access-groups` to be embedded in the signed
+          # binary so Touch ID-protected saved passwords work in
+          # shipping builds. Profile lives at
+          # ~/Library/MobileDevice/Provisioning Profiles/<UUID>.provisionprofile.
+          CODE_SIGN_IDENTITY: "Developer ID Application: Daubit & Francke GmbH (6QDCK94P7Y)"
+          CODE_SIGN_STYLE: Manual
+          DEVELOPMENT_TEAM: "6QDCK94P7Y"
+          PROVISIONING_PROFILE_SPECIFIER: "heidrun developer id application"
+    dependencies:
+      - package: HeidrunCore
+        product: HeidrunCore
+      - package: HeidrunUI
+        product: HeidrunUI
+      - package: HeidrunModules
+        product: HeidrunChat
+      - package: HeidrunModules
+        product: HeidrunMessages
+      - package: HeidrunModules
+        product: HeidrunNews
+      - package: HeidrunModules
+        product: HeidrunFiles
+      - package: HeidrunModules
+        product: HeidrunAdmin
+      - package: HeidrunModules
+        product: HeidrunBookmarks
+      - package: CommonTools
+        product: CommonTools
+    preBuildScripts:
+      - script: |
+            /opt/homebrew/bin/swiftlint
+        inputFiles:
+            - $(SRCROOT)/**/*.swift
+        outputFiles:
+            - $(DERIVED_FILE_DIR)/swiftLint.log
+        name: SwiftLint
+    postBuildScripts:
+      - script: |
+            # Stamp CFBundleVersion with the git commit count so every
+            # build gets a unique, monotonically-increasing number
+            # without dirtying the working tree. The marketing version
+            # (CFBundleShortVersionString) is left untouched — that's a
+            # release-time human decision.
+            set -e
+            INFO_PLIST="${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}"
+            if [ ! -f "$INFO_PLIST" ]; then
+                echo "warning: Info.plist not found at $INFO_PLIST — skipping build-number stamp"
+                exit 0
+            fi
+            COUNT=$(cd "${SRCROOT}" && git rev-list --count HEAD 2>/dev/null || true)
+            if [ -z "$COUNT" ]; then
+                echo "warning: git rev-list failed — keeping CURRENT_PROJECT_VERSION=${CURRENT_PROJECT_VERSION}"
+                exit 0
+            fi
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${COUNT}" "$INFO_PLIST"
+            # Touch the sentinel so Xcode's dependency analysis has a
+            # cacheable output to track. Nothing downstream consumes
+            # it, so it can't form a cycle.
+            mkdir -p "$(dirname "${SCRIPT_OUTPUT_FILE_0}")"
+            : > "${SCRIPT_OUTPUT_FILE_0}"
+            echo "Stamped CFBundleVersion = ${COUNT}"
+        name: Stamp build number from git commit count
+        # Inputs:
+        #   - The processed Info.plist orders this phase AFTER
+        #     ProcessInfoPlistFile AND re-triggers the stamp
+        #     whenever the plist is regenerated (so an incremental
+        #     plist rebuild can't leave an unstamped Info.plist
+        #     in the .app).
+        #   - .git/logs/HEAD changes every time HEAD moves
+        #     (commit, reset, checkout), which is exactly when
+        #     the commit-count stamp could change. So the script
+        #     re-runs only when the result could differ — clean
+        #     builds re-run it because the sentinel is missing.
+        # Output: a sentinel in DERIVED_FILE_DIR, NOT the
+        #   Info.plist itself — declaring the plist as an output
+        #   forms a cycle with ProcessInfoPlistFile.
+        # With real inputs + outputs we leave dependency analysis
+        # on (default), which suppresses the "will be run during
+        # every build" note from Xcode 14+.
+        inputFiles:
+            - $(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)
+            - $(SRCROOT)/.git/logs/HEAD
+        outputFiles:
+            - $(DERIVED_FILE_DIR)/build-number-stamped
+
+  HeidrunAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - HeidrunAppTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.tastybytes.heidrun.tests
+        GENERATE_INFOPLIST_FILE: YES
+        # Match the host app's signing identity / team. dyld refuses
+        # to load a test bundle into a host whose Team ID differs
+        # ("mapping process and mapped file have different Team IDs").
+        CODE_SIGN_IDENTITY: "Apple Development"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: "6QDCK94P7Y"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Heidrun.app/Contents/MacOS/Heidrun"
+    dependencies:
+      - target: Heidrun
+      - package: CommonTools
+        product: CommonTools
+
+schemes:
+  Heidrun:
+    build:
+      targets:
+        Heidrun: all
+        HeidrunAppTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - HeidrunAppTests
+    archive:
+      config: Release
+  Heidrun_Release:
+    build:
+      targets:
+        Heidrun: all
+        HeidrunAppTests: []
+    run:
+      config: Release
+    test:
+      config: Debug
+    archive:
+      config: Release

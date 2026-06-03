@@ -1,0 +1,131 @@
+import Foundation
+import Observation
+import HeidrunCore
+
+/// Live user-roster view model owned by the host window. Subscribes to the
+/// client's event stream, applies user-list deltas, and exposes a couple of
+/// row-action wrappers (`sendIM`, `requestInfo`).
+@Observable
+@MainActor
+public final class UserListViewModel {
+    public private(set) var users: [User] = []
+    public private(set) var loadError: String?
+
+    private let client: any HotlineClient
+    private var eventTask: Task<Void, Never>?
+
+    public init(client: any HotlineClient) {
+        self.client = client
+    }
+
+    public func start(initialRoster: [User]? = nil) async {
+        // Subscribe BEFORE the fetch await so any `userChanged` /
+        // `userLeft` events that arrive while we're waiting for the
+        // 300-reply land in the stream's buffer instead of being lost.
+        // Combined with `EventBroadcaster.makeStream`'s eager-register
+        // behaviour, this closes the join-race that caused new peers
+        // to be invisible to a just-connected client until the next
+        // unrelated broadcast (auto-away flip, /me, etc.) re-asserted
+        // their presence.
+        let stream: AsyncStream<HotlineEvent>? = (eventTask == nil) ? client.events : nil
+        if let initialRoster {
+            // Host already fetched the roster (e.g. ConnectionHandle
+            // sharing it with ChatViewModel). Skip the redundant
+            // round-trip — caller is responsible for accuracy.
+            users = initialRoster
+            loadError = nil
+            Self.logUsers("seeded", users: users)
+        } else {
+            do {
+                users = try await client.fetchUserList()
+                loadError = nil
+                Self.logUsers("fetched", users: users)
+            } catch {
+                loadError = String(describing: error)
+            }
+        }
+        if let stream, eventTask == nil {
+            eventTask = Task { [weak self] in
+                for await event in stream {
+                    self?.apply(event: event)
+                }
+            }
+        }
+    }
+
+    public func cancel() {
+        eventTask?.cancel()
+        eventTask = nil
+    }
+
+    public func sendIM(to socket: UInt16, body: String) async throws {
+        try await client.sendPrivateMessage(body, to: socket)
+    }
+
+    public func requestInfo(for socket: UInt16) async throws -> UserInfo {
+        try await client.fetchUserInfo(socket: socket)
+    }
+
+    /// Open a private chat with `socket`. Returns the new chat's id so the
+    /// host can spin up a chat surface for it.
+    public func startPrivateChat(with socket: UInt16) async throws -> ChatID {
+        try await client.createPrivateChat(with: socket)
+    }
+
+    /// Disconnect (kick) `socket`. Passes `ban: false` so this is a
+    /// soft-kick without adding to the server's ban list.
+    public func disconnect(socket: UInt16) async throws {
+        try await client.kick(socket: socket, ban: false)
+    }
+
+    /// Mirror a successful TX 304 (changeNickname) into the local roster
+    /// for our own socket. HeidrunServer broadcasts `userChanged` with
+    /// `excluding=sender`, so without this manual apply the sender's own
+    /// row would never reflect their new icon / nickname.
+    public func applyLocalSelfChange(
+        socket: UInt16, icon: UInt16, nickname: String, emoji: String?
+    ) {
+        if let index = users.firstIndex(where: { $0.socket == socket }) {
+            users[index].icon = icon
+            users[index].nickname = nickname
+            users[index].emoji = emoji
+            Self.log("local self-change socket=\(socket) icon=\(icon) nick=\(nickname)")
+        }
+    }
+
+    private func apply(event: HotlineEvent) {
+        switch event {
+        case .userListReceived(let list):
+            users = list
+            loadError = nil
+            Self.logUsers("received", users: list)
+        case .userChanged(let user):
+            if let idx = users.firstIndex(where: { $0.socket == user.socket }) {
+                users[idx] = user
+            } else {
+                users.append(user)
+            }
+            Self.log("changed socket=\(user.socket) icon=\(user.icon) nick=\(user.nickname)")
+        case .userLeft(let socket):
+            users.removeAll { $0.socket == socket }
+        default:
+            break
+        }
+    }
+
+    nonisolated private static func log(_ message: String) {
+        FileHandle.standardError.write(Data("[UserList] \(message)\n".utf8))
+    }
+
+    nonisolated private static func logUsers(_ source: String, users: [User]) {
+        let summary = users
+            .prefix(20)
+            .map { user in
+                let statusHex = String(user.status.rawValue, radix: 16, uppercase: false)
+                return "\(user.socket):icon=\(user.icon):color=\(user.status.color):status=0x\(statusHex):\(user.nickname)"
+            }
+            .joined(separator: ", ")
+        let suffix = users.count > 20 ? " (+\(users.count - 20) more)" : ""
+        log("\(source) \(users.count) user(s) — \(summary)\(suffix)")
+    }
+}

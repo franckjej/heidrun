@@ -1,0 +1,776 @@
+import SwiftUI
+import HeidrunCore
+import HeidrunUI
+import CommonTools
+
+/// News surface that adapts to the server's capabilities.
+///
+/// On appear we ask the client for its `connectionInfo`, derive a
+/// `NewsCapability`, and show exactly one UI:
+///   * `.plain` — single bulletin-board view (Hotline < 1.5 + WC servers).
+///   * `.threaded` — hierarchical browser (Hotline 1.5+).
+///
+/// We only fetch the flavour the server actually advertises, matching the
+/// rule "load only the one the server runs".
+public struct NewsView: View {
+    @State private var plain: PlainNewsViewModel
+    @State private var threaded: ThreadedNewsViewModel
+    @State private var capability: NewsCapability?
+
+    private let resolveCapability: @Sendable () async -> NewsCapability
+    private let ownNickname: String
+
+    /// Production initialiser: derives the capability from the live client.
+    public init(client: any HotlineClient, ownNickname: String = "") {
+        self._plain    = State(initialValue: PlainNewsViewModel(client: client))
+        self._threaded = State(initialValue: ThreadedNewsViewModel(client: client))
+        self.ownNickname = ownNickname
+        self.resolveCapability = {
+            NewsCapability(serverVersion: await client.connectionInfo.serverVersion)
+        }
+    }
+
+    /// Test / preview initialiser: callers inject ready-made view-models and
+    /// an explicit capability so no live client is needed.
+    public init(
+        plain: PlainNewsViewModel,
+        threaded: ThreadedNewsViewModel,
+        capability: NewsCapability,
+        ownNickname: String = ""
+    ) {
+        self._plain      = State(initialValue: plain)
+        self._threaded   = State(initialValue: threaded)
+        self._capability = State(initialValue: capability)
+        self.ownNickname = ownNickname
+        self.resolveCapability = { capability }
+    }
+
+    /// Hosted initialiser: inject view-models persisted on the connection
+    /// (so the composer draft + browse state survive feature switches)
+    /// while still resolving the capability from the live client.
+    public init(
+        plain: PlainNewsViewModel,
+        threaded: ThreadedNewsViewModel,
+        client: any HotlineClient,
+        ownNickname: String = ""
+    ) {
+        self._plain    = State(initialValue: plain)
+        self._threaded = State(initialValue: threaded)
+        self.ownNickname = ownNickname
+        self.resolveCapability = {
+            NewsCapability(serverVersion: await client.connectionInfo.serverVersion)
+        }
+    }
+
+    public var body: some View {
+        Group {
+            switch capability {
+            case .none:
+                ProgressView()
+                    .controlSize(.large)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            case .plain:
+                PlainNewsScreen(viewModel: plain)
+                    .padding(.bottom, .xlarge)
+            case .threaded:
+                ThreadedNewsScreen(viewModel: threaded, ownNickname: ownNickname)
+                    .padding(.bottom, .xlarge)
+            }
+        }
+        .task { await bootstrap() }
+    }
+
+    /// Detect capability, then autofetch only the flavour the server runs.
+    /// Plain-news servers stream `.newsPosted` events; the observation
+    /// loop is owned at connection scope (`ConnectionHandle`/`start()`)
+    /// so live posts survive module switches — `start()` here is an
+    /// idempotent no-op for the hoisted VM and only does work for the
+    /// standalone `NewsView(client:)` path. Threaded servers don't push.
+    private func bootstrap() async {
+        if capability == nil {
+            capability = await resolveCapability()
+        }
+        switch capability {
+        case .plain:
+            plain.start()
+            await plain.refresh()
+        case .threaded:
+            await threaded.refresh()
+        case .none:
+            break
+        }
+    }
+}
+
+// MARK: - Plain news
+
+private struct PlainNewsScreen: View {
+    @Bindable var viewModel: PlainNewsViewModel
+
+    private var posts: [String] {
+        viewModel.feed
+            .components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            header
+            Divider()
+            feed
+            Divider()
+            composer
+                .padding(.top, .small)
+                .padding(.bottom, .small)
+        }
+        .padding(.bottom, .small)
+        .frame(alignment: .topLeading)
+    }
+
+    private var header: some View {
+        GroupBox {
+            HStack(spacing: Spacing.xxsmall.rawValue) {
+                Image(systemName: "newspaper")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text("News")
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    Task { await viewModel.refresh() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.body)
+                        .frame(width: 16, height: 16)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .disabled(viewModel.isLoading)
+                .help("Reload news feed")
+            }
+            .font(.subheadline)
+            .padding(.horizontal, .xsmall)
+            .frame(height: 24)
+        }
+        .background(.background)
+        .padding(.horizontal, .xsmall)
+        .padding(.vertical, .xxxsmall)
+    }
+
+    @ViewBuilder
+    private var feed: some View {
+        if viewModel.isLoading && posts.isEmpty {
+            ProgressView("Loading news…")
+                .controlSize(.large)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if posts.isEmpty {
+            ContentUnavailableView(
+                "No News Yet",
+                systemImage: "newspaper",
+                description: Text("Posts will appear here when someone shares an update.")
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            SelectableTranscript(
+                lines: NewsPostsTranscriptProjection.lines(from: posts)
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(.background)
+        }
+    }
+
+    private var composer: some View {
+        VStack(alignment: .leading, spacing: Spacing.xsmall.rawValue) {
+            HStack(alignment: .top, spacing: Spacing.xsmall.rawValue) {
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $viewModel.draft)
+                        .font(.body)
+                        .frame(minHeight: 64, maxHeight: 160)
+                        .scrollContentBackground(.hidden)
+
+                    if viewModel.draft.isEmpty {
+                        Text("Share an update with the server…")
+                            .font(.body)
+                            .foregroundStyle(.tertiary)
+                            // Align to the TextEditor's text origin (NSTextView
+                            // line-fragment padding ≈ 5pt left, flush top) so the
+                            // placeholder sits exactly where the cursor appears.
+                            .padding(.leading, .xxsmall)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .padding(.xxsmall)
+                .background(.background.secondary, in: RoundedRectangle(cornerRadius: .cornerHigh, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: .cornerHigh, style: .continuous)
+                        .stroke(.separator, lineWidth: 0.5)
+                )
+                Spacer()
+                Button {
+                    Task { await viewModel.postDraft() }
+                } label: {
+                    Label("Post", systemImage: "paperplane.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .padding(.horizontal, .small)
+                .keyboardShortcut(.return, modifiers: .command)
+                .disabled(isDraftEmpty)
+                .help("Post draft (⌘↩)")
+            }
+
+            if let error = viewModel.lastError {
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .labelStyle(.titleAndIcon)
+            }
+        }
+        .padding(.horizontal, .small)
+    }
+
+    private var isDraftEmpty: Bool {
+        viewModel.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
+// MARK: - Threaded news
+
+private struct ThreadedNewsScreen: View {
+    @Bindable var viewModel: ThreadedNewsViewModel
+    let ownNickname: String
+    @State private var composing = false
+    @State private var creatingBundle = false
+    @State private var deleteTarget: NewsBundle?
+    @State private var editThreadTarget: NewsThread?
+    @State private var deleteThreadTarget: NewsThread?
+    @State private var replyTarget: NewsThread?
+
+    private var actions: NewsThreadActions {
+        NewsThreadActions(
+            viewModel: viewModel,
+            ownNickname: ownNickname,
+            onEdit: { thread in editThreadTarget = thread },
+            onConfirmDelete: { thread in deleteThreadTarget = thread },
+            onReply: { thread in replyTarget = thread }
+        )
+    }
+
+    /// The currently-selected thread (row), or nil. Toolbar + menu act
+    /// on this — not on the loaded body — so empty-body/top-level posts
+    /// are actionable.
+    private var selectedThread: NewsThread? { viewModel.selectedThread }
+
+    private var canEditSelected: Bool {
+        guard let thread = selectedThread else { return false }
+        return actions.canEdit(thread)
+    }
+
+    private func copySelectedPost() {
+        guard let thread = selectedThread else { return }
+        actions.copyPost(thread)
+    }
+
+    private func copySelectedThread() {
+        guard let thread = selectedThread else { return }
+        actions.copyThread(thread)
+    }
+
+    private func editSelected() {
+        // Prefer the fully-loaded thread (TX 400 body) over the list
+        // metadata (TX 371, no body) so the sheet's body field isn't
+        // empty — saving an empty body would wipe the original post.
+        guard let thread = viewModel.editableSelectedThread else { return }
+        editThreadTarget = thread
+    }
+
+    private func deleteSelected() {
+        guard let thread = selectedThread else { return }
+        deleteThreadTarget = thread
+    }
+
+    private func replySelected() {
+        guard let thread = selectedThread else { return }
+        replyTarget = thread
+    }
+
+    private func copySelectedBundleContents() {
+        guard let bundle = viewModel.selectedBundle else { return }
+        Task { await actions.copyContents(bundle) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            breadcrumb
+            Divider()
+            HSplitView {
+                leftPane
+                    .frame(minWidth: 200, idealWidth: 220)
+                    .background(SplitViewAutosaver(name: "news.threaded.bundles"))
+                rightPane
+                    .frame(minWidth: 320)
+            }
+            .padding(.top, .xsmall)
+            if let error = viewModel.lastError {
+                Divider()
+                Label(error, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(.small)
+            }
+        }
+        .frame(alignment: .topLeading)
+        .sheet(isPresented: $composing) {
+            NewPostSheet { title, body in
+                await viewModel.post(title: title, body: body)
+            }
+        }
+        .sheet(item: $replyTarget) { thread in
+            NewPostSheet(
+                title: "Reply",
+                initialTitle: NewsThreadActions.replyTitle(
+                    forParent: thread.elements.first?.title ?? ""
+                )
+            ) { title, body in
+                await viewModel.post(
+                    parentThreadID: thread.threadID,
+                    title: title,
+                    body: body
+                )
+            }
+        }
+        .sheet(isPresented: $creatingBundle) {
+            CreateBundleSheet { name, isCategory in
+                await viewModel.createBundle(named: name, isCategory: isCategory)
+            }
+        }
+        .alert(
+            "Delete this bundle?",
+            isPresented: deleteBinding,
+            presenting: deleteTarget
+        ) { bundle in
+            Button("Delete", role: .destructive) {
+                Task { await viewModel.deleteBundle(bundle) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { bundle in
+            Text(
+                bundle.kind == .category
+                    ? "“\(bundle.title)” and every thread inside it will be removed from the server. This can't be undone."
+                    : "“\(bundle.title)” and everything inside it will be removed from the server. This can't be undone."
+            )
+        }
+        .sheet(item: $editThreadTarget) { thread in
+            EditPostSheet(thread: thread) { newTitle, newBody in
+                await viewModel.editThread(
+                    threadID: thread.threadID,
+                    newTitle: newTitle,
+                    newBody: newBody
+                )
+            }
+        }
+        .confirmationDialog(
+            "Delete this post?",
+            isPresented: Binding(
+                get: { deleteThreadTarget != nil },
+                set: { if !$0 { deleteThreadTarget = nil } }
+            ),
+            presenting: deleteThreadTarget
+        ) { thread in
+            Button("Delete", role: .destructive) {
+                Task {
+                    await viewModel.deleteThread(
+                        threadID: thread.threadID,
+                        cascade: false
+                    )
+                }
+                deleteThreadTarget = nil
+            }
+            Button("Cancel", role: .cancel) { deleteThreadTarget = nil }
+        } message: { _ in
+            Text("Any replies will remain visible as orphan posts.")
+        }
+        // Publish the selection + actions so the macOS "News" menu can
+        // drive the same handlers as the toolbar. Only present while the
+        // threaded-news view is on screen (this struct is the .threaded
+        // branch of NewsView), so the menu disables when focus moves to
+        // another feature/window.
+        .focusedValue(\.newsActionContext, NewsActionContext(
+            hasSelection: selectedThread != nil,
+            canEdit: canEditSelected,
+            copyPost: { copySelectedPost() },
+            copyThread: { copySelectedThread() },
+            reply: { replySelected() },
+            edit: { editSelected() },
+            delete: { deleteSelected() },
+            hasSelectedBundle: viewModel.selectedBundle != nil,
+            copyBundleContents: { copySelectedBundleContents() }
+        ))
+    }
+
+    private var deleteBinding: Binding<Bool> {
+        Binding(
+            get: { deleteTarget != nil },
+            set: { if !$0 { deleteTarget = nil } }
+        )
+    }
+
+    // MARK: Breadcrumb / actions
+
+    private var breadcrumb: some View {
+        GroupBox {
+            HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+                Image(systemName: "house")
+                    .resizable()
+                    .scaledToFit()
+                    .font(.subheadline)
+                    .frame(width: 20, height: 20)
+                    .foregroundStyle(.secondary)
+                Button {
+                    Task { await viewModel.navigate(toDepth: 0) }
+                } label: {
+                    Text("News")
+                        .heidrunBody()
+                }
+                .buttonStyle(.plain)
+                .controlSize(.regular)
+                .foregroundStyle(viewModel.currentPath.isRoot ? .primary : .secondary)
+                .disabled(viewModel.currentPath.isRoot)
+
+                ForEach(Array(viewModel.currentPath.components.enumerated()), id: \.offset) { index, component in
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.tertiary)
+                        .fontWeight(.light)
+                        .imageScale(.small)
+                    let isCurrent = index == viewModel.currentPath.components.count - 1
+                    Button {
+                        Task { await viewModel.navigate(toDepth: index + 1) }
+                    } label: {
+                        Text(component)
+                    }
+                    .buttonStyle(.plain)
+                    .controlSize(.small)
+                    .foregroundStyle(isCurrent ? .primary : .secondary)
+                    .disabled(isCurrent)
+                }
+
+                Spacer()
+
+                ActionButton(
+                    title: "Copy Post",
+                    systemImage: "doc.on.doc",
+                    isEnabled: selectedThread != nil,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    copySelectedPost()
+                }
+
+                ActionButton(
+                    title: "Copy Thread",
+                    systemImage: "doc.on.doc.fill",
+                    isEnabled: selectedThread != nil,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    copySelectedThread()
+                }
+
+                ActionButton(
+                    title: "Edit Post…",
+                    systemImage: "pencil",
+                    isEnabled: canEditSelected,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    editSelected()
+                }
+
+                ActionButton(
+                    title: "Delete Post…",
+                    systemImage: "trash",
+                    isEnabled: selectedThread != nil,
+                    role: .destructive,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    deleteSelected()
+                }
+
+                Divider().frame(height: 16)
+
+                ActionButton(
+                    title: "Copy Contents",
+                    systemImage: "doc.on.clipboard",
+                    isEnabled: viewModel.selectedBundle != nil && !viewModel.isGatheringCopy,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    copySelectedBundleContents()
+                }
+
+                ActionButton(
+                    title: "New Bundle or Category…",
+                    systemImage: "plus",
+                    isEnabled: true,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    creatingBundle = true
+                }
+
+                if viewModel.selectedCategoryPath != nil {
+                    ActionButton(
+                        title: "New Thread…",
+                        systemImage: "square.and.pencil",
+                        isEnabled: true,
+                        size: .small,
+                        fontWeight: .light
+                    ) {
+                        composing = true
+                    }
+                }
+
+                ActionButton(
+                    title: "Reload",
+                    systemImage: "arrow.clockwise",
+                    isEnabled: !viewModel.isLoading,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    Task { await viewModel.refresh() }
+                }
+            }
+            .font(.subheadline)
+            .padding(.horizontal, .xsmall)
+            .frame(height: 24)
+        }
+        .background(.background)
+        .padding(.horizontal, .xsmall)
+        .padding(.vertical, .xxxsmall)
+    }
+
+    // MARK: Left pane — folders + categories
+
+    @ViewBuilder
+    private var leftPane: some View {
+        if viewModel.isLoadingBundles && viewModel.bundles.isEmpty {
+            ProgressView()
+                .controlSize(.small)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if viewModel.bundles.isEmpty {
+            ContentUnavailableView {
+                Label("Empty Folder", systemImage: "folder")
+            } description: {
+                Text("Nothing here yet.")
+            } actions: {
+                Button("Create…") { creatingBundle = true }
+                    .controlSize(.small)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            List {
+                ForEach(viewModel.bundles) { bundle in
+                    BundleRow(
+                        bundle: bundle,
+                        isSelected: bundle.id == viewModel.selectedBundleID
+                    )
+                    .contentShape(.rect)
+                    // Double-tap before single-tap so folder descent wins
+                    // over the highlight gesture. Single-tap on a folder
+                    // only selects (matches Finder column view); the user
+                    // must double-click to enter.
+                    .onTapGesture(count: 2) {
+                        Task { await viewModel.descend(into: bundle) }
+                    }
+                    .onTapGesture {
+                        Task { await viewModel.select(bundle) }
+                    }
+                    .contextMenu {
+                        if bundle.kind == .bundle {
+                            Button("Open") {
+                                Task { await viewModel.descend(into: bundle) }
+                            }
+                        }
+                        Button("Refresh") {
+                            Task { await viewModel.refresh() }
+                        }
+                        Button("Copy Contents") {
+                            Task { await actions.copyContents(bundle) }
+                        }
+                        Divider()
+                        Button("Delete…", role: .destructive) {
+                            deleteTarget = bundle
+                        }
+                    }
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 1, leading: 4, bottom: 1, trailing: 4))
+                }
+            }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+        }
+    }
+
+    // MARK: Right pane — thread tree + body
+
+    private var rightPane: some View {
+        VSplitView {
+            threadListPane
+                .frame(minHeight: 140, idealHeight: 220)
+                .background(SplitViewAutosaver(name: "news.threaded.body"))
+            bodyPane
+                .frame(minHeight: 120)
+        }
+    }
+
+    /// The highlighted bundle on the left, if it's a folder rather than
+    /// a category. Used to nudge the user toward double-clicking when
+    /// they single-tap a folder.
+    private var selectedFolder: NewsBundle? {
+        guard let id = viewModel.selectedBundleID, id.kind == .bundle else { return nil }
+        return viewModel.bundles.first(where: { $0.id == id })
+    }
+
+    @ViewBuilder
+    private var threadListPane: some View {
+        if viewModel.selectedCategoryPath == nil {
+            ContentUnavailableView(
+                selectedFolder == nil ? "No Category Selected" : "Folder Selected",
+                systemImage: "tray",
+                description: Text(
+                    selectedFolder == nil
+                        ? "Pick a category on the left to see its threads."
+                        : "Double-click \u{201C}\(selectedFolder?.title ?? "")\u{201D} to open it, or pick a category."
+                )
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if viewModel.isLoadingThreads && viewModel.threads.isEmpty {
+            ProgressView("Loading posts…")
+                .controlSize(.small)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if viewModel.threads.isEmpty {
+            ContentUnavailableView(
+                "No Posts Yet",
+                systemImage: "tray",
+                description: Text("This category is empty. Use the pencil button above to start a thread.")
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            threadTreeList
+        }
+    }
+
+    private var threadTreeList: some View {
+        let nodes = buildThreadTree(viewModel.threads)
+        return List {
+            ForEach(nodes) { node in
+                ThreadRow(
+                    thread: node.thread,
+                    depth: node.depth,
+                    isSelected: node.thread.threadID == viewModel.selectedThreadID
+                )
+                .contentShape(.rect)
+                .onTapGesture {
+                    Task { await viewModel.openThread(node.thread) }
+                }
+                .contextMenu {
+                    NewsActionsMenuItems(actions: actions, thread: node.thread)
+                }
+                .onDrag {
+                    TextFileExport.makeItemProvider(
+                        fileName: node.thread.elements.first?.title ?? "News Post",
+                        text: NewsClipboardFormatter.formatPost(node.thread)
+                    )
+                }
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 1, leading: 4, bottom: 1, trailing: 4))
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+    }
+
+    @ViewBuilder
+    private var bodyPane: some View {
+        if viewModel.isLoadingBody {
+            ProgressView()
+                .controlSize(.small)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let thread = viewModel.loadedThread, let element = thread.elements.first {
+            ScrollView {
+                // `Spacing.xsmall` (8pt) between the header row, the
+                // hairline divider, and the body — so the divider does
+                // the visual-separation work and the gap on each side
+                // is breathing room, not a full margin.
+                VStack(alignment: .leading, spacing: Spacing.xsmall.rawValue) {
+                    HStack(spacing: Spacing.xsmall.rawValue) {
+                        if let author = element.author.nonEmpty {
+                            Label(author, systemImage: "person.fill")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        if let display = thread.postDate.displayableAbsolute {
+                            Text(display)
+                        }
+                        Spacer()
+                        Button {
+                            replyTarget = thread
+                        } label: {
+                            Label("Reply…", systemImage: "arrowshape.turn.up.left")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                    .heidrunCaption()
+                    .foregroundStyle(.secondary)
+
+                    Divider()
+
+                    if let body = element.body.nonEmpty {
+                        Text(linkifyAttributed(body))
+                            .heidrunBody()
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .environment(\.openURL, OpenURLAction { url in
+                                // hotline/heidrun → in-app dispatch via
+                                // NotificationCenter so macOS doesn't auto-
+                                // spawn an extra empty window for the URL
+                                // receipt. Everything else (http(s)) falls
+                                // to the system default.
+                                HotlineLinkClick.post(url) ? .handled : .systemAction
+                            })
+                    } else {
+                        Text("(empty)")
+                            .heidrunBody()
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .padding(.small)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        } else {
+            ContentUnavailableView(
+                "No Thread Selected",
+                systemImage: "doc.text",
+                description: Text("Pick a thread above to read its body here.")
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    /// Build an `AttributedString` from a raw post body with `.link`
+    /// runs on hotline/heidrun/http(s) URLs so SwiftUI `Text` dispatches
+    /// clicks through `NSWorkspace.open` → our `.onOpenURL` → connection.
+    /// SelectableTranscript handles the same job for chat / plain news /
+    /// PM surfaces; this is the threaded-news-body counterpart.
+    private func linkifyAttributed(_ body: String) -> AttributedString {
+        var attributed = AttributedString(body)
+        for link in HotlineLinkDetector.scan(body) {
+            let nsRange = NSRange(link.range, in: body)
+            guard let attributedRange = Range(nsRange, in: attributed) else { continue }
+            attributed[attributedRange].link = link.url
+        }
+        return attributed
+    }
+}
