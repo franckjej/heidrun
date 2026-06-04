@@ -138,6 +138,7 @@
       }
     },
     "%@ users · %lld transfers" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1213,6 +1214,9 @@
           }
         }
       }
+    },
+    "Copy" : {
+
     },
     "Copy Folder/Category Contents" : {
       "localizations" : {

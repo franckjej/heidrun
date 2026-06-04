@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import HeidrunCore
 import HeidrunUI
 import CommonTools
@@ -130,6 +131,46 @@ struct FileInfoSheet: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
+        .contextMenu {
+            if let info {
+                Button("Copy File Info") {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(
+                        copyableInfoBlock(info: info),
+                        forType: .string
+                    )
+                }
+            }
+        }
+    }
+
+    /// Multi-line plain-text dump of the whole sheet — name + path,
+    /// metadata grid, then the comment if any. Tab-separated key/value
+    /// pairs so Numbers / spreadsheets can absorb it too.
+    private func copyableInfoBlock(info: RemoteFileInfo) -> String {
+        var lines: [String] = []
+        lines.append(entry.name)
+        lines.append(path.isRoot ? "/" : path.displayPath)
+        lines.append("")
+        lines.append("Size:\t\(sizeLabel(info.dataForkSize))")
+        if info.resourceForkSize > 0 {
+            lines.append("Resource Fork:\t\(sizeLabel(info.resourceForkSize))")
+        }
+        lines.append("Type:\t\(info.file.type.stringValue)")
+        lines.append("Creator:\t\(info.file.creator.stringValue)")
+        if let created = info.creationDate {
+            lines.append("Created:\t\(Self.dateFormatter.string(from: created))")
+        }
+        if let modified = info.modificationDate {
+            lines.append("Modified:\t\(Self.dateFormatter.string(from: modified))")
+        }
+        let comment = (info.comment ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !comment.isEmpty {
+            lines.append("")
+            lines.append("Comment:")
+            lines.append(comment)
+        }
+        return lines.joined(separator: "\n")
     }
 
     /// Comment editor. Sits below the metadata card with the same

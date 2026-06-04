@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import HeidrunCore
 import HeidrunUI
 import CommonTools
@@ -85,6 +86,13 @@ public struct ChatView: View {
                     .heidrunBody()
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .textSelection(.enabled)
+                    .contextMenu {
+                        Button("Copy") {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(headerTitle, forType: .string)
+                        }
+                    }
                 Spacer()
                     // Subject editing only meaningful for private chats — vanilla
                     // Hotline servers don't accept a subject change on public chat.

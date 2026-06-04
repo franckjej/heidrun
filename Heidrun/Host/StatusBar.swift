@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import CommonTools
 
 /// Single-row status strip rendered at the bottom of HostView via
@@ -18,21 +19,35 @@ struct StatusBar: View {
                 Text(identityLabel)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
             }
             Spacer()
-            Text("\(userCount.map { "\($0)" } ?? "—") users · \(transferCount) transfers")
+            Text(countsLabel)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-                .selectionDisabled(false)
+                .textSelection(.enabled)
         }
         .padding(.horizontal, .small)
         .frame(maxWidth: .infinity)
         .background(.clear)
+        .contextMenu {
+            Button("Copy") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(
+                    "\(identityLabel) · \(countsLabel)",
+                    forType: .string
+                )
+            }
+        }
     }
 
     private var identityLabel: String {
         let nick = state.lastAttemptedSettings?.nickname ?? "—"
         let login = state.lastAttemptedSettings?.login ?? ""
         return login.isEmpty ? "\(nick)@\(state.serverName)" : "\(login)@\(state.serverName)"
+    }
+
+    private var countsLabel: String {
+        "\(userCount.map { "\($0)" } ?? "—") users · \(transferCount) transfers"
     }
 }

@@ -256,6 +256,9 @@
         }
       }
     },
+    "Copy File Info" : {
+
+    },
     "Couldn't replace the file" : {
       "localizations" : {
         "de" : {
