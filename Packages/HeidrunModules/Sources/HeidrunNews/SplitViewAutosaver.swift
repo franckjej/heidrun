@@ -73,29 +73,59 @@ private final class AutosaverNSView: NSView {
             return
         }
 
-        // SwiftUI may install us before the enclosing NSSplitView has
-        // finished arranging its children. Defer to next run-loop so
-        // `setPosition` lands on the final layout, not a transient one.
-        DispatchQueue.main.async { [weak self] in
-            self?.installAutosaveHook()
-        }
+        // SwiftUI realises split views over several layout passes — the
+        // enclosing NSSplitView may not yet have its arrangedSubviews
+        // when we first see a window. Keep retrying on the run loop
+        // until we find one with the dividers we expect to autosave.
+        installAutosaveHook(retriesLeft: 30)
     }
 
-    private func installAutosaveHook() {
-        guard observedSplitView == nil, let splitView = enclosingSplitView() else { return }
+    private func installAutosaveHook(retriesLeft: Int) {
+        guard observedSplitView == nil else { return }
+        let splitView = enclosingSplitView()
+        let dividerCount = splitView.map { max(0, $0.arrangedSubviews.count - 1) } ?? 0
+        // Wait until the split view has at least one divider — until
+        // both arrangedSubviews exist, `setPosition` and the resize
+        // notification are pointless.
+        guard let splitView, dividerCount > 0 else {
+            if retriesLeft > 0 {
+                DispatchQueue.main.async { [weak self] in
+                    self?.installAutosaveHook(retriesLeft: retriesLeft - 1)
+                }
+            }
+            return
+        }
         observedSplitView = splitView
         restorePositions(into: splitView)
         resizeObserver = NotificationCenter.default.addObserver(
             forName: NSSplitView.didResizeSubviewsNotification,
             object: splitView,
             queue: .main
-        ) { [weak self, weak splitView] _ in
+        ) { [weak self, weak splitView] notification in
+            // NSSplitView posts this for layout-driven resizes too
+            // (SwiftUI relayout, window resize, content size change).
+            // Saving on those overwrites the user's drag with the
+            // post-layout default the next moment — divider feels
+            // stuck. The `NSSplitViewDividerIndex` key in userInfo is
+            // present ONLY when the user actually dragged a divider,
+            // so gate the save on that.
+            //
+            // Pull the bool out of `notification` BEFORE the actor hop
+            // — `Notification` isn't Sendable under Swift 6.
+            let wasUserDrag = notification.userInfo?["NSSplitViewDividerIndex"] != nil
             // `queue: .main` guarantees we're on the main thread; tell
             // the compiler so it lets us touch MainActor state.
             MainActor.assumeIsolated {
-                guard let self, let splitView else { return }
+                guard wasUserDrag, let self, let splitView else { return }
                 self.savePositions(from: splitView)
             }
+        }
+        // Re-apply the restored position on the next run-loop pass so
+        // SwiftUI's `idealHeight` / `idealWidth` preference, if any,
+        // can't snap the divider back after our first `setPosition`.
+        DispatchQueue.main.async { [weak self, weak splitView] in
+            guard let self, let splitView else { return }
+            self.restorePositions(into: splitView)
         }
     }
 

@@ -571,58 +571,62 @@ private struct ThreadedNewsScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            List {
-                ForEach(viewModel.bundles) { bundle in
-                    BundleRow(
-                        bundle: bundle,
-                        isSelected: bundle.id == viewModel.selectedBundleID
-                    )
-                    .contentShape(.rect)
-                    // Double-tap before single-tap so folder descent wins
-                    // over the highlight gesture. Single-tap on a folder
-                    // only selects (matches Finder column view); the user
-                    // must double-click to enter.
-                    .onTapGesture(count: 2) {
-                        Task { await viewModel.descend(into: bundle) }
-                    }
-                    .onTapGesture {
-                        Task { await viewModel.select(bundle) }
-                    }
-                    .contextMenu {
-                        if bundle.kind == .bundle {
-                            Button("Open") {
-                                Task { await viewModel.descend(into: bundle) }
-                            }
-                        }
-                        Button("Refresh") {
-                            Task { await viewModel.refresh() }
-                        }
-                        Button("Copy Contents") {
-                            Task { await actions.copyContents(bundle) }
-                        }
-                        Divider()
-                        Button("Delete…", role: .destructive) {
-                            deleteTarget = bundle
-                        }
-                    }
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 1, leading: 4, bottom: 1, trailing: 4))
-                }
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+            BundleTableView(
+                bundles: viewModel.bundles,
+                selectedBundleID: viewModel.selectedBundleID,
+                actions: bundleListActions
+            )
         }
+    }
+
+    private var bundleListActions: BundleListActions {
+        let actions = self.actions
+        return BundleListActions(
+            navigate: { bundle in
+                Task {
+                    if bundle.kind == .bundle {
+                        await viewModel.descend(into: bundle)
+                    } else {
+                        await viewModel.select(bundle)
+                    }
+                }
+            },
+            menuItems: { bundle in
+                var items: [ThreadMenuItem] = []
+                if bundle.kind == .bundle {
+                    items.append(.normal(String(localized: "Open", bundle: .module)) {
+                        Task { await viewModel.descend(into: bundle) }
+                    })
+                }
+                items.append(.normal(String(localized: "Refresh", bundle: .module)) {
+                    Task { await viewModel.refresh() }
+                })
+                items.append(.normal(String(localized: "Copy Contents", bundle: .module)) {
+                    Task { await actions.copyContents(bundle) }
+                })
+                items.append(.separator)
+                items.append(.destructive(String(localized: "Delete…", bundle: .module)) {
+                    deleteTarget = bundle
+                })
+                return items
+            }
+        )
     }
 
     // MARK: Right pane — thread tree + body
 
     private var rightPane: some View {
-        VSplitView {
+        // AppKit-backed split — see `PersistentVSplit` for why
+        // SwiftUI's `VSplitView` couldn't hold the divider here.
+        PersistentVSplit(
+            autosaveName: "Heidrun.news.threaded.body",
+            topMinHeight: 140,
+            bottomMinHeight: 120,
+            defaultTopHeight: 220
+        ) {
             threadListPane
-                .frame(minHeight: 140, idealHeight: 220)
-                .background(SplitViewAutosaver(name: "news.threaded.body"))
+        } bottom: {
             bodyPane
-                .frame(minHeight: 120)
         }
     }
 
@@ -664,33 +668,52 @@ private struct ThreadedNewsScreen: View {
     }
 
     private var threadTreeList: some View {
-        let nodes = buildThreadTree(viewModel.threads)
-        return List {
-            ForEach(nodes) { node in
-                ThreadRow(
-                    thread: node.thread,
-                    depth: node.depth,
-                    isSelected: node.thread.threadID == viewModel.selectedThreadID
-                )
-                .contentShape(.rect)
-                .onTapGesture {
-                    Task { await viewModel.openThread(node.thread) }
+        ThreadOutlineView(
+            threads: viewModel.threads,
+            selectedThreadID: viewModel.selectedThreadID,
+            actions: outlineActions
+        )
+    }
+
+    private var outlineActions: ThreadOutlineActions {
+        // Capture `actions` once per render so the closures see the same
+        // NewsThreadActions the toolbar/menu builders use.
+        let actions = self.actions
+        return ThreadOutlineActions(
+            open: { thread in
+                Task { await viewModel.openThread(thread) }
+            },
+            menuItems: { thread in
+                var items: [ThreadMenuItem] = [
+                    .normal(String(localized: "Reply…", bundle: .module)) {
+                        actions.onReply(thread)
+                    },
+                    .separator
+                ]
+                if actions.canEdit(thread) {
+                    items.append(.normal(String(localized: "Edit…", bundle: .module)) {
+                        actions.onEdit(thread)
+                    })
                 }
-                .contextMenu {
-                    NewsActionsMenuItems(actions: actions, thread: node.thread)
-                }
-                .onDrag {
-                    TextFileExport.makeItemProvider(
-                        fileName: node.thread.elements.first?.title ?? "News Post",
-                        text: NewsClipboardFormatter.formatPost(node.thread)
-                    )
-                }
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets(top: 1, leading: 4, bottom: 1, trailing: 4))
+                items.append(.destructive(String(localized: "Delete…", bundle: .module)) {
+                    actions.onConfirmDelete(thread)
+                })
+                items.append(.separator)
+                items.append(.normal(String(localized: "Copy Post", bundle: .module)) {
+                    actions.copyPost(thread)
+                })
+                items.append(.normal(String(localized: "Copy Thread", bundle: .module)) {
+                    actions.copyThread(thread)
+                })
+                return items
+            },
+            clipboardText: { thread in
+                NewsClipboardFormatter.formatPost(thread)
+            },
+            clipboardTitle: { thread in
+                thread.elements.first?.title ?? "News Post"
             }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
+        )
     }
 
     @ViewBuilder

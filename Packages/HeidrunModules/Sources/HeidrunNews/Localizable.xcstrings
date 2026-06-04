@@ -1,6 +1,38 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "“%@” and every thread inside it will be removed from the server. This can't be undone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ und jeder darin enthaltene Thread werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」とその中のすべてのスレッドがサーバーから削除されます。この操作は取り消せません。"
+          }
+        }
+      }
+    },
+    "“%@” and everything inside it will be removed from the server. This can't be undone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ und der gesamte Inhalt werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」とその中のすべてがサーバーから削除されます。この操作は取り消せません。"
+          }
+        }
+      }
+    },
     "(%u)" : {
       "localizations" : {
         "de" : {
@@ -38,6 +70,9 @@
           }
         }
       }
+    },
+    "(untitled)" : {
+
     },
     "A category holds news threads (posts)." : {
       "localizations" : {
@@ -986,38 +1021,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "タイトル"
-          }
-        }
-      }
-    },
-    "“%@” and every thread inside it will be removed from the server. This can't be undone." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ und jeder darin enthaltene Thread werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」とその中のすべてのスレッドがサーバーから削除されます。この操作は取り消せません。"
-          }
-        }
-      }
-    },
-    "“%@” and everything inside it will be removed from the server. This can't be undone." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ und der gesamte Inhalt werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」とその中のすべてがサーバーから削除されます。この操作は取り消せません。"
           }
         }
       }

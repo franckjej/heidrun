@@ -464,7 +464,7 @@ final class HostState {
         let stream = client.events
         agreementWatcher = Task { [weak self] in
             for await event in stream {
-                if case .agreementReceived(let text, let auto) = event {
+                if case let .agreementReceived(text, auto) = event {
                     await MainActor.run {
                         guard let self else { return }
                         self.pendingAgreement = AgreementPrompt(
