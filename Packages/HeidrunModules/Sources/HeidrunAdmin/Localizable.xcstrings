@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     "Admin" : {
       "localizations" : {
         "de" : {
@@ -142,6 +145,7 @@
       }
     },
     "Duplicate" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

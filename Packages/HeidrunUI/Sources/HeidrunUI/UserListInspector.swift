@@ -45,8 +45,9 @@ public struct UserListInspector: View {
             header
             Divider()
             list
-                .background(alignment: .top) { bannerBackdrop }
+                .padding(.bottom, .xxsmall)
         }
+        .background(alignment: .top) { bannerBackdrop }
     }
 
     /// Stretched 16x1 banner behind the user list — vertical color bands

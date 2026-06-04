@@ -48,7 +48,7 @@ struct HostView: View {
                 .overlay(alignment: .bottom) {
                     if let state {
                         StatusBar(state: state, userCount: userListVM?.users.count, transferCount: activeTransferCount)
-                            .padding(.xsmall)
+                            .padding([.bottom, .trailing], .xsmall)
                     }
                 }
         }
@@ -230,20 +230,15 @@ struct HostView: View {
         // switches. Everything else uses `makeContentView(client:)`.
         if selectedIdentifier == ChatFeature.identifier, let vm = chatVM {
             ChatView(viewModel: vm)
-                .padding(.bottom, .xsmall)
         } else if selectedIdentifier == FilesFeature.identifier, let vm = filesVM {
             FilesView(viewModel: vm, serverIdentifier: serverIdentifier)
-                .padding(.bottom, .xsmall)
         } else if selectedIdentifier == MessagesFeature.identifier, let vm = messagesVM {
             MessagesView(viewModel: vm)
-                .padding(.bottom, .xsmall)
         } else if selectedIdentifier == NewsFeature.identifier,
                   let plainVM = newsPlainVM, let threadedVM = newsThreadedVM {
             HostedNewsView(plain: plainVM, threaded: threadedVM, client: client)
-                .padding(.bottom, .xsmall)
         } else if let selected = currentFeature() {
             selected.makeContentView(client: client)
-                .padding(.bottom, .xsmall)
         } else {
             ContentUnavailableView(
                 "Pick a feature",

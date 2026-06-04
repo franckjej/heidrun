@@ -25,13 +25,11 @@ public struct AdminView: View {
     }
 
     public var body: some View {
-        HSplitView {
-            sidebar
-                .frame(minWidth: 200, idealWidth: 220, maxWidth: 260)
-            detail
-                .frame(minWidth: 420)
+        VStack(alignment: .leading, spacing: 0){
+            accountEdit
+                .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .padding(.bottom, .xlarge)
+        .padding(.bottom, .xxxsmall)
         .alert(
             "Couldn't complete the operation",
             isPresented: Binding(
@@ -60,72 +58,68 @@ public struct AdminView: View {
 
     // MARK: - Sidebar
 
-    private var sidebar: some View {
-        VStack(spacing: Spacing.xsmall.rawValue) {
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Find login", text: $viewModel.findQuery)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { Task { await viewModel.findAndLoad() } }
-                Button {
-                    viewModel.startNew()
-                } label: {
-                    Image(systemName: "person.badge.plus")
-                }
-                .buttonStyle(.borderless)
-                .help("New account")
-            }
-            .padding(.horizontal, .xsmall)
-            .padding(.top, .small)
-
+    private var accountEdit: some View {
+        VStack(alignment: .leading, spacing: 0) {
             GroupBox {
-                List(selection: Binding(
-                    get: { viewModel.selection },
-                    set: { next in
-                        if case let .existing(login) = next {
-                            Task { await viewModel.selectExisting(login: login) }
-                        } else {
-                            viewModel.selection = next
+                HStack {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField("Find login", text: $viewModel.findQuery)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit {
+                            Task {
+                                await viewModel.findAndLoad()
+                            }
+                        }
+
+                    Spacer(minLength: 50)
+
+                    ActionButton(title: "", systemImage: "person.badge.plus", isEnabled: !(viewModel.loadedAccount == nil) || !viewModel.isWorking, size: .small, fontWeight: .light) {
+                        viewModel.startNew()
+                    }
+                    .help("New account")
+
+                    ActionButton(title: "", systemImage: "square.and.arrow.down", isEnabled: !saveDisabled, size: .small, fontWeight: .light) {
+                        Task { await viewModel.save() }
+                    }
+                    .help("Save")
+
+                    ActionButton(title: "", systemImage: "arrowshape.turn.up.left.circle", isEnabled: !viewModel.isDirty || viewModel.loadedAccount != nil || viewModel.isWorking == false, size: .small, fontWeight: .light) {
+                        Task { await viewModel.revert() }
+                    }
+                    .help("Revert")
+
+                    Spacer(minLength: 50)
+
+                    ActionButton(title: "Delete", systemImage: "trash", isEnabled: viewModel.loadedAccount != nil || viewModel.isWorking == false, role: .destructive, size: .small, fontWeight: .light) {
+                        if let loaded = viewModel.loadedAccount {
+                            pendingDeleteLogin = loaded
+                            showDeleteConfirmation = true
                         }
                     }
-                )) {
-                    ForEach(viewModel.roster) { entry in
-                        rosterRow(entry).tag(AdminViewModel.Selection.existing(login: entry.login))
-                    }
+                    .help("Delete")
                 }
-                .listStyle(.inset(alternatesRowBackgrounds: false))
-                .scrollContentBackground(.hidden)
-                .frame(maxHeight: .infinity)
+                .font(.subheadline)
+                .padding(.horizontal, .xsmall)
+                .frame(height: 24)
             }
             .background(.background)
             .padding(.horizontal, .xsmall)
-            .padding(.bottom, .xsmall)
-        }
-    }
+            .padding(.vertical, .xxxsmall)
 
-    @ViewBuilder
-    private func rosterRow(_ entry: AdminViewModel.RosterEntry) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.login).font(.body.monospaced())
-                Text(entry.nickname).font(.caption).foregroundStyle(.secondary)
+            Divider()
+
+            HStack(alignment: .center, spacing: 0) {
+                detail
+                    .overlay(alignment: .top) {
+                        noticeLabel
+                            .offset(y: 8)
+                    }
+                Spacer()
             }
-            Spacer()
-            if entry.isDirty {
-                Circle().fill(.orange).frame(width: 8, height: 8)
-            }
-        }
-        .padding(.vertical, .xxsmall)
-        .padding(.horizontal, .xxsmall)
-        .contentShape(Rectangle())
-        .contextMenu {
-            Button("Duplicate") {
-                Task { await viewModel.duplicate(login: entry.login) }
-            }
-            Button("Delete", role: .destructive) {
-                pendingDeleteLogin = entry.login
-                showDeleteConfirmation = true
-            }
+            .background(.background)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .padding(.horizontal, .xsmall)
+            .padding(.bottom, .small)
         }
     }
 
@@ -188,45 +182,8 @@ public struct AdminView: View {
                     .listRowBackground(Color.clear)
             }
             .formStyle(.grouped)
-            .frame(minWidth: 420)
-            .padding(.top, .xsmall)
-            .safeAreaInset(edge: .bottom) {
-                detailBottomBar
-            }
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-    }
-
-    private var detailBottomBar: some View {
-        HStack {
-            Button(role: .destructive) {
-                if let loaded = viewModel.loadedAccount {
-                    pendingDeleteLogin = loaded
-                    showDeleteConfirmation = true
-                }
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-            .disabled(viewModel.loadedAccount == nil || viewModel.isWorking)
-
-            Spacer()
-
-            noticeLabel
-                .padding(.trailing, .xsmall)
-
-            Button("Revert") {
-                Task { await viewModel.revert() }
-            }
-            .disabled(!viewModel.isDirty || viewModel.loadedAccount == nil || viewModel.isWorking)
-
-            Button("Save") {
-                Task { await viewModel.save() }
-            }
-            .keyboardShortcut(.defaultAction)
-            .disabled(saveDisabled)
-        }
-        .padding(.horizontal, .small)
-        .padding(.vertical, .xsmall)
-        .background(.background)
     }
 
     /// Transient confirmation label that fades in/out next to the
