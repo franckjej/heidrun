@@ -33,6 +33,8 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.notifyChatInvite) private var notifyChatInvite: Bool = true
     @AppStorage(AppStorageKeys.notifyTransferFinished) private var notifyTransferFinished: Bool = true
     @AppStorage(AppStorageKeys.notifyNewsPosted) private var notifyNewsPosted: Bool = true
+    @AppStorage(AppStorageKeys.dockBounceOnPrivateMessage) private var dockBounceOnPrivateMessage: Bool = true
+    @AppStorage(AppStorageKeys.dockBadgeForUnreadMessages) private var dockBadgeForUnreadMessages: Bool = true
     @AppStorage(AppStorageKeys.reopenConnectionsOnLaunch) private var reopenConnectionsOnLaunch: Bool = true
     @AppStorage(AppStorageKeys.confirmBeforeDisconnect) private var confirmBeforeDisconnect: Bool = true
     @AppStorage(AppStorageKeys.useBiometricPasswordProtection) private var useBiometricPasswordProtection: Bool = false
@@ -391,6 +393,18 @@ struct SettingsView: View {
                 .disabled(!notificationsEnabled)
             } label: {
                 Label("Notify me about", systemImage: "checklist")
+                    .font(.headline)
+            }
+
+            GroupBox {
+                VStack(alignment: .leading, spacing: rowSpacing.rawValue) {
+                    Toggle("Bounce the dock on a new private message", isOn: $dockBounceOnPrivateMessage)
+                    Toggle("Show unread message count on the dock icon", isOn: $dockBadgeForUnreadMessages)
+                }
+                .padding(insidePadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } label: {
+                Label("Dock attention", systemImage: "app.badge")
                     .font(.headline)
             }
         }

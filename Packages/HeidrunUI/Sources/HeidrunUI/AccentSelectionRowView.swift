@@ -13,10 +13,18 @@ import AppKit
 ///
 /// Overriding `drawSelection(in:)` does NOT solve this — `.inset` style
 /// tables paint the capsule themselves (the override is never called).
-final class AccentSelectionRowView: NSTableRowView {
-    override var isEmphasized: Bool {
+public final class AccentSelectionRowView: NSTableRowView {
+    override public var isEmphasized: Bool {
         get { true }
         set { /* always emphasised */ }
+    }
+
+    override public init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+    }
+
+    public required init?(coder: NSCoder) {
+        super.init(coder: coder)
     }
 }
 
@@ -29,14 +37,14 @@ final class AccentSelectionRowView: NSTableRowView {
 /// `nil` from `hitTest` makes the view transparent to mouse events so
 /// the click goes straight to the row / table view.
 
-final class InertLabel: NSTextField {
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+public final class InertLabel: NSTextField {
+    override public func hitTest(_ point: NSPoint) -> NSView? { nil }
 
-    convenience init() {
+    public convenience init() {
         self.init(labelWithString: "")
     }
 }
 
-final class InertImageView: NSImageView {
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+public final class InertImageView: NSImageView {
+    override public func hitTest(_ point: NSPoint) -> NSView? { nil }
 }

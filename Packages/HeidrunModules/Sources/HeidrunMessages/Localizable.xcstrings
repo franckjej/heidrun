@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Cancel" : {
+
+    },
     "Conversations" : {
       "localizations" : {
         "de" : {
@@ -16,6 +19,21 @@
           }
         }
       }
+    },
+    "Delete" : {
+
+    },
+    "Delete All" : {
+
+    },
+    "Delete all conversations?" : {
+
+    },
+    "Delete Conversation" : {
+
+    },
+    "Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only." : {
+
     },
     "Messages" : {
       "localizations" : {
@@ -55,6 +73,38 @@
         }
       }
     },
+    "offline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "offline"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オフライン"
+          }
+        }
+      }
+    },
+    "online" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "online"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オンライン"
+          }
+        }
+      }
+    },
     "Pick a conversation" : {
       "localizations" : {
         "de" : {
@@ -88,6 +138,7 @@
       }
     },
     "Reply…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -147,37 +198,8 @@
         }
       }
     },
-    "offline" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "offline"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オフライン"
-          }
-        }
-      }
-    },
-    "online" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "online"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オンライン"
-          }
-        }
-      }
+    "Send message ⌘+⏎" : {
+
     }
   },
   "version" : "1.0"

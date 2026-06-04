@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import AppKit
 import HeidrunCore
 import HeidrunUI
 
@@ -172,6 +173,7 @@ public final class MessagesViewModel {
     public func markActiveThreadRead() {
         guard let id = activeThreadID, let i = threads.firstIndex(where: { $0.id == id }) else { return }
         threads[i].hasUnread = false
+        refreshDockBadge()
     }
 
     /// Send the current draft to the active thread, then clear it.
@@ -192,6 +194,45 @@ public final class MessagesViewModel {
         markActiveThreadRead()
     }
 
+    /// Drop a single conversation from the local cache. Hotline has no
+    /// server-side concept of "delete a conversation" — private messages
+    /// aren't persisted by the server — so this just clears the local
+    /// thread. If it was the active one, the detail pane falls back to
+    /// the "Pick a conversation" empty state.
+    public func deleteConversation(socket: UInt16) {
+        threads.removeAll { $0.id == socket }
+        if activeThreadID == socket {
+            activeThreadID = nil
+            draft = ""
+        }
+        refreshDockBadge()
+    }
+
+    /// Clear every conversation. Same caveat as `deleteConversation`:
+    /// local cache only.
+    public func deleteAll() {
+        threads.removeAll()
+        activeThreadID = nil
+        draft = ""
+        refreshDockBadge()
+    }
+
+    /// Plain-text rendering of a single conversation, suitable for the
+    /// drag-out payload and the clipboard. One line per message, prefixed
+    /// with the timestamp and the nickname (or "Me" for outgoing).
+    public func transcript(for socket: UInt16) -> String? {
+        guard let thread = threads.first(where: { $0.id == socket }) else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        let peer = nickname(for: socket) ?? "Unknown user"
+        let lines = thread.messages.map { message -> String in
+            let when = formatter.string(from: message.receivedAt)
+            let who = message.direction == .outgoing ? "Me" : peer
+            return "[\(when)] \(who): \(message.text)"
+        }
+        return lines.joined(separator: "\n")
+    }
+
     // MARK: - Private
 
     private func appendIncoming(message: String, from socket: UInt16) {
@@ -200,7 +241,46 @@ public final class MessagesViewModel {
             thread.messages.append(line)
             thread.hasUnread = (socket != activeThreadID)
         }
+        // Dock attention: bounce only when the user can't see the new
+        // message — either the app isn't active or the active thread
+        // is a different conversation. The system stops the bounce
+        // automatically when the app gains focus.
+        let isVisible = NSApp.isActive && activeThreadID == socket
+        if !isVisible, Self.dockBounceEnabled() {
+            NSApp.requestUserAttention(.criticalRequest)
+        }
+        refreshDockBadge()
         onIncomingMessage?(socket)
+    }
+
+    /// Mirror the unread-thread count onto `NSApp.dockTile.badgeLabel`.
+    /// Empty string clears the badge — `nil` would leave the previous
+    /// label in place. When the user has disabled the badge in Settings,
+    /// we clear the label so a previously-set value doesn't linger.
+    private func refreshDockBadge() {
+        guard Self.dockBadgeEnabled() else {
+            NSApp.dockTile.badgeLabel = ""
+            return
+        }
+        let unread = threads.lazy.filter(\.hasUnread).count
+        NSApp.dockTile.badgeLabel = unread > 0 ? String(unread) : ""
+    }
+
+    // MARK: - Settings keys
+    //
+    // These string literals are mirrored from
+    // `Heidrun/App/AppStorageKeys.swift` — kept here so HeidrunMessages
+    // doesn't have to depend on the app target. If you rename either
+    // key, change BOTH places.
+    private static let dockBounceKey = "Heidrun.dockBounceOnPrivateMessage"
+    private static let dockBadgeKey = "Heidrun.dockBadgeForUnreadMessages"
+
+    private static func dockBounceEnabled() -> Bool {
+        UserDefaults.standard.object(forKey: dockBounceKey) as? Bool ?? true
+    }
+
+    private static func dockBadgeEnabled() -> Bool {
+        UserDefaults.standard.object(forKey: dockBadgeKey) as? Bool ?? true
     }
 
     private func appendOutgoing(message: String, to socket: UInt16) {

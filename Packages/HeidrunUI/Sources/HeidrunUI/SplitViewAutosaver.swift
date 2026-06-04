@@ -22,12 +22,16 @@ import AppKit
 ///     rightPane
 /// }
 /// ```
-struct SplitViewAutosaver: NSViewRepresentable {
+public struct SplitViewAutosaver: NSViewRepresentable {
     let name: String
 
-    func makeNSView(context: Context) -> NSView { AutosaverNSView(autosaveKey: name) }
+    public init(name: String) {
+        self.name = name
+    }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
+    public func makeNSView(context: Context) -> NSView { AutosaverNSView(autosaveKey: name) }
+
+    public func updateNSView(_ nsView: NSView, context: Context) {
         // Name is immutable per instance — no update needed.
     }
 }

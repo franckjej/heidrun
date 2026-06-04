@@ -10,7 +10,7 @@ import CommonTools
 /// avoid the nested-split-view layout glitches AppKit exhibits.
 public struct MessagesView: View {
     @State private var viewModel: MessagesViewModel
-    @FocusState private var inputFocused: Bool
+    @State private var confirmDeleteAll = false
 
     public init(viewModel: MessagesViewModel) {
         self._viewModel = State(initialValue: viewModel)
@@ -19,61 +19,118 @@ public struct MessagesView: View {
     public var body: some View {
         HSplitView {
             threadList
+                // Width clamped via min/max; the actual position
+                // persists across launches via the autosaver below.
                 .frame(minWidth: 220, idealWidth: 260, maxWidth: 360)
+                .background(SplitViewAutosaver(name: "Heidrun.messages.threads"))
             detail
                 .frame(minWidth: 320)
         }
         .padding(.bottom, .xlarge)
+        .confirmationDialog(
+            "Delete all conversations?",
+            isPresented: $confirmDeleteAll
+        ) {
+            Button("Delete All", role: .destructive) {
+                viewModel.deleteAll()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only.")
+        }
     }
 
     // MARK: - Thread list
 
     private var threadList: some View {
         VStack(spacing: 0) {
-            HStack(spacing: Spacing.xxsmall.rawValue) {
-                Image(systemName: "envelope")
-                    .foregroundStyle(.secondary)
-                Text("Conversations")
-                    .heidrunBody()
-                    .foregroundStyle(.secondary)
-                Spacer()
-                if !viewModel.threads.isEmpty {
-                    Text(verbatim: "\(viewModel.threads.count)")
-                        .heidrunCaption()
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.horizontal, .xsmall)
-            .padding(.vertical, .xxsmall)
+            breadcrumb
 
             Divider()
 
             if viewModel.threads.isEmpty {
                 emptyList
             } else {
-                List(selection: Binding(
-                    get: { viewModel.activeThreadID },
-                    set: { newValue in
-                        if let id = newValue { viewModel.openThread(with: id) }
-                    }
-                )) {
-                    ForEach(viewModel.threads) { thread in
-                        ThreadRow(
-                            thread: thread,
+                ConversationsTableView(
+                    conversations: viewModel.threads.map { thread in
+                        ConversationDisplay(
+                            id: thread.id,
                             nickname: viewModel.nickname(for: thread.id),
                             iconID: viewModel.icon(for: thread.id),
                             emoji: viewModel.emoji(for: thread.id),
-                            isOnline: viewModel.isOnline(socket: thread.id)
+                            isOnline: viewModel.isOnline(socket: thread.id),
+                            hasUnread: thread.hasUnread,
+                            lastMessagePreview: thread.messages.last?.text
                         )
-                        .tag(thread.id)
+                    },
+                    selectedID: viewModel.activeThreadID,
+                    onSelect: { socket in viewModel.openThread(with: socket) },
+                    onDelete: { socket in viewModel.deleteConversation(socket: socket) },
+                    transcriptText: { socket in viewModel.transcript(for: socket) },
+                    transcriptTitle: { socket in
+                        viewModel.nickname(for: socket) ?? "Conversation"
                     }
-                }
-                .listStyle(.sidebar)
-                .scrollContentBackground(.hidden)
+                )
             }
         }
         .background(.background)
+    }
+
+    /// Unified breadcrumb-style header matching the news pane: a label,
+    /// the conversation counter, and per-list actions on the trailing
+    /// edge. 24pt content height like the other modules.
+    private var breadcrumb: some View {
+        GroupBox {
+            HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+                Image(systemName: "envelope")
+                    .resizable()
+                    .scaledToFit()
+                    .font(.subheadline)
+                    .frame(width: 20, height: 20)
+                    .foregroundStyle(.secondary)
+                Text("Conversations")
+                    .heidrunBody()
+                    .foregroundStyle(.primary)
+                if !viewModel.threads.isEmpty {
+                    Text(verbatim: "(\(viewModel.threads.count))")
+                        .heidrunCaption()
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                ActionButton(
+                    title: "Delete Conversation",
+                    systemImage: "trash",
+                    isEnabled: viewModel.activeThreadID != nil,
+                    role: .destructive,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    if let socket = viewModel.activeThreadID {
+                        viewModel.deleteConversation(socket: socket)
+                    }
+                }
+
+                ActionButton(
+                    title: "Delete All",
+                    systemImage: "trash.slash",
+                    isEnabled: !viewModel.threads.isEmpty,
+                    role: .destructive,
+                    size: .small,
+                    fontWeight: .light
+                ) {
+                    confirmDeleteAll = true
+                }
+            }
+            .font(.subheadline)
+            .padding(.horizontal, .xsmall)
+            .frame(height: 24)
+        }
+        .background(.background)
+        .padding(.horizontal, .xsmall)
+        .padding(.vertical, .xxxsmall)
     }
 
     private var emptyList: some View {
@@ -98,7 +155,6 @@ public struct MessagesView: View {
                 emoji: viewModel.emoji(for: id),
                 isOnline: viewModel.isOnline(socket: id),
                 draft: $viewModel.draft,
-                inputFocused: $inputFocused,
                 onSend: { Task { try? await viewModel.sendDraft() } }
             )
         } else {
@@ -112,48 +168,7 @@ public struct MessagesView: View {
     }
 }
 
-// MARK: - Rows
-
-private struct ThreadRow: View {
-    let thread: MessagesViewModel.Thread
-    let nickname: String?
-    let iconID: UInt16?
-    let emoji: String?
-    let isOnline: Bool
-
-    var body: some View {
-        HStack(spacing: Spacing.xsmall.rawValue) {
-            UserIcon(id: iconID, emoji: emoji, size: 24)
-                .opacity(isOnline ? 1.0 : 0.4)
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: Spacing.xxsmall.rawValue) {
-                    Text(nickname ?? "Unknown user")
-                        .heidrunBody()
-                        .fontWeight(thread.hasUnread ? .semibold : .regular)
-                        .lineLimit(1)
-                    if !isOnline {
-                        Text("offline")
-                            .heidrunCaption()
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-                if let last = thread.messages.last {
-                    Text(last.text)
-                        .heidrunCaption()
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-            Spacer(minLength: 4)
-            if thread.hasUnread {
-                Circle()
-                    .fill(.tint)
-                    .frame(width: 8, height: 8)
-            }
-        }
-        .padding(.vertical, .tiny)
-    }
-}
+// MARK: - Detail
 
 private struct ThreadDetail: View {
     let thread: MessagesViewModel.Thread
@@ -162,7 +177,6 @@ private struct ThreadDetail: View {
     let emoji: String?
     let isOnline: Bool
     @Binding var draft: String
-    @FocusState.Binding var inputFocused: Bool
     let onSend: () -> Void
 
     var body: some View {
@@ -175,24 +189,32 @@ private struct ThreadDetail: View {
         }
     }
 
+    /// Mirrors the left-pane breadcrumb: GroupBox + 24pt content height
+    /// + matching outer paddings, so the divider between the conversation
+    /// list and the detail pane lands on the same baseline.
     private var header: some View {
-        HStack(spacing: Spacing.xsmall.rawValue) {
-            UserIcon(id: iconID, emoji: emoji, size: 28)
-                .opacity(isOnline ? 1.0 : 0.4)
-            VStack(alignment: .leading, spacing: 0) {
+        GroupBox {
+            HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+                UserIcon(id: iconID, emoji: emoji, size: 20)
+                    .opacity(isOnline ? 1.0 : 0.4)
                 Text(nickname)
-                    .font(.headline)
+                    .heidrunBody()
+                    .fontWeight(.semibold)
                     .lineLimit(1)
+                Text(verbatim: "·")
+                    .foregroundStyle(.tertiary)
                 Text(isOnline ? "online" : "offline")
                     .heidrunCaption()
                     .foregroundStyle(isOnline ? .secondary : .tertiary)
+                Spacer()
             }
-            Spacer()
+            .font(.subheadline)
+            .padding(.horizontal, .xsmall)
+            .frame(height: 24)
         }
-        .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxsmall)
-        .frame(height: 44)
         .background(.background)
+        .padding(.horizontal, .xsmall)
+        .padding(.vertical, .xxxsmall)
     }
 
     private var messages: some View {
@@ -213,55 +235,40 @@ private struct ThreadDetail: View {
         return formatter
     }()
 
+    /// Composer mirrors the chat input — `IsolatedTextEditor` so typing
+    /// doesn't dirty the enclosing DocumentGroup bookmark, with ⌘↵
+    /// wired to send. `autoFocus` matches chat: ready to type when the
+    /// thread opens (only if the correspondent is online).
     private var inputRow: some View {
-        HStack(spacing: Spacing.xsmall.rawValue) {
-            TextField("Reply…", text: $draft, axis: .vertical)
-                .textFieldStyle(.roundedBorder)
-                .focused($inputFocused)
-                .lineLimit(1...4)
-                .onSubmit(onSend)
-                .disabled(!isOnline)
+        HStack(alignment: .top, spacing: Spacing.xsmall.rawValue) {
+            IsolatedTextEditor(
+                text: $draft,
+                minHeight: 50,
+                autoFocus: isOnline,
+                onSubmit: { if isOnline { onSend() } }
+            )
+            .frame(height: 50)
+            .padding(.horizontal, .xxsmall)
+            .padding(.vertical, .xsmall)
+            .background(.background)
+            .overlay(
+                RoundedRectangle(cornerRadius: .cornerMed, style: .continuous)
+                    .strokeBorder(.separator, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: .cornerMed, style: .continuous))
 
             Button("Send", action: onSend)
-                .keyboardShortcut(.return, modifiers: [])
-                .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !isOnline)
+                .padding(.top, .xxsmall)
+                .disabled(isDraftEmpty || !isOnline)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.return, modifiers: [.command])
+                .help("Send message \u{2318}+\u{23CE}")
         }
         .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxsmall)
-        .onAppear { inputFocused = isOnline }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
-}
 
-// MARK: - Helpers
-
-/// Renders a user's emoji avatar if present, else the bundled Hotline
-/// icon for `id`, falling back to an SF Symbol when the catalog has no
-/// entry. Pixel-aligned so the original 16×16 / 32×32 PNGs stay crisp.
-private struct UserIcon: View {
-    let id: UInt16?
-    var emoji: String?
-    var size: CGFloat = 24
-
-    var body: some View {
-        if let emoji = EmojiAvatar.sanitized(emoji) {
-            // `.fixedSize()` renders the glyph at natural size so the tall
-            // emoji line box isn't clipped by the square frame (matches the
-            // roster avatar).
-            Text(emoji)
-                .font(.system(size: size * 0.85))
-                .fixedSize()
-                .frame(width: size, height: size)
-        } else if let id, let cg = IconCatalog.shared.icons.cgImage(forID: Int(id)) {
-            Image(decorative: cg, scale: 1, orientation: .up)
-                .interpolation(.none)
-                .resizable()
-                .frame(width: size, height: size)
-        } else {
-            Image(systemName: "person.crop.square")
-                .resizable()
-                .scaledToFit()
-                .frame(width: size, height: size)
-                .foregroundStyle(.secondary)
-        }
+    private var isDraftEmpty: Bool {
+        draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
