@@ -14,6 +14,9 @@ struct BookmarkRowActions {
     var connectMany: ([Bookmark]) -> Void
     /// Routed through the confirmation dialog.
     var delete: (Bookmark) -> Void
+    /// Drag-reorder: move the listed bookmark ids so their head lands
+    /// at `targetIndex` (in pre-move coordinates).
+    var move: (_ ids: [Bookmark.ID], _ targetIndex: Int) -> Void
 }
 
 /// AppKit `NSTableView` bookmark roster wrapped for SwiftUI. Replaces a
@@ -47,8 +50,12 @@ struct BookmarkTableView: NSViewRepresentable {
         tableView.dataSource = context.coordinator
         tableView.delegate = context.coordinator
         tableView.menu = context.coordinator.makeMenu()
-        // Drag rows OUT to Finder as `.heidrunbookmarks` (no passwords).
+        // OUT (.heidrunbookmarks file) and local row reorder share the
+        // same pasteboard writer; the local UUID type below identifies
+        // same-table drops.
         tableView.setDraggingSourceOperationMask(.copy, forLocal: false)
+        tableView.setDraggingSourceOperationMask(.move, forLocal: true)
+        tableView.registerForDraggedTypes([BookmarkDragWriter.rowType])
         tableView.backgroundColor = .clear
 
         let column = NSTableColumn(identifier: .init("bookmark"))
@@ -103,9 +110,6 @@ struct BookmarkTableView: NSViewRepresentable {
         private var bookmarks: [Bookmark] = []
         private var applyingSelection = false
         var lastContentSize: ContentSize?
-        /// `NSFilePromiseProvider.delegate` is weak — retain in-flight
-        /// promise delegates until the drag session ends.
-        private var promiseDelegates: [BookmarkPromiseDelegate] = []
 
         init(_ parent: BookmarkTableView) { self.parent = parent }
 
@@ -122,22 +126,40 @@ struct BookmarkTableView: NSViewRepresentable {
 
         func numberOfRows(in tableView: NSTableView) -> Int { bookmarks.count }
 
-        /// Drag OUT to Finder as `.heidrunbookmarks` (no passwords). Vends
-        /// a file promise written off the drag loop.
+        /// Single writer carries both the cross-app `.heidrunbookmarks`
+        /// payload AND a private row UUID for same-table reorder.
         func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
             guard row < bookmarks.count else { return nil }
-            let delegate = BookmarkPromiseDelegate(bookmark: bookmarks[row])
-            promiseDelegates.append(delegate)
-            return NSFilePromiseProvider(fileType: UTType.heidrunBookmarks.identifier, delegate: delegate)
+            return BookmarkDragWriter(bookmark: bookmarks[row])
         }
 
         func tableView(
             _ tableView: NSTableView,
-            draggingSession session: NSDraggingSession,
-            endedAt screenPoint: NSPoint,
-            operation: NSDragOperation
-        ) {
-            promiseDelegates.removeAll()
+            validateDrop info: NSDraggingInfo,
+            proposedRow row: Int,
+            proposedDropOperation dropOperation: NSTableView.DropOperation
+        ) -> NSDragOperation {
+            guard dropOperation == .above,
+                  let source = info.draggingSource as? NSTableView,
+                  source === tableView
+            else { return [] }
+            return .move
+        }
+
+        func tableView(
+            _ tableView: NSTableView,
+            acceptDrop info: NSDraggingInfo,
+            row: Int,
+            dropOperation: NSTableView.DropOperation
+        ) -> Bool {
+            guard let items = info.draggingPasteboard.pasteboardItems else { return false }
+            let ids = items.compactMap { item -> Bookmark.ID? in
+                guard let raw = item.string(forType: BookmarkDragWriter.rowType) else { return nil }
+                return UUID(uuidString: raw)
+            }
+            guard !ids.isEmpty else { return false }
+            parent.actions.move(ids, row)
+            return true
         }
 
         // MARK: Delegate
@@ -375,31 +397,39 @@ final class BookmarkRowView: NSTableRowView {
     }
 }
 
-/// Writes one bookmark's `.heidrunbookmarks` archive (no passwords) to
-/// the promised URL after the drop, off the drag loop.
-final class BookmarkPromiseDelegate: NSObject, NSFilePromiseProviderDelegate, @unchecked Sendable {
+/// Combined writer: a private row UUID identifies the source row for
+/// same-table reorder, while the `.fileURL` representation writes the
+/// `.heidrunbookmarks` archive lazily for cross-app drops (Finder, Mail).
+/// Archive write is synchronous because the single-bookmark payload is
+/// tiny — no need for `NSFilePromiseProvider`'s async machinery.
+final class BookmarkDragWriter: NSObject, NSPasteboardWriting {
+    static let rowType = NSPasteboard.PasteboardType("dev.heidrun.bookmark.row")
     private let bookmark: Bookmark
-    private let queue = OperationQueue()
 
     init(bookmark: Bookmark) { self.bookmark = bookmark }
 
-    func filePromiseProvider(_ provider: NSFilePromiseProvider, fileNameForType fileType: String) -> String {
-        BookmarkExport(bookmarks: [bookmark]).suggestedFileName + ".heidrunbookmarks"
+    func writableTypes(for pasteboard: NSPasteboard) -> [NSPasteboard.PasteboardType] {
+        [Self.rowType, .fileURL]
     }
 
-    func operationQueue(for provider: NSFilePromiseProvider) -> OperationQueue { queue }
-
-    func filePromiseProvider(
-        _ provider: NSFilePromiseProvider,
-        writePromiseTo url: URL,
-        completionHandler: @escaping (Error?) -> Void
-    ) {
-        do {
-            let data = try BookmarkExport.archiveData(for: [bookmark])
-            try data.write(to: url, options: .atomic)
-            completionHandler(nil)
-        } catch {
-            completionHandler(error)
+    func pasteboardPropertyList(forType type: NSPasteboard.PasteboardType) -> Any? {
+        switch type {
+        case Self.rowType:
+            return bookmark.id.uuidString
+        case .fileURL:
+            let safe = BookmarkExport(bookmarks: [bookmark]).suggestedFileName
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent(safe)
+                .appendingPathExtension("heidrunbookmarks")
+            do {
+                let data = try BookmarkExport.archiveData(for: [bookmark])
+                try data.write(to: url, options: .atomic)
+                return url.absoluteString
+            } catch {
+                return nil
+            }
+        default:
+            return nil
         }
     }
 }

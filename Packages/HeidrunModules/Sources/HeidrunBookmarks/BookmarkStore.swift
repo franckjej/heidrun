@@ -20,6 +20,9 @@ public final class BookmarkStore {
     /// Kept around for the one-shot migration; never written going forward.
     public static let storageKey = "Heidrun.bookmarks"
 
+    /// User-defined sidebar order, persisted as UUID strings.
+    public static let orderStorageKey = "Heidrun.bookmarkOrder"
+
     public private(set) var bookmarks: [Bookmark]
     private let defaults: UserDefaults
     public let bookmarksDirectoryURL: URL
@@ -43,7 +46,8 @@ public final class BookmarkStore {
             into: self.bookmarksDirectoryURL
         )
 
-        self.bookmarks = Self.loadFromDirectory(self.bookmarksDirectoryURL)
+        let loaded = Self.loadFromDirectory(self.bookmarksDirectoryURL)
+        self.bookmarks = Self.applyStoredOrder(to: loaded, defaults: defaults)
     }
 
     /// Same-id existing entry → updates in place.
@@ -54,6 +58,7 @@ public final class BookmarkStore {
             bookmarks.append(bookmark)
         }
         writeFile(for: bookmark)
+        persistOrder()
     }
 
     /// No-op when no matching id — callers can `add` to insert.
@@ -67,6 +72,7 @@ public final class BookmarkStore {
         guard let index = bookmarks.firstIndex(where: { $0.id == id }) else { return }
         let removed = bookmarks.remove(at: index)
         deleteFile(for: removed)
+        persistOrder()
     }
 
     public func contains(id: UUID) -> Bool {
@@ -120,6 +126,7 @@ public final class BookmarkStore {
         for mark in replacements {
             writeFile(for: mark)
         }
+        persistOrder()
     }
 
     /// On-disk URL, or `nil` for in-memory-only bookmarks.
@@ -131,7 +138,43 @@ public final class BookmarkStore {
     /// Re-scan the directory — covers Finder-dropped `.heidrunbookmark`
     /// files or direct-write imports.
     public func refreshFromDisk() {
-        bookmarks = Self.loadFromDirectory(bookmarksDirectoryURL)
+        let loaded = Self.loadFromDirectory(bookmarksDirectoryURL)
+        bookmarks = Self.applyStoredOrder(to: loaded, defaults: defaults)
+    }
+
+    /// Move bookmarks identified by `ids` so their head lands at row
+    /// `targetIndex` (in pre-move coordinates). Persists the new order.
+    public func move(ids: [UUID], to targetIndex: Int) {
+        let moving = bookmarks.filter { ids.contains($0.id) }
+        guard !moving.isEmpty else { return }
+        let remaining = bookmarks.filter { !ids.contains($0.id) }
+        let droppedBefore = bookmarks.prefix(targetIndex).filter { ids.contains($0.id) }.count
+        let insertion = max(0, min(remaining.count, targetIndex - droppedBefore))
+        var reordered = remaining
+        reordered.insert(contentsOf: moving, at: insertion)
+        bookmarks = reordered
+        persistOrder()
+    }
+
+    private func persistOrder() {
+        let uuids = bookmarks.map { $0.id.uuidString }
+        defaults.set(uuids, forKey: Self.orderStorageKey)
+    }
+
+    private static func applyStoredOrder(
+        to loaded: [Bookmark],
+        defaults: UserDefaults
+    ) -> [Bookmark] {
+        guard let stored = defaults.array(forKey: orderStorageKey) as? [String] else {
+            return loaded
+        }
+        let ranking = Dictionary(uniqueKeysWithValues: stored.enumerated().map { ($1, $0) })
+        // Known IDs sorted by stored rank; unknown IDs (new files dropped
+        // in via Finder, fresh imports) keep filename order at the end.
+        let known = loaded.filter { ranking[$0.id.uuidString] != nil }
+            .sorted { ranking[$0.id.uuidString, default: 0] < ranking[$1.id.uuidString, default: 0] }
+        let unknown = loaded.filter { ranking[$0.id.uuidString] == nil }
+        return known + unknown
     }
 
     // MARK: Private

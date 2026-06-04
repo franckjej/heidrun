@@ -38,7 +38,8 @@ struct BookmarkSidebarView: View {
                     actions: BookmarkRowActions(
                         connect: { onConnect($0) },
                         connectMany: { onConnectMany($0) },
-                        delete: { mark in pendingDelete = [mark.id] }
+                        delete: { mark in pendingDelete = [mark.id] },
+                        move: { ids, target in store.move(ids: ids, to: target) }
                     )
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

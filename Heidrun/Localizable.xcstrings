@@ -691,6 +691,9 @@
         }
       }
     },
+    "Bounce the dock on a new private message" : {
+
+    },
     "Bring Window to Front" : {
       "localizations" : {
         "de" : {
@@ -1552,6 +1555,9 @@
           }
         }
       }
+    },
+    "Dock attention" : {
+
     },
     "Done" : {
       "localizations" : {
@@ -3756,6 +3762,9 @@
           }
         }
       }
+    },
+    "Show unread message count on the dock icon" : {
+
     },
     "Sign in to chat, browse files, and read news." : {
       "localizations" : {
