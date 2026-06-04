@@ -139,10 +139,12 @@ struct FeatureSidebarTableView: NSViewRepresentable {
             // notification inside SwiftUI's view-update cycle (e.g. when
             // `reloadData` shuffles the selection), and writing to a
             // `@Binding` there is "Modifying state during view update".
-            DispatchQueue.main.async { [weak self] in
+            Task {@MainActor [weak self] in
                 guard let self else { return }
                 if self.parent.selection != identifier {
-                    self.parent.selection = identifier
+                    withAnimation(.smooth(duration: 0.67)) {
+                        self.parent.selection = identifier
+                    }
                 }
             }
         }
