@@ -153,7 +153,6 @@ struct RootView: View {
             // Mark non-restorable so AppKit stops persisting per-window state
             // at quit — pairs with the NSQuitAlwaysKeepsWindows=off default.
             window?.isRestorable = false
-            hostWindow = window
             if fileURL == nil {
                 window?.representedURL = nil
             }
@@ -167,6 +166,13 @@ struct RootView: View {
             if let window {
                 window.toolbarStyle = .unified
                 ToolbarSeparatorSuppressor.install(on: window)
+            }
+            // @State write deferred — WindowAccessor now fires sync from
+            // viewDidMoveToWindow which can land mid view-update;
+            // mutating @State synchronously trips "Modifying state
+            // during view update" warnings.
+            DispatchQueue.main.async {
+                hostWindow = window
             }
         })
         .onChange(of: phaseFailureMessage, initial: true) { _, newMessage in

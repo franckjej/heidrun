@@ -18,6 +18,41 @@ struct ConnectionForm: View {
     let onConnect: (ConnectionSettings, String, Bool) -> Void
     var initialSettings: ConnectionSettings?
 
+    /// Seeded at init time from `initialSettings` + `UserDefaults` so
+    /// the form's first frame is already populated. Without this, the
+    /// `@State` defaults render once before `.onAppear` hydration runs,
+    /// producing a visible flash as TextFields snap from empty to
+    /// filled and the icon picker swaps to the chosen icon.
+    init(
+        onConnect: @escaping (ConnectionSettings, String, Bool) -> Void,
+        initialSettings: ConnectionSettings? = nil
+    ) {
+        self.onConnect = onConnect
+        self.initialSettings = initialSettings
+        let defaults = UserDefaults.standard
+        let storedNickname = defaults.string(forKey: AppStorageKeys.defaultNickname)
+            ?? NSFullUserName()
+        let storedPort = (defaults.object(forKey: AppStorageKeys.defaultPort) as? Int) ?? 5500
+        let storedIconID = (defaults.object(forKey: AppStorageKeys.defaultIconID) as? Int) ?? 0
+        let storedEmoji = defaults.string(forKey: AppStorageKeys.defaultEmoji) ?? ""
+        if let initial = initialSettings {
+            self._name = State(initialValue: initial.name)
+            self._address = State(initialValue: initial.address)
+            self._port = State(initialValue: initial.port)
+            self._useTLS = State(initialValue: initial.useTLS)
+            self._pinnedCertificateSHA256 = State(initialValue: initial.pinnedCertificateSHA256)
+            self._nickname = State(initialValue: initial.nickname)
+            self._login = State(initialValue: initial.login)
+            self._iconID = State(initialValue: initial.icon == 0 ? storedIconID : Int(initial.icon))
+            self._emoji = State(initialValue: initial.emoji ?? (storedEmoji.isEmpty ? nil : storedEmoji))
+        } else {
+            self._nickname = State(initialValue: storedNickname)
+            self._port = State(initialValue: UInt16(clamping: storedPort))
+            self._iconID = State(initialValue: storedIconID)
+            self._emoji = State(initialValue: storedEmoji.isEmpty ? nil : storedEmoji)
+        }
+    }
+
     @Environment(\.newDocument) private var newDocument
     @Environment(\.openDocument) private var openDocument
 
@@ -61,6 +96,12 @@ struct ConnectionForm: View {
     }
     @State private var bookmarkAlert: BookmarkAlert?
 
+    /// Gates the form's first render so the window title + toolbar can
+    /// settle off-screen before the content fades in. Without this the
+    /// DocumentGroup-set filename title and pre-unified-toolbar style
+    /// are visible for one frame and read as a flash + ~10pt shift.
+    @State private var contentVisible = false
+
     var body: some View {
         NavigationSplitView {
             BookmarkSidebarView(
@@ -76,12 +117,14 @@ struct ConnectionForm: View {
                 onDropFile: handleDropFile
             )
             .navigationSplitViewColumnWidth(min: 220, ideal: 280, max: 400)
+            .opacity(contentVisible ? 1 : 0)
         } detail: {
             VStack(spacing: 8) {
                 formColumn
                 Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .opacity(contentVisible ? 1 : 0)
             .sheet(isPresented: $showingTrackerBrowser) {
                 TrackerBrowser(
                     onPick: { server in
@@ -96,7 +139,18 @@ struct ConnectionForm: View {
                 )
             }
         }
-        .onAppear(perform: hydrateDefaults)
+        .onAppear {
+            hydrateDefaults()
+            // One run-loop tick lets the window title + toolbar style
+            // settle (WindowAccessor pushes both synchronously on view-
+            // mount, but the title-bar growth from .navigationSubtitle
+            // can still animate). Then fade the content in.
+            DispatchQueue.main.async {
+                withAnimation(.easeOut(duration: 0.18)) {
+                    contentVisible = true
+                }
+            }
+        }
         .onChange(of: sidebarSelection) { _, newValue in
             guard newValue.count == 1, let identifier = newValue.first,
                   let mark = bookmarks.bookmarks.first(where: { $0.id == identifier }) else {
@@ -385,25 +439,13 @@ struct ConnectionForm: View {
         return bookmarks.bookmark(matching: candidate) != nil
     }
 
+    /// Field hydration now happens in `init` (synchronously, so the
+    /// first frame is correct). All this leg has left to do is the
+    /// keychain check, which derives the `Saved password will be used`
+    /// placeholder from the saved-credentials index.
     private func hydrateDefaults() {
-        if let initial = initialSettings {
-            name = initial.name
-            address = initial.address
-            port = initial.port
-            nickname = initial.nickname
-            login = initial.login
-            useTLS = initial.useTLS
-            pinnedCertificateSHA256 = initial.pinnedCertificateSHA256
-            // Bookmark identity nil/zero = "use Settings → Identity defaults";
-            // non-nil / non-zero = explicit per-bookmark choice that wins.
-            iconID = initial.icon == 0 ? defaultIconID : Int(initial.icon)
-            emoji = initial.emoji ?? (defaultEmoji.isEmpty ? nil : defaultEmoji)
+        if initialSettings != nil {
             hydratePasswordFromKeychain()
-        } else {
-            if nickname.isEmpty { nickname = defaultNickname }
-            if port == 5500 { port = UInt16(clamping: defaultPort) }
-            iconID = defaultIconID
-            emoji = defaultEmoji.isEmpty ? nil : defaultEmoji
         }
     }
 

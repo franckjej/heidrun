@@ -10,20 +10,29 @@ struct WindowAccessor: NSViewRepresentable {
     let onWindow: (NSWindow?) -> Void
 
     func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        // `window` is nil until the view joins a window. Defer until the
-        // next runloop tick so the hierarchy has settled.
-        DispatchQueue.main.async {
-            onWindow(view.window)
-        }
+        let view = WindowCaptureView()
+        view.onWindow = onWindow
         return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        // Re-publish in case the view re-parents (rare on macOS but
-        // possible during scene transitions).
-        DispatchQueue.main.async {
-            onWindow(nsView.window)
-        }
+        // Re-publish on body updates so phase-driven title/style changes
+        // re-stamp the window. Sync — no DispatchQueue hop. By the
+        // time `updateNSView` runs the view is already in the window.
+        onWindow(nsView.window)
+    }
+}
+
+/// Fires the consumer's callback the instant `viewDidMoveToWindow` lands
+/// (synchronously, before the next paint) rather than deferring to the
+/// next run-loop tick. The deferral is what produced a one-frame flash
+/// of the DocumentGroup-auto-set title and default toolbar style before
+/// the consumer's overrides applied.
+private final class WindowCaptureView: NSView {
+    var onWindow: ((NSWindow?) -> Void)?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        onWindow?(window)
     }
 }
