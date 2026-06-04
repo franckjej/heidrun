@@ -199,7 +199,7 @@ struct RootView: View {
         // Skip during termination — SwiftUI also fires onDisappear for every
         // window when the process is shutting down, and disconnecting would
         // wipe the still-live snapshot `applicationWillTerminate` is about
-        // to save.
+        // to save. of course it will!
         .onDisappear {
             guard !HeidrunAppDelegate.isTerminating else { return }
             state.disconnect()
