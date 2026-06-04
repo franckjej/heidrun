@@ -49,6 +49,7 @@ public struct CertificateTrustSheet: View {
         }
         .padding(.medium)
         .frame(width: 420)
+        .closeOnCmdW { onDecision(.reject) }
     }
 
     private var headline: String {

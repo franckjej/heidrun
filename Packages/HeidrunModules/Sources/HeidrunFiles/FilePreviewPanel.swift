@@ -118,6 +118,11 @@ final class FilePreviewWindowController {
     // making this `weak` would let the delegate be deallocated immediately.
     // swiftlint:disable:next weak_delegate
     private var panelDelegate: PanelDelegate?
+    /// Local NSEvent monitor that turns Cmd+W into "close the preview"
+    /// while the panel is up. Needed because the panel is a non-
+    /// activating utility — it never becomes key, so a SwiftUI button
+    /// shortcut inside it never fires.
+    private var keyMonitor: Any?
 
     /// Bring the panel up for `viewModel`. If it's already open, just
     /// foregrounds it — the panel re-reads the view-model's
@@ -181,6 +186,35 @@ final class FilePreviewWindowController {
         panel = newPanel
         hostingController = host
         attachedViewModel = viewModel
+        installKeyMonitor()
+    }
+
+    private func installKeyMonitor() {
+        guard keyMonitor == nil else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let isCmdW = event.modifierFlags
+                .intersection(.deviceIndependentFlagsMask) == .command
+                && event.charactersIgnoringModifiers == "w"
+            guard isCmdW else { return event }
+            let consumed = MainActor.assumeIsolated {
+                guard let panel = self?.panel, panel.isVisible else { return false }
+                // Don't steal Cmd+W from an active SwiftUI sheet — let
+                // the attached sheet handle its own close shortcut.
+                if NSApp.windows.contains(where: { $0.attachedSheet != nil }) {
+                    return false
+                }
+                panel.performClose(nil)
+                return true
+            }
+            return consumed ? nil : event
+        }
+    }
+
+    private func removeKeyMonitor() {
+        if let keyMonitor {
+            NSEvent.removeMonitor(keyMonitor)
+            self.keyMonitor = nil
+        }
     }
 
     /// Build a stable, file-system-safe autosave key from the server
@@ -239,6 +273,7 @@ final class FilePreviewWindowController {
         hostingController = nil
         panelDelegate = nil
         attachedViewModel = nil
+        removeKeyMonitor()
     }
 
     private final class PanelDelegate: NSObject, NSWindowDelegate {

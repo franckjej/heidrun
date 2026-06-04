@@ -1,5 +1,6 @@
 import SwiftUI
 import CommonTools
+import HeidrunUI
 
 /// Modal sheet for posting a new thread (top-level or reply). Mirrors
 /// `EditPostSheet` in shape: title field on top, multi-line body, ⌘⏎
@@ -76,6 +77,7 @@ struct NewPostSheet: View {
         }
         .padding(.small)
         .frame(minWidth: 420, minHeight: 320)
+        .closeOnCmdW { dismiss() }
         .onAppear { titleFocused = true }
     }
 

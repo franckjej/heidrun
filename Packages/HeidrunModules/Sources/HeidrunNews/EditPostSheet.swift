@@ -1,6 +1,7 @@
 import SwiftUI
 import CommonTools
 import HeidrunCore
+import HeidrunUI
 
 /// Modal sheet for editing an existing news post. Pre-filled with the
 /// current title + body; Save fires the supplied `onSave` callback
@@ -75,6 +76,7 @@ struct EditPostSheet: View {
         }
         .padding(.small)
         .frame(minWidth: 420, minHeight: 320)
+        .closeOnCmdW { dismiss() }
         .onAppear { titleFocused = true }
     }
 

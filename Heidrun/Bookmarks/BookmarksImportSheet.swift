@@ -55,6 +55,7 @@ struct BookmarksImportSheet: View {
         }
         .padding(.medium)
         .frame(width: 460)
+        .closeOnCmdW(onDismiss)
         .task { await load() }
     }
 

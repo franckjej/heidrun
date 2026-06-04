@@ -41,6 +41,7 @@ struct FileInfoSheet: View {
         }
         .padding(.medium)
         .frame(minWidth: 460, minHeight: 460)
+        .closeOnCmdW(onClose)
         .task { await load() }
     }
 

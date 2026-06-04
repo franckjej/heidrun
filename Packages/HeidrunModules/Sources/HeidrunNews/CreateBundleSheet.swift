@@ -63,6 +63,7 @@ struct CreateBundleSheet: View {
         }
         .padding(.small)
         .frame(minWidth: 360)
+        .closeOnCmdW { dismiss() }
         .onAppear { nameFocused = true }
     }
 

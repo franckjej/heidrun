@@ -55,6 +55,7 @@ public struct IMSendSheet: View {
         }
         .padding(.medium)
         .frame(width: 420)
+        .closeOnCmdW(onDismiss)
     }
 
     private var canSubmit: Bool {

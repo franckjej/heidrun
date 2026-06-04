@@ -49,7 +49,7 @@ struct FileTableView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let tableView = NSTableView()
+        let tableView = FileShortcutTableView()
         tableView.style = .inset
         tableView.usesAlternatingRowBackgroundColors = false
         tableView.allowsMultipleSelection = true
@@ -59,6 +59,12 @@ struct FileTableView: NSViewRepresentable {
         tableView.rowHeight = contentSize.rowHeight
         tableView.target = context.coordinator
         tableView.doubleAction = #selector(Coordinator.doubleClicked(_:))
+        tableView.onCommandI = { [weak coordinator = context.coordinator] in
+            coordinator?.invokeForSelectedRow { $0.getInfo }
+        }
+        tableView.onSpace = { [weak coordinator = context.coordinator] in
+            coordinator?.invokeForSelectedRow { $0.quickLook }
+        }
         tableView.dataSource = context.coordinator
         tableView.delegate = context.coordinator
         tableView.menu = context.coordinator.makeMenu()
@@ -229,6 +235,17 @@ struct FileTableView: NSViewRepresentable {
             let row = sender.clickedRow
             guard row >= 0, row < files.count else { return }
             parent.actions.activate(files[row])
+        }
+
+        /// Pull the focused row out of the live selection and feed it to
+        /// a `FileRowActions` member. Used by Cmd+I / Spacebar key paths.
+        /// Multi-row selection collapses to the first matched row; no-op
+        /// when nothing is selected.
+        func invokeForSelectedRow(_ pick: (FileRowActions) -> (RemoteFile) -> Void) {
+            guard let tableView else { return }
+            let row = tableView.selectedRow
+            guard row >= 0, row < files.count else { return }
+            pick(parent.actions)(files[row])
         }
 
         // MARK: Drag IN (upload)
@@ -409,6 +426,28 @@ struct FileTableView: NSViewRepresentable {
             ])
             return cell
         }
+    }
+}
+
+/// NSTableView that adds two keyboard affordances: Cmd+I → Get Info
+/// and Spacebar → Quick Look for the currently-selected row. Anything
+/// else falls through to the default NSTableView handler (arrows for
+/// selection, Return, etc.).
+final class FileShortcutTableView: NSTableView {
+    var onCommandI: () -> Void = {}
+    var onSpace: () -> Void = {}
+
+    override func keyDown(with event: NSEvent) {
+        let chars = event.charactersIgnoringModifiers ?? ""
+        if event.modifierFlags.contains(.command), chars == "i" {
+            onCommandI()
+            return
+        }
+        if chars == " " {
+            onSpace()
+            return
+        }
+        super.keyDown(with: event)
     }
 }
 

@@ -55,15 +55,7 @@ public struct UserInfoSheet: View {
         }
         .padding(.medium)
         .frame(minWidth: 460, idealWidth: 520, minHeight: 420, idealHeight: 480)
-        .background {
-            // Hidden Cmd+W trigger — SwiftUI sheets don't route ⌘W to
-            // the host window's close action, so we wire a zero-size
-            // button to the dismiss closure to give users the same
-            // muscle memory they'd have on a window.
-            Button(action: onDismiss) { EmptyView() }
-                .keyboardShortcut("w", modifiers: .command)
-                .hidden()
-        }
+        .closeOnCmdW(onDismiss)
         .task { await load() }
     }
 
