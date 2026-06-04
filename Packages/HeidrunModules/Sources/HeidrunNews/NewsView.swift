@@ -448,6 +448,7 @@ private struct ThreadedNewsScreen: View {
                         Task { await viewModel.navigate(toDepth: index + 1) }
                     } label: {
                         Text(component)
+                            .heidrunBody()
                     }
                     .buttonStyle(.plain)
                     .controlSize(.small)

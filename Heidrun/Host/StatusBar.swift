@@ -23,8 +23,9 @@ struct StatusBar: View {
             Text("\(userCount.map { "\($0)" } ?? "—") users · \(transferCount) transfers")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
-                .padding(.trailing, .small)
+                .selectionDisabled(false)
         }
+        .padding(.horizontal, .small)
         .frame(maxWidth: .infinity)
         .background(.clear)
     }
