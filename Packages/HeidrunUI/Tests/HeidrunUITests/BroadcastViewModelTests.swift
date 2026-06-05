@@ -203,7 +203,12 @@ private final class FakeBroadcastClient: HotlineClient, @unchecked Sendable {
     func downloadStream(for handle: TransferHandle) -> AsyncThrowingStream<Data, Error> {
         AsyncThrowingStream { $0.finish() }
     }
-    func sendUpload(_ content: Data, for handle: TransferHandle, fileName: String, type: HeidrunCore.FourCharCode, creator: HeidrunCore.FourCharCode, creationDate: Date, modificationDate: Date, progress: (@Sendable (UInt64) async -> Void)?) async throws {}
+    func downloadEnvelope(for handle: TransferHandle) async throws -> UploadEnvelope {
+        UploadEnvelope(fileName: "", data: Data(), type: HeidrunCore.FourCharCode(rawValue: 0), creator: HeidrunCore.FourCharCode(rawValue: 0))
+    }
+    func consumeResourceFork(for transferID: UInt32) async -> Data { Data() }
+    var serverSupportsResourceForks: Bool { get async { false } }
+    func sendUpload(_ content: Data, for handle: TransferHandle, fileName: String, type: HeidrunCore.FourCharCode, creator: HeidrunCore.FourCharCode, creationDate: Date, modificationDate: Date, resourceFork: Data, progress: (@Sendable (UInt64) async -> Void)?) async throws {}
     func sendFolderUpload(_ items: [FolderUploadItem], for handle: TransferHandle, type: HeidrunCore.FourCharCode, creator: HeidrunCore.FourCharCode, creationDate: Date, modificationDate: Date, progress: (@Sendable (UInt64) async -> Void)?) async throws {}
     func downloadBanner() async throws -> ServerBanner? { nil }
 }
