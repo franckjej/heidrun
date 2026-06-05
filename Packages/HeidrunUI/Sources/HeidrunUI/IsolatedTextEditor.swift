@@ -18,8 +18,9 @@ import AppKit
 /// `SwiftUI` won't let us swap the `\.undoManager` environment value
 /// from inside a view — the env key is read-only on Swift 6. So we
 /// drop a level and own the NSTextView directly: the subclass below
-/// overrides `undoManager` to return a private instance, breaking
-/// the responder-chain walk.
+/// overrides `undoManager` to return a shared, app-lifetime instance,
+/// breaking the responder-chain walk. (Shared rather than per-view
+/// because a short-lived NSUndoManager leaks itself — see the property.)
 public struct IsolatedTextEditor: NSViewRepresentable {
     @Binding public var text: String
     public var font: NSFont
@@ -96,6 +97,14 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         }
     }
 
+    public static func dismantleNSView(_ nsView: NSScrollView, coordinator: Coordinator) {
+        // Clear the shared manager only on real teardown — not on blur — so
+        // it can't retain this torn-down view's text storage (which would
+        // leak the view), while a composer's undo survives focus churn
+        // (e.g. Chat's live transcript bouncing first responder).
+        IsolatedNSTextView.sharedUndoManager.removeAllActions()
+    }
+
     public func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -120,12 +129,42 @@ public struct IsolatedTextEditor: NSViewRepresentable {
 /// ⌘↵ so a chat composer can wire "send on Cmd+Enter" without
 /// installing a global key monitor.
 final class IsolatedNSTextView: NSTextView {
-    private let privateUndoManager = UndoManager()
+    /// One shared, app-lifetime undo manager for every isolated composer —
+    /// NOT one per view. `NSUndoManager` (with `groupsByEvent`) arms a GCD
+    /// dispatch source whose handler retains the manager; that cycle is
+    /// only broken in the manager's own dealloc, so a short-lived per-view
+    /// manager never deallocates and leaks one instance per window
+    /// open/close. A single instance that lives for the app's lifetime
+    /// can't grow. It's still a non-document manager, so typing stays out
+    /// of the `DocumentGroup` document's undo stack (the isolation goal).
+    fileprivate static let sharedUndoManager = UndoManager()
+
     /// Called when the user presses ⌘↵. Assigned by `IsolatedTextEditor`.
     var onCommandSubmit: (() -> Void)?
 
     override var undoManager: UndoManager? {
-        privateUndoManager
+        Self.sharedUndoManager
+    }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // Handle ⌘Z / ⇧⌘Z here. The composer registers typing undo on the
+        // shared manager, but the Edit ▸ Undo menu item operates on the
+        // DocumentGroup document's manager — so the menu never sees these
+        // edits. Performing undo/redo directly while we're first responder
+        // routes the command to the right manager and consumes the event.
+        guard event.modifierFlags.contains(.command),
+              event.charactersIgnoringModifiers?.lowercased() == "z",
+              window?.firstResponder === self else {
+            return super.performKeyEquivalent(with: event)
+        }
+        let manager = Self.sharedUndoManager
+        if event.modifierFlags.contains(.shift) {
+            if manager.canRedo { manager.redo(); return true }
+        } else if manager.canUndo {
+            manager.undo()
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
     }
 
     override func keyDown(with event: NSEvent) {

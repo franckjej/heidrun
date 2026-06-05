@@ -25,6 +25,14 @@ enum URLDispatchGuard {
     }
 }
 
+/// Weak box for the host `NSWindow`. Lets `RootView` keep a window
+/// reference (for `close()`) without the strong `@State` ↔ window retain
+/// cycle that pinned the whole DocumentGroup scene — see `windowHolder`.
+@MainActor
+final class WeakWindowHolder {
+    weak var window: NSWindow?
+}
+
 struct RootView: View {
     @ObservedObject var document: HeidrunBookmarkDocument
     /// `nil` for untitled docs; used to gate doc-app affordances (save-dirty,
@@ -44,7 +52,12 @@ struct RootView: View {
     /// register as a dependency, so a Binding directly off `state.phase`
     /// fails to repaint the alert when the connect Task throws.
     @State private var failureMessage: String?
-    @State private var hostWindow: NSWindow?
+    /// Holds the host window WEAKLY. The `WindowAccessor` closure that
+    /// captures `self` is stored in an NSView inside this very window's
+    /// view tree, so a strong window reference here closed a retain cycle
+    /// (window → view tree → closure → @State box → window) that pinned the
+    /// whole DocumentGroup scene — document, HostState, table — past close.
+    @State private var windowHolder = WeakWindowHolder()
 
     private var phaseFailureMessage: String? {
         if case let .failed(message) = state.phase { return message }
@@ -140,7 +153,7 @@ struct RootView: View {
                         let shouldCloseWindow = state.isQueueSpawned
                         state.cancelConnect()
                         if shouldCloseWindow {
-                            hostWindow?.close()
+                            windowHolder.window?.close()
                         }
                     }
                 )
@@ -167,13 +180,10 @@ struct RootView: View {
                 window.toolbarStyle = .unified
                 ToolbarSeparatorSuppressor.install(on: window)
             }
-            // @State write deferred — WindowAccessor now fires sync from
-            // viewDidMoveToWindow which can land mid view-update;
-            // mutating @State synchronously trips "Modifying state
-            // during view update" warnings.
-            DispatchQueue.main.async {
-                hostWindow = window
-            }
+            // Store the window WEAKLY via windowHolder. Mutating a property
+            // on the holder (not reassigning the @State) is not a SwiftUI
+            // state write, so it needs no deferral and forms no retain cycle.
+            windowHolder.window = window
         })
         .onChange(of: phaseFailureMessage, initial: true) { _, newMessage in
             failureMessage = newMessage

@@ -59,9 +59,14 @@ struct HostView: View {
                 HostToolbar(state: state, transferCount: activeTransferCount)
             }
         }
-        .background(WindowAccessor { window in
+        .background(WindowAccessor { [weak state] window in
+            // Capture `state` WEAKLY: this closure is stored in an NSView
+            // inside the window's own view tree, so capturing the whole
+            // HostView (→ strong `state` + `client`) anchored the connected
+            // scene and leaked HostState + its closeGuard + reconnect
+            // coordinator past window close.
             // Park the window so the TaskManager can front it.
-            handle?.window = window
+            state?.currentHandle?.window = window
             if let state, let window {
                 let guardForWindow = state.closeGuard ?? HostWindowCloseGuard(state: state)
                 state.closeGuard = guardForWindow
