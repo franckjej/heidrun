@@ -3,6 +3,27 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] — 2026-06-05
+
+### Added
+- Undo / redo (⌘Z, ⇧⌘Z) in the chat, messages, and news composers.
+- Drag to reorder bookmarks in the library.
+- Copy support for the chat subject, status bar, and file-info fields.
+- Keyboard shortcuts: ⌘I (user info), Spacebar (Quick Look), ⌘W.
+
+### Changed
+- Messages rebuilt on an AppKit conversation list, with Dock attention on
+  incoming private messages.
+- Threaded news rebuilt on AppKit panes with a persistent body divider.
+- Account admin and the user editor reworked into a single unified view.
+- Connection form no longer flashes on open; ⌘. cancels an in-progress
+  connect. General animation and status-bar / banner layout polish.
+
+### Fixed
+- Window memory leaks: the per-window undo manager and the whole document
+  scene (document, host state, table rows/cells, composers) are now
+  released on window close instead of accumulating.
+
 ## [1.0.0] — 2026-05-31
 
 Initial release. A complete Swift 6 port of the original 2002 Hotline
