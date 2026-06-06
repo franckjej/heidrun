@@ -19,6 +19,10 @@ enum AppStorageKeys {
     /// "Erika entered" / "Erika left" system lines. On by default.
     static let showChatJoinLeave = "Heidrun.showChatJoinLeave"
 
+    /// In-memory recall of recently-sent chat messages (↑ in the input +
+    /// the recent-messages menu). On by default; clears on disconnect.
+    static let chatInputHistoryEnabled = "Heidrun.chatInputHistoryEnabled"
+
     /// When off, an unexpected disconnect goes to `.failed` (unless a
     /// matching bookmark has `autoReconnect == .alwaysOn`). Default off.
     static let autoReconnectEnabled = "Heidrun.autoReconnectEnabled"

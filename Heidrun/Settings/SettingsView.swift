@@ -25,6 +25,7 @@ struct SettingsView: View {
     @AppStorage(SoundPlayer.enabledDefaultsKey) private var soundsEnabled: Bool = true
     @AppStorage(AppStorageKeys.showChatTimestamps) private var showChatTimestamps: Bool = false
     @AppStorage(AppStorageKeys.showChatJoinLeave) private var showChatJoinLeave: Bool = true
+    @AppStorage(AppStorageKeys.chatInputHistoryEnabled) private var chatInputHistoryEnabled: Bool = true
     @AppStorage(AppStorageKeys.notificationsEnabled) private var notificationsEnabled: Bool = true
     @AppStorage(AppStorageKeys.notifyConnected) private var notifyConnected: Bool = true
     @AppStorage(AppStorageKeys.notifyDisconnected) private var notifyDisconnected: Bool = true
@@ -324,6 +325,18 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
                 Label("Notifications", systemImage: "bell")
+                    .font(.headline)
+            }
+
+            GroupBox {
+                VStack(alignment: .leading, spacing: rowSpacing.rawValue) {
+                    Toggle("Remember recently sent messages", isOn: $chatInputHistoryEnabled)
+                    caption("Press \u{2191} in the chat input to recall earlier messages, plus a recent-messages menu by the Send button. Kept in memory only and cleared when you disconnect.")
+                }
+                .padding(insidePadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } label: {
+                Label("Input history", systemImage: "clock.arrow.circlepath")
                     .font(.headline)
             }
         }

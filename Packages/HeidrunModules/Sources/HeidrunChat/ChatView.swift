@@ -19,6 +19,7 @@ public struct ChatView: View {
 
     @AppStorage("Heidrun.showChatTimestamps") private var showTimestamps: Bool = false
     @AppStorage("Heidrun.showChatJoinLeave")  private var showJoinLeave: Bool = true
+    @AppStorage("Heidrun.chatInputHistoryEnabled") private var historyEnabled: Bool = true
 
     public init(viewModel: ChatViewModel) {
         self._viewModel = State(initialValue: viewModel)
@@ -170,9 +171,9 @@ public struct ChatView: View {
                 minHeight: 50,
                 autoFocus: true,
                 onSubmit: submit,
-                onHistoryPrevious: { viewModel.recallPreviousDraft() },
-                onHistoryNext: { viewModel.recallNextDraft() },
-                onEdit: { viewModel.resetHistoryNavigation() }
+                onHistoryPrevious: historyEnabled ? { viewModel.recallPreviousDraft() } : nil,
+                onHistoryNext: historyEnabled ? { viewModel.recallNextDraft() } : nil,
+                onEdit: historyEnabled ? { viewModel.resetHistoryNavigation() } : nil
             )
                 .frame(height: 50)
                 .padding(.horizontal, .xxsmall)
@@ -189,12 +190,18 @@ public struct ChatView: View {
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.return, modifiers: [.command])
                     .help("Send message \u{2318}+\u{23CE}")
-                recentMenu
+                if historyEnabled {
+                    recentMenu
+                }
             }
             .padding(.top, .xxsmall)
         }
         .padding(.horizontal, .xsmall)
         .frame(maxWidth: .infinity, alignment: .topLeading)
+        .onChange(of: historyEnabled) { _, isEnabled in
+            // Turning the feature off wipes the in-memory history at once.
+            if !isEnabled { viewModel.clearInputHistory() }
+        }
     }
 
     /// Dropdown of recently-sent messages; picking one drops it into the

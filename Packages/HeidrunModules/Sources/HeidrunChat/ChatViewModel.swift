@@ -272,11 +272,30 @@ public final class ChatViewModel {
         }
         guard !text.isEmpty else { return }
         try await sendChat(text, chatScope, false)
-        inputHistory.record(text)
+        if Self.inputHistoryEnabled {
+            inputHistory.record(text)
+        }
         draft = ""
     }
 
     // MARK: - Input history
+
+    /// Mirrors `Heidrun/App/AppStorageKeys.swift` —
+    /// `chatInputHistoryEnabled` — kept as a literal so HeidrunChat
+    /// doesn't depend on the app target. Rename in both places together.
+    private static let inputHistoryEnabledKey = "Heidrun.chatInputHistoryEnabled"
+
+    /// Whether the user has the in-memory recall feature enabled (default
+    /// on). Read live so a Settings toggle takes effect immediately.
+    private static var inputHistoryEnabled: Bool {
+        UserDefaults.standard.object(forKey: inputHistoryEnabledKey) as? Bool ?? true
+    }
+
+    /// Wipe the in-memory history — used when the user turns the feature
+    /// off in Settings.
+    public func clearInputHistory() {
+        inputHistory = InputHistory()
+    }
 
     /// Most-recently-sent messages, newest first — for the recent menu.
     public var recentMessages: [String] { inputHistory.recent }
