@@ -89,12 +89,10 @@ struct ConnectionForm: View {
     /// selected; otherwise compared against the live form to detect edits.
     @State private var editingBaseline: EditingBaseline?
     @State private var showingTrackerBrowser = false
-    private struct BookmarkAlert: Identifiable {
-        let id = UUID()
-        let title: String
-        let message: String
-    }
-    @State private var bookmarkAlert: BookmarkAlert?
+    /// This (non-connection) scene's own error sink — bookmark
+    /// import/export failures route here, matching the connection
+    /// window's unified presentation.
+    @State private var errorPresenter = ErrorPresenter()
 
     /// Gates the form's first render so the window title + toolbar can
     /// settle off-screen before the content fades in. Without this the
@@ -160,12 +158,17 @@ struct ConnectionForm: View {
             hydrate(from: mark)
             editingBaseline = currentEditingBaseline()
         }
-        .alert(item: $bookmarkAlert) { alert in
-            Alert(
-                title: Text(alert.title),
-                message: Text(alert.message),
-                dismissButton: .cancel(Text("OK"))
-            )
+        .alert(
+            errorPresenter.current?.title ?? "",
+            isPresented: Binding(
+                get: { errorPresenter.current != nil },
+                set: { presented in if !presented { errorPresenter.dismiss() } }
+            ),
+            presenting: errorPresenter.current
+        ) { _ in
+            Button("OK", role: .cancel) { errorPresenter.dismiss() }
+        } message: { presented in
+            Text(presented.message)
         }
         .sheet(item: $droppedImport) { pending in
             BookmarksImportSheet(url: pending.url) { droppedImport = nil }
@@ -700,7 +703,7 @@ struct ConnectionForm: View {
             try FileManager.default.copyItem(at: url, to: destination)
             droppedImport = PendingBookmarksImport(url: destination)
         } catch {
-            bookmarkAlert = BookmarkAlert(
+            errorPresenter.present(
                 title: "Couldn't import bookmarks",
                 message: error.localizedDescription
             )
@@ -709,7 +712,7 @@ struct ConnectionForm: View {
 
     private func handleImportLegacy() {
         let imported = BookmarkFileActions.importLegacy(into: bookmarks) { title, message in
-            bookmarkAlert = BookmarkAlert(title: title, message: message)
+            errorPresenter.present(title: title, message: message)
         }
         // Replaced roster invalidates the current selection.
         if imported != nil {
@@ -719,13 +722,13 @@ struct ConnectionForm: View {
 
     private func handleExportLegacy() {
         BookmarkFileActions.exportLegacy(from: bookmarks) { title, message in
-            bookmarkAlert = BookmarkAlert(title: title, message: message)
+            errorPresenter.present(title: title, message: message)
         }
     }
 
     private func handleExportCSV() {
         BookmarkFileActions.exportCSV(from: bookmarks) { title, message in
-            bookmarkAlert = BookmarkAlert(title: title, message: message)
+            errorPresenter.present(title: title, message: message)
         }
     }
 }
