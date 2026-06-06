@@ -89,10 +89,10 @@ public struct IsolatedTextEditor: NSViewRepresentable {
             coordinator?.parent.onSubmit?()
         }
         textView.onHistoryPrevious = { [weak coordinator = context.coordinator] in
-            coordinator?.parent.onHistoryPrevious?() ?? nil
+            coordinator?.parent.onHistoryPrevious?()
         }
         textView.onHistoryNext = { [weak coordinator = context.coordinator] in
-            coordinator?.parent.onHistoryNext?() ?? nil
+            coordinator?.parent.onHistoryNext?()
         }
         textView.onEdit = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onEdit?()
@@ -123,10 +123,10 @@ public struct IsolatedTextEditor: NSViewRepresentable {
             coordinator?.parent.onSubmit?()
         }
         textView.onHistoryPrevious = { [weak coordinator = context.coordinator] in
-            coordinator?.parent.onHistoryPrevious?() ?? nil
+            coordinator?.parent.onHistoryPrevious?()
         }
         textView.onHistoryNext = { [weak coordinator = context.coordinator] in
-            coordinator?.parent.onHistoryNext?() ?? nil
+            coordinator?.parent.onHistoryNext?()
         }
         textView.onEdit = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onEdit?()
