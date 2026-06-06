@@ -291,14 +291,19 @@ struct HostView: View {
                 onEditAccount: { user in
                     Task {
                         // The roster only has nickname/socket; the account
-                        // login comes from getUserInfo (field 105). Guests
-                        // have no account → surface a note instead.
-                        let login = (try? await vm.requestInfo(for: user.socket))?.accountLogin ?? ""
-                        if login.isEmpty {
-                            editAccountError = "\(user.nickname) is connected as a guest — there's no account to edit."
-                        } else {
-                            await adminVM?.selectExisting(login: login)
-                            selectedIdentifier = AdminFeature.identifier
+                        // login comes from getUserInfo (field 105) — which
+                        // itself needs the getUserInfo privilege, so a
+                        // failed lookup ≠ "they're a guest".
+                        do {
+                            let login = try await vm.requestInfo(for: user.socket).accountLogin
+                            if login.isEmpty {
+                                editAccountError = "\(user.nickname) is connected as a guest — there's no account to edit."
+                            } else {
+                                await adminVM?.selectExisting(login: login)
+                                selectedIdentifier = AdminFeature.identifier
+                            }
+                        } catch {
+                            editAccountError = "Couldn't look up \(user.nickname)'s account — you may not have permission to edit accounts."
                         }
                     }
                 },
