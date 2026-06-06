@@ -12,22 +12,26 @@ public final class UserListViewModel {
     public private(set) var loadError: String?
 
     private let client: any HotlineClient
+    private let eventStream: AsyncStream<HotlineEvent>
     private var eventTask: Task<Void, Never>?
 
     public init(client: any HotlineClient) {
         self.client = client
+        // Subscribe at INIT, not in start(). The host creates this VM, then
+        // snapshots the roster and runs several awaits (sound, notifications,
+        // banner) before calling start(). Subscribing only in start() left a
+        // window where a peer who joined mid-sequence was lost to the roster
+        // — their `userChanged` broadcast landed before we subscribed — even
+        // though ChatViewModel (which subscribes at init) showed them
+        // "entered". That was the auto-reconnect desync: on a server
+        // redeploy several clients reconnect inside that window. Capturing
+        // the stream here closes it; events buffer (EventBroadcaster.
+        // makeStream is unbounded) until start() drains them on top of the
+        // seeded roster.
+        self.eventStream = client.events
     }
 
     public func start(initialRoster: [User]? = nil) async {
-        // Subscribe BEFORE the fetch await so any `userChanged` /
-        // `userLeft` events that arrive while we're waiting for the
-        // 300-reply land in the stream's buffer instead of being lost.
-        // Combined with `EventBroadcaster.makeStream`'s eager-register
-        // behaviour, this closes the join-race that caused new peers
-        // to be invisible to a just-connected client until the next
-        // unrelated broadcast (auto-away flip, /me, etc.) re-asserted
-        // their presence.
-        let stream: AsyncStream<HotlineEvent>? = (eventTask == nil) ? client.events : nil
         if let initialRoster {
             // Host already fetched the roster (e.g. ConnectionHandle
             // sharing it with ChatViewModel). Skip the redundant
@@ -44,7 +48,8 @@ public final class UserListViewModel {
                 loadError = String(describing: error)
             }
         }
-        if let stream, eventTask == nil {
+        if eventTask == nil {
+            let stream = eventStream
             eventTask = Task { [weak self] in
                 for await event in stream {
                     self?.apply(event: event)

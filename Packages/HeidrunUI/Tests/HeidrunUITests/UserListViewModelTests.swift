@@ -145,6 +145,27 @@ struct UserListViewModelTests {
         #expect(vm.users.map(\.nickname) == ["alice"], "event should be ignored after cancel")
     }
 
+    @Test("a peer that joins between init and start() still lands in the roster")
+    func joinBetweenInitAndStartIsNotLost() async {
+        // Reproduces the auto-reconnect roster desync. The host subscribes
+        // the chat VM at init but historically subscribed the roster VM only
+        // in start() — after several awaits and after snapshotting the roster.
+        // A peer whose `userChanged` lands in that window was shown "entered"
+        // by chat yet missing from the roster. The VM must subscribe at init
+        // so the event buffers and drains on top of the seeded roster.
+        let client = FakeUserListClient()
+        let vm = UserListViewModel(client: client)
+
+        // Peer joins AFTER the VM is created but BEFORE start() runs —
+        // exactly the gap a mass-reconnect (server redeploy) opens.
+        client.emit(.userChanged(user: User(socket: 2, nickname: "bob")))
+
+        // Host seeds with the snapshot it took before bob joined.
+        await vm.start(initialRoster: [User(socket: 1, nickname: "alice")])
+        await vm.waitForRosterChange { roster in roster.contains { $0.socket == 2 } }
+        #expect(vm.users.map(\.socket).sorted() == [1, 2])
+    }
+
     @Test("sendIM forwards to client.sendPrivateMessage")
     func sendIMForwardsToClient() async throws {
         let client = FakeUserListClient()
@@ -186,22 +207,31 @@ private extension UserListViewModel {
 // MARK: - Test helpers
 
 private final class FakeUserListClient: HotlineClient, @unchecked Sendable {
-    let events: AsyncStream<HotlineEvent>
-    private let continuation: AsyncStream<HotlineEvent>.Continuation
+    // Each `events` access mints a fresh eagerly-registered stream, mirroring
+    // `EventBroadcaster.makeStream`: a subscriber only sees events emitted
+    // AFTER it subscribes. A single shared stream would mask the join-race
+    // this suite guards against (events before subscribe would still buffer).
+    private var continuations: [AsyncStream<HotlineEvent>.Continuation] = []
     var fetchUserListResponse: Result<[User], Error> = .success([])
     var fetchUserInfoResponse: Result<UserInfo, Error> = .success(
         UserInfo(user: User(socket: 0), infoText: "")
     )
     var sentMessages: [(socket: UInt16, message: String)] = []
 
-    init() {
-        var cont: AsyncStream<HotlineEvent>.Continuation!
-        self.events = AsyncStream { cont = $0 }
-        self.continuation = cont
+    init() {}
+
+    var events: AsyncStream<HotlineEvent> {
+        let (stream, continuation) = AsyncStream<HotlineEvent>.makeStream()
+        continuations.append(continuation)
+        return stream
     }
 
-    func emit(_ event: HotlineEvent) { continuation.yield(event) }
-    func finishEvents() { continuation.finish() }
+    func emit(_ event: HotlineEvent) {
+        for continuation in continuations { continuation.yield(event) }
+    }
+    func finishEvents() {
+        for continuation in continuations { continuation.finish() }
+    }
 
     var connectionInfo: HotlineConnectionInfo {
         get async {
