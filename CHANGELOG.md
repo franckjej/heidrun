@@ -3,7 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.2] — 2026-06-06
 
 ### Changed
 - Errors now surface through one consistent alert. Failures that used to
