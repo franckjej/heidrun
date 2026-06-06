@@ -29,7 +29,7 @@ packages:
     # `exact:` rather than `from:` because pre-release tags compare
     # lexically in SemVer (`"rc10" < "rc9"` since '1' < '9'), so a
     # `from:` constraint at this version would resolve back to rc9.
-    exactVersion: "1.0.0-rc15"
+    exactVersion: "1.0.0-rc16"
   HeidrunUI:
     path: Packages/HeidrunUI
   HeidrunModules:

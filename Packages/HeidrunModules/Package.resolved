@@ -1,13 +1,13 @@
 {
-  "originHash" : "cc37b0a1745f63fb4d81b691023ce056b43816cf1ae88371f89a08799695eab1",
+  "originHash" : "8c2dc598438f97ce62bcbfc7d5f60fd6a847f1eede5cf580c431251c136e9b87",
   "pins" : [
     {
       "identity" : "heidrun-protocol",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/franckjej/heidrun-protocol.git",
       "state" : {
-        "revision" : "d165d7e8970490bc1f46d467e53b8d6497ea319e",
-        "version" : "1.0.0-rc15"
+        "revision" : "53cdb5c8899a5043817dd579eaa8f6e6b78ead9b",
+        "version" : "1.0.0-rc16"
       }
     },
     {
