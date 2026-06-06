@@ -12,6 +12,10 @@ public struct UserListInspector: View {
     public var onSendMessage: (User) -> Void
     public var onStartPrivateChat: (User) -> Void
     public var onGetInfo: (User) -> Void
+    /// Edit the selected user's server account. The host resolves their
+    /// login and opens the Admin module; guests (no account) surface a
+    /// message instead.
+    public var onEditAccount: (User) -> Void
     public var onDisconnect: (User) -> Void
     /// Optional fetch for a user's full info. Retained for API stability
     /// (the AppKit row drag-out exports basic local info synchronously).
@@ -28,6 +32,7 @@ public struct UserListInspector: View {
         onSendMessage: @escaping (User) -> Void,
         onStartPrivateChat: @escaping (User) -> Void = { _ in },
         onGetInfo: @escaping (User) -> Void,
+        onEditAccount: @escaping (User) -> Void = { _ in },
         onDisconnect: @escaping (User) -> Void = { _ in },
         fetchUserInfo: (@Sendable (User) async throws -> UserInfo)? = nil
     ) {
@@ -36,6 +41,7 @@ public struct UserListInspector: View {
         self.onSendMessage = onSendMessage
         self.onStartPrivateChat = onStartPrivateChat
         self.onGetInfo = onGetInfo
+        self.onEditAccount = onEditAccount
         self.onDisconnect = onDisconnect
         self.fetchUserInfo = fetchUserInfo
     }
@@ -96,6 +102,14 @@ public struct UserListInspector: View {
                 if let user = selectedUser { onGetInfo(user) }
             }
 
+            ActionButton(
+                title: "Edit Account",
+                systemImage: "person.text.rectangle",
+                isEnabled: selectedUser != nil
+            ) {
+                if let user = selectedUser { onEditAccount(user) }
+            }
+
             Spacer(minLength: Spacing.xxsmall.rawValue)
 
             ActionButton(
@@ -141,6 +155,7 @@ public struct UserListInspector: View {
                     sendMessage: onSendMessage,
                     startPrivateChat: onStartPrivateChat,
                     getInfo: onGetInfo,
+                    editAccount: onEditAccount,
                     disconnect: onDisconnect
                 )
             )

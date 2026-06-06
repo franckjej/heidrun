@@ -6,6 +6,7 @@ import HeidrunChat
 import HeidrunFiles
 import HeidrunMessages
 import HeidrunNews
+import HeidrunAdmin
 
 struct HostView: View {
     let client: any HotlineClient
@@ -17,6 +18,7 @@ struct HostView: View {
     @State private var imRecipient: User?
     @State private var infoRecipient: User?
     @State private var disconnectCandidate: User?
+    @State private var editAccountError: String?
 
     private var handle: ConnectionHandle? { state?.currentHandle }
     private var userListVM: UserListViewModel? { handle?.userListVM }
@@ -25,6 +27,7 @@ struct HostView: View {
     private var messagesVM: MessagesViewModel? { handle?.messagesVM }
     private var newsPlainVM: PlainNewsViewModel? { handle?.newsPlainVM }
     private var newsThreadedVM: ThreadedNewsViewModel? { handle?.newsThreadedVM }
+    private var adminVM: AdminViewModel? { handle?.adminVM }
     private var broadcastVM: BroadcastViewModel? { handle?.broadcastVM }
 
     /// `address:port` for per-server preference scoping (window frames,
@@ -152,6 +155,18 @@ struct HostView: View {
         } message: { entry in
             Text(entry.message)
         }
+        .alert(
+            "Can't edit account",
+            isPresented: Binding(
+                get: { editAccountError != nil },
+                set: { if !$0 { editAccountError = nil } }
+            ),
+            presenting: editAccountError
+        ) { _ in
+            Button("OK", role: .cancel) { editAccountError = nil }
+        } message: { message in
+            Text(message)
+        }
         // Agreement sheet is at RootView level so it floats over
         // `ConnectingPane` while the connect Task waits for the user.
     }
@@ -242,6 +257,11 @@ struct HostView: View {
         } else if selectedIdentifier == NewsFeature.identifier,
                   let plainVM = newsPlainVM, let threadedVM = newsThreadedVM {
             HostedNewsView(plain: plainVM, threaded: threadedVM, client: client)
+        } else if selectedIdentifier == AdminFeature.identifier, let vm = adminVM {
+            // Use the hoisted Admin VM (not a fresh makeContentView one) so
+            // "Edit Account" from the roster can load an account into it
+            // before switching here.
+            AdminView(viewModel: vm)
         } else if let selected = currentFeature() {
             selected.makeContentView(client: client)
         } else {
@@ -268,6 +288,20 @@ struct HostView: View {
                     }
                 },
                 onGetInfo: { infoRecipient = $0 },
+                onEditAccount: { user in
+                    Task {
+                        // The roster only has nickname/socket; the account
+                        // login comes from getUserInfo (field 105). Guests
+                        // have no account → surface a note instead.
+                        let login = (try? await vm.requestInfo(for: user.socket))?.accountLogin ?? ""
+                        if login.isEmpty {
+                            editAccountError = "\(user.nickname) is connected as a guest — there's no account to edit."
+                        } else {
+                            await adminVM?.selectExisting(login: login)
+                            selectedIdentifier = AdminFeature.identifier
+                        }
+                    }
+                },
                 onDisconnect: { disconnectCandidate = $0 },
                 fetchUserInfo: { user in try await vm.requestInfo(for: user.socket) }
             )

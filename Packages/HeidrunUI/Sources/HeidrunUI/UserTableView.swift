@@ -10,6 +10,7 @@ struct UserRowActions {
     var sendMessage: (User) -> Void
     var startPrivateChat: (User) -> Void
     var getInfo: (User) -> Void
+    var editAccount: (User) -> Void
     var disconnect: (User) -> Void
 }
 
@@ -240,6 +241,9 @@ struct UserTableView: NSViewRepresentable {
             }
             add(String(localized: "Get Info…", bundle: .module)) { [actions = parent.actions] in
                 actions.getInfo(user)
+            }
+            add(String(localized: "Edit Account…", bundle: .module)) { [actions = parent.actions] in
+                actions.editAccount(user)
             }
             menu.addItem(.separator())
             add(String(localized: "Copy Nickname", bundle: .module)) { [weak self] in

@@ -7,6 +7,7 @@ import HeidrunChat
 import HeidrunFiles
 import HeidrunMessages
 import HeidrunNews
+import HeidrunAdmin
 
 /// Per-connection bag of references the host window and TaskManager both
 /// read from. Owns the long-lived feature VMs so chat history, file paths,
@@ -44,6 +45,10 @@ final class ConnectionHandle: Identifiable {
     let soundCoordinator: SoundCoordinator
     let notificationCoordinator: NotificationCoordinator
     let broadcastVM: BroadcastViewModel
+    /// Account-admin VM, hoisted here (like the others) so "Edit Account"
+    /// from the roster can load an account into it before switching to the
+    /// Admin module, and the editor state survives module switches.
+    let adminVM: AdminViewModel
 
     var phase: Phase = .connected
 
@@ -113,6 +118,7 @@ final class ConnectionHandle: Identifiable {
             userList: userListVM
         )
         self.broadcastVM = BroadcastViewModel(client: client)
+        self.adminVM = AdminViewModel(client: client)
     }
 
     /// Stamp each `.heidrunpart` with the server identity that produced
