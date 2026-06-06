@@ -163,11 +163,16 @@ public struct ChatView: View {
             // to a UUID-named file, etc). ⌘↵ → submit is wired in the
             // text view so the user doesn't have to leave the input
             // to send.
+            // ↑/↓ recall previously-sent messages (shell-style); typing
+            // anything else ends the recall navigation.
             IsolatedTextEditor(
                 text: $viewModel.draft,
                 minHeight: 50,
                 autoFocus: true,
-                onSubmit: submit
+                onSubmit: submit,
+                onHistoryPrevious: { viewModel.recallPreviousDraft() },
+                onHistoryNext: { viewModel.recallNextDraft() },
+                onEdit: { viewModel.resetHistoryNavigation() }
             )
                 .frame(height: 50)
                 .padding(.horizontal, .xxsmall)
@@ -178,15 +183,41 @@ public struct ChatView: View {
                         .strokeBorder(.separator, lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: .cornerMed, style: .continuous))
-            Button("Send", action: submit)
-                .padding(.top, .xxsmall)
-                .disabled(isDraftEmpty)
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.return, modifiers: [.command])
-                .help("Send message \u{2318}+\u{23CE}")
+            VStack(spacing: Spacing.xxsmall.rawValue) {
+                Button("Send", action: submit)
+                    .disabled(isDraftEmpty)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.return, modifiers: [.command])
+                    .help("Send message \u{2318}+\u{23CE}")
+                recentMenu
+            }
+            .padding(.top, .xxsmall)
         }
         .padding(.horizontal, .xsmall)
         .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    /// Dropdown of recently-sent messages; picking one drops it into the
+    /// input to edit/resend. Disabled until something has been sent.
+    @ViewBuilder
+    private var recentMenu: some View {
+        Menu {
+            ForEach(Array(viewModel.recentMessages.prefix(15).enumerated()), id: \.offset) { _, message in
+                Button(Self.menuLabel(for: message)) { viewModel.useRecent(message) }
+            }
+        } label: {
+            Image(systemName: "clock.arrow.circlepath")
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .disabled(viewModel.recentMessages.isEmpty)
+        .help("Recent messages")
+    }
+
+    /// One-line, length-capped label for a recent-message menu item.
+    private static func menuLabel(for message: String) -> String {
+        let oneLine = message.replacingOccurrences(of: "\n", with: " ")
+        return oneLine.count > 48 ? String(oneLine.prefix(48)) + "\u{2026}" : oneLine
     }
 
     private var isDraftEmpty: Bool {
