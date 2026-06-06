@@ -22,8 +22,11 @@ playground.xcworkspace
 # Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
 # Packages/
 # Package.pins
-# Package.resolved
 #
+
+# Package.resolved is derivable from the exact: pins in each Package.swift /
+# project.yml, so committing it only adds re-resolution churn.
+Package.resolved
 
 # The Xcode project is generated from project.yml by xcodegen — it's a build
 # artifact, not source. Run `xcodegen generate` after cloning or pulling.
