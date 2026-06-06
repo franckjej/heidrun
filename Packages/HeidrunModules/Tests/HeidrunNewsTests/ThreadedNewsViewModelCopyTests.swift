@@ -266,13 +266,14 @@ struct ThreadedNewsViewModelCopyTests {
         #expect(await viewModel.contentsText(for: folder) == nil)
     }
 
-    @Test("contentsText sets lastError and returns nil when a fetch throws")
-    func contentsText_fetchThrows_setsLastError() async {
+    @Test("contentsText presents an error and returns nil when a fetch throws")
+    func contentsText_fetchThrows_presentsError() async {
         let category = NewsBundle(
             identifier: Data([0x00, 0x00, 0x00, 0x01]),
             title: "News",
             kind: .category
         )
+        let errors = PresentedErrorRecorder()
         let viewModel = ThreadedNewsViewModel(
             fetchBundles: { _ in [category] },
             fetchThreads: { _ in throw StubFetchError() },
@@ -280,11 +281,12 @@ struct ThreadedNewsViewModelCopyTests {
             createBundleAt: { _, _, _ in },
             postThread: { _, _, _, _, _ in },
             deleteBundleAt: { _ in },
-            deleteThreadAt: { _, _, _ in }
+            deleteThreadAt: { _, _, _ in },
+            present: { errors.record($0) }
         )
         let text = await viewModel.contentsText(for: category)
         #expect(text == nil)
-        #expect(viewModel.lastError != nil)
+        #expect(errors.last != nil)
         #expect(viewModel.isGatheringCopy == false)
     }
 

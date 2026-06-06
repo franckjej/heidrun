@@ -11,7 +11,6 @@ public final class FilesViewModel {
     public internal(set) var currentPath: RemotePath = []
     public internal(set) var files: [RemoteFile] = []
     public internal(set) var isLoading: Bool = false
-    public internal(set) var lastError: String?
 
     /// Finished entries stay until `clearFinishedTransfers()` so the UI
     /// can show "done" rows.
@@ -112,6 +111,7 @@ public final class FilesViewModel {
     let downloadFolderURL: @Sendable () -> URL
     let onTransferFinished: (@MainActor @Sendable (TransferState) -> Void)?
     let metadataSeed: @Sendable () -> PartialDownloadMetadata.SeedFields?
+    let present: @MainActor (Error) -> Void
 
     /// Tests verify callers actually wired a seed instead of letting it
     /// default to `{ nil }`, which would silently break the resume xattr.
@@ -142,7 +142,8 @@ public final class FilesViewModel {
         sendFolderUploadBytes: @escaping FolderUploadSender = { _, _, _ in },
         downloadFolderURL: @escaping @Sendable () -> URL = FilesViewModel.defaultDownloadFolder,
         onTransferFinished: (@MainActor @Sendable (TransferState) -> Void)? = nil,
-        metadataSeed: @escaping @Sendable () -> PartialDownloadMetadata.SeedFields? = { nil }
+        metadataSeed: @escaping @Sendable () -> PartialDownloadMetadata.SeedFields? = { nil },
+        present: @escaping @MainActor (Error) -> Void = { _ in }
     ) {
         self.listFiles            = listFiles
         self.createFolderAt       = createFolderAt
@@ -162,13 +163,15 @@ public final class FilesViewModel {
         self.downloadFolderURL    = downloadFolderURL
         self.onTransferFinished   = onTransferFinished
         self.metadataSeed         = metadataSeed
+        self.present              = present
     }
 
     public convenience init(
         client: any HotlineClient,
         downloadFolderURL: @escaping @Sendable () -> URL = FilesViewModel.defaultDownloadFolder,
         onTransferFinished: (@MainActor @Sendable (TransferState) -> Void)? = nil,
-        metadataSeed: @escaping @Sendable () -> PartialDownloadMetadata.SeedFields? = { nil }
+        metadataSeed: @escaping @Sendable () -> PartialDownloadMetadata.SeedFields? = { nil },
+        present: @escaping @MainActor (Error) -> Void = { _ in }
     ) {
         self.init(
             listFiles: { [client] path in
@@ -234,7 +237,8 @@ public final class FilesViewModel {
             },
             downloadFolderURL: downloadFolderURL,
             onTransferFinished: onTransferFinished,
-            metadataSeed: metadataSeed
+            metadataSeed: metadataSeed,
+            present: present
         )
     }
 
@@ -265,9 +269,8 @@ public final class FilesViewModel {
         defer { isLoading = false }
         do {
             files = try await listFiles(currentPath)
-            lastError = nil
         } catch {
-            lastError = String(describing: error)
+            present(error)
             files = []
         }
     }
@@ -279,14 +282,14 @@ public final class FilesViewModel {
         do {
             try await createFolderAt(currentPath, name)
             await refresh()
-        } catch { lastError = String(describing: error) }
+        } catch { present(error) }
     }
 
     public func delete(_ entry: RemoteFile) async {
         do {
             try await deleteEntryAt(currentPath, entry.name)
             await refresh()
-        } catch { lastError = String(describing: error) }
+        } catch { present(error) }
     }
 
     /// Batch delete with one trailing refresh (vs N round-trips). Stops
@@ -298,7 +301,7 @@ public final class FilesViewModel {
                 try await deleteEntryAt(currentPath, entry.name)
             }
             await refresh()
-        } catch { lastError = String(describing: error) }
+        } catch { present(error) }
     }
 
     public func rename(_ entry: RemoteFile, to newName: String) async {
@@ -306,21 +309,21 @@ public final class FilesViewModel {
         do {
             try await renameAt(currentPath, entry.name, newName)
             await refresh()
-        } catch { lastError = String(describing: error) }
+        } catch { present(error) }
     }
 
     public func setComment(on entry: RemoteFile, _ comment: String) async {
         do {
             try await setCommentAt(currentPath, entry.name, comment)
             await refresh()
-        } catch { lastError = String(describing: error) }
+        } catch { present(error) }
     }
 
     public func move(_ entry: RemoteFile, to destination: RemotePath) async {
         do {
             try await moveEntryAt(currentPath, entry.name, destination)
             await refresh()
-        } catch { lastError = String(describing: error) }
+        } catch { present(error) }
     }
 
     public func fetchFileInfo(_ entry: RemoteFile) async throws -> RemoteFileInfo {

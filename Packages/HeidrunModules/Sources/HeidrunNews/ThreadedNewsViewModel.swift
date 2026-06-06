@@ -58,7 +58,6 @@ public final class ThreadedNewsViewModel {
     public private(set) var isLoadingBundles: Bool = false
     public private(set) var isLoadingThreads: Bool = false
     public private(set) var isLoadingBody: Bool = false
-    public private(set) var lastError: String?
 
     /// True while a folder/category Copy-Contents gather is in flight.
     public private(set) var isGatheringCopy: Bool = false
@@ -82,6 +81,7 @@ public final class ThreadedNewsViewModel {
     private let postThread: @Sendable (RemotePath, UInt16, String, String, String) async throws -> Void
     private let deleteBundleAt: @Sendable (RemotePath) async throws -> Void
     private let deleteThreadAt: @Sendable (RemotePath, UInt16, Bool) async throws -> Void
+    private let present: @MainActor (Error) -> Void
 
     public init(
         fetchBundles: @escaping @Sendable (RemotePath) async throws -> [NewsBundle],
@@ -90,7 +90,8 @@ public final class ThreadedNewsViewModel {
         createBundleAt: @escaping @Sendable (RemotePath, String, Bool) async throws -> Void,
         postThread: @escaping @Sendable (RemotePath, UInt16, String, String, String) async throws -> Void,
         deleteBundleAt: @escaping @Sendable (RemotePath) async throws -> Void,
-        deleteThreadAt: @escaping @Sendable (RemotePath, UInt16, Bool) async throws -> Void
+        deleteThreadAt: @escaping @Sendable (RemotePath, UInt16, Bool) async throws -> Void,
+        present: @escaping @MainActor (Error) -> Void = { _ in }
     ) {
         self.fetchBundles    = fetchBundles
         self.fetchThreads    = fetchThreads
@@ -99,9 +100,13 @@ public final class ThreadedNewsViewModel {
         self.postThread      = postThread
         self.deleteBundleAt  = deleteBundleAt
         self.deleteThreadAt  = deleteThreadAt
+        self.present         = present
     }
 
-    public convenience init(client: any HotlineClient) {
+    public convenience init(
+        client: any HotlineClient,
+        present: @escaping @MainActor (Error) -> Void = { _ in }
+    ) {
         self.init(
             fetchBundles: { [client] path in
                 try await client.fetchNewsBundles(at: path)
@@ -129,7 +134,8 @@ public final class ThreadedNewsViewModel {
             },
             deleteThreadAt: { [client] path, threadID, cascade in
                 try await client.deleteNewsThread(at: path, threadID: threadID, cascade: cascade)
-            }
+            },
+            present: present
         )
     }
 
@@ -188,9 +194,8 @@ public final class ThreadedNewsViewModel {
         defer { isLoadingBundles = false }
         do {
             bundles = try await fetchBundles(currentPath)
-            lastError = nil
         } catch {
-            lastError = String(describing: error)
+            present(error)
             bundles = []
         }
     }
@@ -200,9 +205,8 @@ public final class ThreadedNewsViewModel {
         defer { isLoadingThreads = false }
         do {
             threads = try await fetchThreads(path)
-            lastError = nil
         } catch {
-            lastError = String(describing: error)
+            present(error)
             threads = []
         }
     }
@@ -222,9 +226,8 @@ public final class ThreadedNewsViewModel {
         defer { isLoadingBody = false }
         do {
             loadedThread = try await fetchThread(path, threadID, type)
-            lastError = nil
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -240,7 +243,7 @@ public final class ThreadedNewsViewModel {
             try await createBundleAt(currentPath, name, isCategory)
             await refreshBundles()
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -255,7 +258,7 @@ public final class ThreadedNewsViewModel {
             try await postThread(path, parentThreadID, title, type, body)
             await loadThreads(at: path)
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -264,7 +267,7 @@ public final class ThreadedNewsViewModel {
             try await deleteBundleAt(currentPath)
             await navigateUp()
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -280,7 +283,7 @@ public final class ThreadedNewsViewModel {
             }
             await refreshBundles()
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -291,7 +294,7 @@ public final class ThreadedNewsViewModel {
             if selectedThreadID == threadID { dismissLoadedThread() }
             await loadThreads(at: path)
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -314,14 +317,12 @@ public final class ThreadedNewsViewModel {
             try await deleteThreadAt(path, threadID, false)
             try await postThread(path, parentID, newTitle, type, newBody)
             await loadThreads(at: path)
-            lastError = nil
         } catch {
             // Refresh FIRST so the tree reflects true server state
             // (delete may have succeeded even though the repost threw),
-            // THEN set lastError — loadThreads clears it on success, so
-            // writing the error after makes it stick.
+            // THEN present so this is the error left on screen.
             await loadThreads(at: path)
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -355,11 +356,10 @@ public final class ThreadedNewsViewModel {
             case .bundle:
                 sections = try await gatherSections(at: bundlePath, headingPrefix: "")
             }
-            lastError = nil
             guard !sections.isEmpty else { return nil }
             return NewsClipboardFormatter.formatBundleContents(sections: sections)
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return nil
         }
     }

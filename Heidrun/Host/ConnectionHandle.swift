@@ -50,6 +50,11 @@ final class ConnectionHandle: Identifiable {
     /// Admin module, and the editor state survives module switches.
     let adminVM: AdminViewModel
 
+    /// Scene-scoped sink for user-facing errors. The feature VMs report
+    /// into it via their `present` closures; `HostView` injects it into
+    /// the environment and shows one alert bound to `current`.
+    let errorPresenter: ErrorPresenter
+
     var phase: Phase = .connected
 
     /// Fetched via TX 212 `downloadBanner` shortly after login. `nil`
@@ -80,6 +85,8 @@ final class ConnectionHandle: Identifiable {
         self.id = handleID
         self.settings = settings
         self.client = client
+        let presenter = ErrorPresenter()
+        self.errorPresenter = presenter
         let userListVM = UserListViewModel(client: client)
         self.userListVM = userListVM
         self.chatVM = ChatViewModel(client: client)
@@ -106,11 +113,18 @@ final class ConnectionHandle: Identifiable {
                     )
                 }
             },
-            metadataSeed: ConnectionHandle.metadataSeed(for: settings)
+            metadataSeed: ConnectionHandle.metadataSeed(for: settings),
+            present: { [presenter] error in presenter.present(error) }
         )
         self.messagesVM = MessagesViewModel(client: client, userList: userListVM)
-        self.newsPlainVM = PlainNewsViewModel(client: client)
-        self.newsThreadedVM = ThreadedNewsViewModel(client: client)
+        self.newsPlainVM = PlainNewsViewModel(
+            client: client,
+            present: { [presenter] error in presenter.present(error) }
+        )
+        self.newsThreadedVM = ThreadedNewsViewModel(
+            client: client,
+            present: { [presenter] error in presenter.present(error) }
+        )
         self.soundCoordinator = SoundCoordinator(client: client)
         self.notificationCoordinator = NotificationCoordinator(
             client: client,
@@ -118,7 +132,10 @@ final class ConnectionHandle: Identifiable {
             userList: userListVM
         )
         self.broadcastVM = BroadcastViewModel(client: client)
-        self.adminVM = AdminViewModel(client: client)
+        self.adminVM = AdminViewModel(
+            client: client,
+            present: { [presenter] error in presenter.present(error) }
+        )
     }
 
     /// Stamp each `.heidrunpart` with the server identity that produced

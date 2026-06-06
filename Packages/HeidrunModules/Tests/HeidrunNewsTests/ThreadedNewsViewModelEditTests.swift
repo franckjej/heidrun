@@ -30,7 +30,8 @@ struct ThreadedNewsViewModelEditTests {
 
     private func makeViewModel(
         threads: [NewsThread],
-        recorder: CallRecorder
+        recorder: CallRecorder,
+        present: @escaping @MainActor (Error) -> Void = { _ in }
     ) async -> ThreadedNewsViewModel {
         let category = NewsBundle(
             identifier: Data([0x00, 0x00, 0x00, 0x01]),
@@ -59,7 +60,8 @@ struct ThreadedNewsViewModelEditTests {
                     threadID: threadID,
                     cascade: cascade
                 ))
-            }
+            },
+            present: present
         )
         await viewModel.refresh()
         await viewModel.select(category)
@@ -126,19 +128,24 @@ struct ThreadedNewsViewModelEditTests {
         #expect(recorder.posts.isEmpty)
     }
 
-    @Test("editThread sets lastError when the repost fails after a successful delete")
-    func editThread_refreshesAfterPostFailure_keepsLastErrorSet() async {
+    @Test("editThread presents an error when the repost fails after a successful delete")
+    func editThread_refreshesAfterPostFailure_presentsError() async {
         struct Boom: Error {}
         let recorder = CallRecorder()
         recorder.postShouldThrow = Boom()
+        let errors = PresentedErrorRecorder()
         let original = NewsThread(
             threadID: 7,
             parentID: 0,
             elements: [ThreadElement(title: "t", author: "m", body: "b")]
         )
-        let viewModel = await makeViewModel(threads: [original], recorder: recorder)
+        let viewModel = await makeViewModel(
+            threads: [original],
+            recorder: recorder,
+            present: { errors.record($0) }
+        )
         await viewModel.editThread(threadID: 7, newTitle: "u", newBody: "v")
-        #expect(viewModel.lastError != nil)
+        #expect(errors.last != nil)
         // Delete still ran (so the post is gone server-side).
         #expect(recorder.deletes.count == 1)
         // Post was attempted once (and threw).

@@ -215,13 +215,7 @@ private struct PlainNewsScreen: View {
                 .disabled(isDraftEmpty)
                 .help("Post draft (⌘↩)")
             }
-
-            if let error = viewModel.lastError {
-                Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .labelStyle(.titleAndIcon)
-            }
+            // Errors surface through the scene-root ErrorPresenter.
         }
         .padding(.horizontal, .small)
     }
@@ -308,13 +302,7 @@ private struct ThreadedNewsScreen: View {
                     .frame(minWidth: 320)
             }
             .padding(.top, .xsmall)
-            if let error = viewModel.lastError {
-                Divider()
-                Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .padding(.small)
-            }
+            // Errors surface through the scene-root ErrorPresenter.
         }
         .frame(alignment: .topLeading)
         .sheet(isPresented: $composing) {

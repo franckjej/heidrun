@@ -1,5 +1,6 @@
 import Foundation
 import HeidrunCore
+import HeidrunUI
 
 /// Transfer machinery for `FilesViewModel`: downloads (with resume),
 /// single-file uploads, recursive folder uploads, and the drain tasks
@@ -77,7 +78,7 @@ extension FilesViewModel {
         do {
             handle = try await beginDownload(path, entry.name, resumeOffset)
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return
         }
 
@@ -290,16 +291,16 @@ extension FilesViewModel {
         do {
             attrs = try fileManager.attributesOfItem(atPath: fileURL.path)
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return
         }
         guard let sizeNumber = attrs[.size] as? NSNumber else {
-            lastError = "could not read size of \(name)"
+            present(PresentableError("could not read size of \(name)"))
             return
         }
         let size = sizeNumber.uint64Value
         guard size <= UInt64(UInt32.max) else {
-            lastError = "\(name) is larger than 4 GB and can't be uploaded yet"
+            present(PresentableError("\(name) is larger than 4 GB and can't be uploaded yet"))
             return
         }
 
@@ -309,7 +310,7 @@ extension FilesViewModel {
             // the chunked sender slices into 64KB windows over the map.
             content = try Data(contentsOf: fileURL, options: [.mappedIfSafe])
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return
         }
 
@@ -331,10 +332,10 @@ extension FilesViewModel {
                 )
                 return
             }
-            lastError = hotlineError.userMessage
+            present(hotlineError)
             return
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return
         }
 
@@ -385,15 +386,15 @@ extension FilesViewModel {
         do {
             (items, totalSize) = try Self.collectFolderItems(at: folderURL)
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return
         }
         guard !items.isEmpty else {
-            lastError = "\(folderName) is empty — nothing to upload"
+            present(PresentableError("\(folderName) is empty — nothing to upload"))
             return
         }
         guard totalSize <= UInt64(UInt32.max) else {
-            lastError = "\(folderName) is larger than 4 GB and can't be uploaded yet"
+            present(PresentableError("\(folderName) is larger than 4 GB and can't be uploaded yet"))
             return
         }
         let itemCount = UInt16(clamping: items.count)
@@ -402,7 +403,7 @@ extension FilesViewModel {
         do {
             handle = try await beginFolderUpload(currentPath, folderName, UInt32(totalSize), itemCount, false)
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return
         }
 
@@ -554,7 +555,7 @@ extension FilesViewModel {
                 return
             }
         } catch {
-            lastError = String(describing: error)
+            present(error)
             return
         }
         await upload(fileURL: pending.fileURL, at: pending.targetPath, resume: false)
@@ -578,7 +579,7 @@ extension FilesViewModel {
         do {
             try await cancelTransferAt(handle)
             transfers.removeValue(forKey: handle.transferID)
-        } catch { lastError = String(describing: error) }
+        } catch { present(error) }
     }
 
     public func clearFinishedTransfers() {

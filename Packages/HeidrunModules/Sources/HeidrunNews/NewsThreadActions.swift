@@ -66,7 +66,7 @@ struct NewsThreadActions {
 
     /// Gather a folder/category's whole content and put it on the general
     /// pasteboard. No-op when the gather yields nothing (empty folder or
-    /// a fetch error — `viewModel.lastError` surfaces the latter).
+    /// a fetch error — the VM presents the latter via its `present` closure).
     func copyContents(_ bundle: NewsBundle) async {
         guard let text = await viewModel.contentsText(for: bundle) else { return }
         Self.writeToPasteboard(text)

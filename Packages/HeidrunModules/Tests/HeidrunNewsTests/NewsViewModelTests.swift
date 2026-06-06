@@ -16,7 +16,6 @@ struct PlainNewsViewModelTests {
         )
         await viewModel.refresh()
         #expect(viewModel.feed == "v1\n")
-        #expect(viewModel.lastError == nil)
     }
 
     @Test("newsPosted events prepend new posts to the feed")
@@ -103,14 +102,16 @@ struct PlainNewsViewModelTests {
     @MainActor
     func refreshSurfacesError() async {
         struct Boom: Error {}
+        let recorder = PresentedErrorRecorder()
         let (events, _) = AsyncStream<HotlineEvent>.makeStream()
         let viewModel = PlainNewsViewModel(
             events: events,
             fetchFeed: { throw Boom() },
-            postNew: { _ in }
+            postNew: { _ in },
+            present: { recorder.record($0) }
         )
         await viewModel.refresh()
-        #expect(viewModel.lastError != nil)
+        #expect(recorder.last != nil)
     }
 }
 

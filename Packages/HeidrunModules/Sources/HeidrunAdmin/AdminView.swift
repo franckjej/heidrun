@@ -30,17 +30,8 @@ public struct AdminView: View {
                 .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .padding(.bottom, .xxxsmall)
-        .alert(
-            "Couldn't complete the operation",
-            isPresented: Binding(
-                get: { viewModel.lastError != nil },
-                set: { value in if !value { viewModel.clearError() } }
-            )
-        ) {
-            Button("OK", role: .cancel) { viewModel.clearError() }
-        } message: {
-            Text(viewModel.lastError ?? "")
-        }
+        // Errors surface through the scene-root ErrorPresenter (injected
+        // via the VM's `present` closure), not a per-view alert.
         .confirmationDialog(
             "Delete \(pendingDeleteLogin ?? "")?",
             isPresented: $showDeleteConfirmation,

@@ -51,7 +51,6 @@ public final class AdminViewModel {
     public private(set) var loadedAccount: String?
     public private(set) var isDirty: Bool = false
     public private(set) var isWorking: Bool = false
-    public private(set) var lastError: String?
 
     /// Transient, semantic status from the last successful intent.
     /// Surfaces in the detail footer so the operator sees a confirmation
@@ -104,6 +103,7 @@ public final class AdminViewModel {
     private let createLoginAt: @Sendable (String, String, String, UserPrivileges) async throws -> Void
     private let modifyLoginAt: @Sendable (String, String?, String, UserPrivileges) async throws -> Void
     private let deleteLoginAt: @Sendable (String) async throws -> Void
+    private let present: @MainActor (Error) -> Void
 
     /// Tracks the values that were last loaded from the server so dirty
     /// detection compares against ground truth and `revert()` can restore.
@@ -119,15 +119,20 @@ public final class AdminViewModel {
         openLogin: @escaping @Sendable (String) async throws -> (String, UserPrivileges),
         createLogin: @escaping @Sendable (String, String, String, UserPrivileges) async throws -> Void,
         modifyLogin: @escaping @Sendable (String, String?, String, UserPrivileges) async throws -> Void,
-        deleteLogin: @escaping @Sendable (String) async throws -> Void
+        deleteLogin: @escaping @Sendable (String) async throws -> Void,
+        present: @escaping @MainActor (Error) -> Void = { _ in }
     ) {
         self.openLoginAt = openLogin
         self.createLoginAt = createLogin
         self.modifyLoginAt = modifyLogin
         self.deleteLoginAt = deleteLogin
+        self.present = present
     }
 
-    public convenience init(client: any HotlineClient) {
+    public convenience init(
+        client: any HotlineClient,
+        present: @escaping @MainActor (Error) -> Void = { _ in }
+    ) {
         self.init(
             openLogin: { [client] name in try await client.openLogin(name) },
             createLogin: { [client] name, password, nickname, privs in
@@ -136,7 +141,8 @@ public final class AdminViewModel {
             modifyLogin: { [client] name, password, nickname, privs in
                 try await client.modifyLogin(name: name, password: password, nickname: nickname, privileges: privs)
             },
-            deleteLogin: { [client] name in try await client.deleteLogin(name) }
+            deleteLogin: { [client] name in try await client.deleteLogin(name) },
+            present: present
         )
     }
 
@@ -164,7 +170,6 @@ public final class AdminViewModel {
         isDirty = false
         noticeAutoClearTask?.cancel()
         lastNotice = nil
-        lastError = nil
     }
 
     public func duplicate(login sourceLogin: String) async {
@@ -348,14 +353,9 @@ public final class AdminViewModel {
         defer { isWorking = false }
         do {
             try await work()
-            lastError = nil
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
-    }
-
-    public func clearError() {
-        lastError = nil
     }
 
     /// Publish a status notice and schedule it to clear automatically.

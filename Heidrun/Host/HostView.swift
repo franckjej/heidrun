@@ -21,6 +21,7 @@ struct HostView: View {
     @State private var editAccountError: String?
 
     private var handle: ConnectionHandle? { state?.currentHandle }
+    private var errorPresenter: ErrorPresenter? { handle?.errorPresenter }
     private var userListVM: UserListViewModel? { handle?.userListVM }
     private var chatVM: ChatViewModel? { handle?.chatVM }
     private var filesVM: FilesViewModel? { handle?.filesVM }
@@ -167,6 +168,22 @@ struct HostView: View {
         } message: { message in
             Text(message)
         }
+        // Single scene-root alert for every VM/sheet error routed through
+        // the connection's ErrorPresenter.
+        .alert(
+            errorPresenter?.current?.title ?? "",
+            isPresented: Binding(
+                get: { errorPresenter?.current != nil },
+                set: { presented in if !presented { errorPresenter?.dismiss() } }
+            ),
+            presenting: errorPresenter?.current
+        ) { _ in
+            Button("OK", role: .cancel) { errorPresenter?.dismiss() }
+        } message: { presented in
+            Text(presented.message)
+        }
+        // Make the presenter reachable from nested views and sheets.
+        .environment(errorPresenter)
         // Agreement sheet is at RootView level so it floats over
         // `ConnectingPane` while the connect Task waits for the user.
     }

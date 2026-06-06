@@ -43,12 +43,7 @@ public struct FilesView: View {
                 Divider()
                 transferDrawer
             }
-            if let error = viewModel.lastError {
-                Text(error)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .padding(.xsmall)
-            }
+            // Errors surface through the scene-root ErrorPresenter.
         }
         .padding(.bottom, .xlarge)
         .frame(alignment: .topLeading)

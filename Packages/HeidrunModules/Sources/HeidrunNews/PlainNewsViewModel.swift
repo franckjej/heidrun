@@ -18,11 +18,11 @@ public final class PlainNewsViewModel {
     public var draft: String = ""
 
     public private(set) var isLoading: Bool = false
-    public private(set) var lastError: String?
 
     private let events: AsyncStream<HotlineEvent>
     private let fetchFeed: @Sendable () async throws -> String
     private let postNew: @Sendable (String) async throws -> Void
+    private let present: @MainActor (Error) -> Void
 
     /// Task wrapping `observe()` when the VM is owned by a long-lived
     /// host (`ConnectionHandle`) rather than a transient view `.task`.
@@ -36,18 +36,24 @@ public final class PlainNewsViewModel {
     public init(
         events: AsyncStream<HotlineEvent>,
         fetchFeed: @escaping @Sendable () async throws -> String,
-        postNew: @escaping @Sendable (String) async throws -> Void
+        postNew: @escaping @Sendable (String) async throws -> Void,
+        present: @escaping @MainActor (Error) -> Void = { _ in }
     ) {
         self.events = events
         self.fetchFeed = fetchFeed
         self.postNew = postNew
+        self.present = present
     }
 
-    public convenience init(client: any HotlineClient) {
+    public convenience init(
+        client: any HotlineClient,
+        present: @escaping @MainActor (Error) -> Void = { _ in }
+    ) {
         self.init(
             events: client.events,
             fetchFeed: { [client] in try await client.fetchNewsFeed() },
-            postNew: { [client] text in try await client.postPlainNews(text) }
+            postNew: { [client] text in try await client.postPlainNews(text) },
+            present: present
         )
     }
 
@@ -83,9 +89,8 @@ public final class PlainNewsViewModel {
         defer { isLoading = false }
         do {
             feed = try await fetchFeed()
-            lastError = nil
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 
@@ -97,9 +102,8 @@ public final class PlainNewsViewModel {
         do {
             try await postNew(text)
             draft = ""
-            lastError = nil
         } catch {
-            lastError = String(describing: error)
+            present(error)
         }
     }
 }
