@@ -66,13 +66,12 @@ public struct ChatView: View {
     // MARK: - Header
 
     private var header: some View {
-        GroupBox {
-            HStack(spacing: Spacing.xxsmall.rawValue) {
-                Image(systemName: "bubble.left")
-                    .resizable()
-                    .scaledToFit()
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+        HStack(spacing: Spacing.xxsmall.rawValue) {
+            Image(systemName: "bubble.left")
+                .resizable()
+                .scaledToFit()
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 // Header title preference order:
                 //   1. Server-pushed chat subject (TX 119) — the
                 //      explicit topic when one exists. heidrun-server
@@ -82,44 +81,38 @@ public struct ChatView: View {
                 //      sessions) — gives third-party servers without
                 //      a topic a recognisable identity.
                 //   3. "Chat" — fallback when we have neither.
-                Text(headerTitle)
-                    .heidrunBody()
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .textSelection(.enabled)
-                    .contextMenu {
-                        Button("Copy") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(headerTitle, forType: .string)
-                        }
+            Text(headerTitle)
+                .heidrunBody()
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .textSelection(.enabled)
+                .contextMenu {
+                    Button("Copy") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(headerTitle, forType: .string)
                     }
-                Spacer()
-                    // Subject editing only meaningful for private chats — vanilla
-                    // Hotline servers don't accept a subject change on public chat.
-                if viewModel.chatScope != nil {
-                    Button {
-                        subjectDraft = viewModel.subject
-                        editingSubject = true
-                    } label: {
-                        Image(systemName: "text.badge.plus")
-                            .resizable()
-                            .scaledToFit()
-                            .font(.body)
-                            .frame(width: 16, height: 16)
-                    }
-                    .buttonStyle(.plain)
-                    .controlSize(.regular)
-                    .help("Set chat subject")
                 }
+            Spacer()
+                // Subject editing only meaningful for private chats — vanilla
+                // Hotline servers don't accept a subject change on public chat.
+            if viewModel.chatScope != nil {
+                Button {
+                    subjectDraft = viewModel.subject
+                    editingSubject = true
+                } label: {
+                    Image(systemName: "text.badge.plus")
+                        .resizable()
+                        .scaledToFit()
+                        .font(.body)
+                        .frame(width: 16, height: 16)
+                }
+                .buttonStyle(.plain)
+                .controlSize(.regular)
+                .help("Set chat subject")
             }
-            .font(.subheadline)
-            .padding(.horizontal, .xsmall)
-            .padding(.vertical, .xxxsmall)
         }
+        .filledHeaderBox()
         .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxsmall)
-        .frame(height: 40)
-        .background(.background)
     }
 
     /// Subject if the server pushed one; otherwise the bookmark name

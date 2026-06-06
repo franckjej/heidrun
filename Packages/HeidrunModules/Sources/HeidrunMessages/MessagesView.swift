@@ -80,57 +80,51 @@ public struct MessagesView: View {
     /// the conversation counter, and per-list actions on the trailing
     /// edge. 24pt content height like the other modules.
     private var breadcrumb: some View {
-        GroupBox {
-            HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
-                Image(systemName: "envelope")
-                    .resizable()
-                    .scaledToFit()
-                    .font(.subheadline)
-                    .frame(width: 20, height: 20)
+        HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+            Image(systemName: "envelope")
+                .resizable()
+                .scaledToFit()
+                .font(.subheadline)
+                .frame(width: 20, height: 20)
+                .foregroundStyle(.secondary)
+            Text("Conversations")
+                .heidrunBody()
+                .foregroundStyle(.primary)
+            if !viewModel.threads.isEmpty {
+                Text(verbatim: "(\(viewModel.threads.count))")
+                    .heidrunCaption()
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
-                Text("Conversations")
-                    .heidrunBody()
-                    .foregroundStyle(.primary)
-                if !viewModel.threads.isEmpty {
-                    Text(verbatim: "(\(viewModel.threads.count))")
-                        .heidrunCaption()
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
+            }
 
-                Spacer()
+            Spacer()
 
-                ActionButton(
-                    title: "Delete Conversation",
-                    systemImage: "trash",
-                    isEnabled: viewModel.activeThreadID != nil,
-                    role: .destructive,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    if let socket = viewModel.activeThreadID {
-                        viewModel.deleteConversation(socket: socket)
-                    }
-                }
-
-                ActionButton(
-                    title: "Delete All",
-                    systemImage: "trash.slash",
-                    isEnabled: !viewModel.threads.isEmpty,
-                    role: .destructive,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    confirmDeleteAll = true
+            ActionButton(
+                title: "Delete Conversation",
+                systemImage: "trash",
+                isEnabled: viewModel.activeThreadID != nil,
+                role: .destructive,
+                size: .small,
+                fontWeight: .light
+            ) {
+                if let socket = viewModel.activeThreadID {
+                    viewModel.deleteConversation(socket: socket)
                 }
             }
-            .font(.subheadline)
-            .padding(.horizontal, .xsmall)
-            .frame(height: 24)
+
+            ActionButton(
+                title: "Delete All",
+                systemImage: "trash.slash",
+                isEnabled: !viewModel.threads.isEmpty,
+                role: .destructive,
+                size: .small,
+                fontWeight: .light
+            ) {
+                confirmDeleteAll = true
+            }
         }
-        .background(.background)
+        .filledHeaderBox()
         .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxxsmall)
     }
 
     private var emptyList: some View {

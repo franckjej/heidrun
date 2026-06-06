@@ -1,0 +1,91 @@
+{
+  "configurations" : [
+    {
+      "id" : "A1B2C3D4-0000-4000-8000-000000000001",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Heidrun.xcodeproj",
+      "identifier" : "368D18D8D6EFFD51C993003B",
+      "name" : "Heidrun"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Heidrun.xcodeproj",
+        "identifier" : "368D18D8D6EFFD51C993003B",
+        "name" : "HeidrunAppTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunUI",
+        "identifier" : "HeidrunUITests",
+        "name" : "HeidrunUITests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/CommonTools",
+        "identifier" : "CommonToolsTests",
+        "name" : "CommonToolsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunModules",
+        "identifier" : "HeidrunChatTests",
+        "name" : "HeidrunChatTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunModules",
+        "identifier" : "HeidrunAgreementTests",
+        "name" : "HeidrunAgreementTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunModules",
+        "identifier" : "HeidrunMessagesTests",
+        "name" : "HeidrunMessagesTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunModules",
+        "identifier" : "HeidrunNewsTests",
+        "name" : "HeidrunNewsTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunModules",
+        "identifier" : "HeidrunFilesTests",
+        "name" : "HeidrunFilesTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunModules",
+        "identifier" : "HeidrunAdminTests",
+        "name" : "HeidrunAdminTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages/HeidrunModules",
+        "identifier" : "HeidrunBookmarksTests",
+        "name" : "HeidrunBookmarksTests"
+      }
+    }
+  ],
+  "version" : 1
+}

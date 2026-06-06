@@ -285,3 +285,24 @@ schemes:
       config: Debug
     archive:
       config: Release
+  # Aggregate scheme: runs EVERY client test in one shot — the app-shell
+  # bundle (HeidrunAppTests) plus all SwiftPM package test targets
+  # (HeidrunUI, CommonTools, and the seven HeidrunModules features).
+  # xcodegen can't list package test targets directly in a scheme's test
+  # action (it only validates project targets), so the membership lives
+  # in Heidrun.xctestplan, which references each package test target by
+  # container path. Edit that plan to add/remove test targets.
+  Heidrun-AllTests:
+    build:
+      targets:
+        Heidrun: all
+        HeidrunAppTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      testPlans:
+        - path: Heidrun.xctestplan
+          defaultPlan: true
+    archive:
+      config: Release

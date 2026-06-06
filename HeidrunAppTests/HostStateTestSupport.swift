@@ -178,6 +178,30 @@ extension HostState {
     }
 }
 
+// MARK: - Condition-based waiting
+
+/// Poll `condition` every 5 ms until it holds or `timeout` elapses, then
+/// return its final value. Replaces fixed `Task.sleep` guesses in the
+/// auto-reconnect suites: the state they assert on is mutated inside a
+/// spawned `Task { @MainActor in … }`, so a fixed window flakes when the
+/// serial MainActor executor is saturated by other suites running in
+/// parallel under a loaded machine (e.g. the all-tests scheme building +
+/// testing every target at once). Waiting for the actual condition is
+/// race-free yet returns the instant it is met.
+@MainActor
+@discardableResult
+func poll(
+    timeout: Duration = .seconds(2),
+    until condition: @MainActor () -> Bool
+) async -> Bool {
+    let deadline = ContinuousClock.now + timeout
+    while ContinuousClock.now < deadline {
+        if condition() { return true }
+        try? await Task.sleep(for: .milliseconds(5))
+    }
+    return condition()
+}
+
 // MARK: - Mutex
 
 /// Tiny lock-protected value holder for tests that need a `Sendable`

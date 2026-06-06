@@ -248,101 +248,95 @@ public struct FilesView: View {
     /// Same vertical metrics as the chat / user-list headers so they
     /// line up across the window.
     private var header: some View {
-        GroupBox {
-            HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
-                ActionButton(
-                    title: "Up",
-                    systemImage: "chevron.up",
-                    isEnabled: !viewModel.currentPath.isRoot,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    Task { await viewModel.navigateUp() }
-                }
-
-                Divider().frame(height: 16)
-
-                ActionButton(
-                    title: "Download",
-                    systemImage: "arrow.down.circle",
-                    isEnabled: !selectedFiles.isEmpty,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    requestDownloadMany(selectedFiles)
-                }
-
-                ActionButton(
-                    title: "Upload…",
-                    systemImage: "arrow.up.circle",
-                    isEnabled: true,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    pickAndUpload()
-                }
-
-                ActionButton(
-                    title: "New Folder…",
-                    systemImage: "folder.badge.plus",
-                    isEnabled: true,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    newFolderDraft = ""
-                    creatingFolder = true
-                }
-
-                ActionButton(
-                    title: "Quick Look",
-                    systemImage: "eye",
-                    isEnabled: previewableSelection != nil,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    if let entry = previewableSelection { presentPreview(for: entry) }
-                }
-
-                ActionButton(
-                    title: "Get Info",
-                    systemImage: "info.circle",
-                    isEnabled: singleSelection != nil,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    infoTarget = singleSelection
-                }
-
-                ActionButton(
-                    title: "Refresh",
-                    systemImage: "arrow.clockwise",
-                    isEnabled: !viewModel.isLoading,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    Task { await viewModel.refresh() }
-                }
-
-                Spacer(minLength: Spacing.xxsmall.rawValue)
-
-                ActionButton(
-                    title: "Delete",
-                    systemImage: "xmark.circle",
-                    isEnabled: !selectedEntries.isEmpty,
-                    role: .destructive,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    deleteTargets = selectedEntries
-                }
+        HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+            ActionButton(
+                title: "Up",
+                systemImage: "chevron.up",
+                isEnabled: !viewModel.currentPath.isRoot,
+                size: .small,
+                fontWeight: .light
+            ) {
+                Task { await viewModel.navigateUp() }
             }
-            .font(.subheadline)
-            .padding(.horizontal, .xsmall)
-            .frame(height: 24)
+
+            Divider().frame(height: 16)
+
+            ActionButton(
+                title: "Download",
+                systemImage: "arrow.down.circle",
+                isEnabled: !selectedFiles.isEmpty,
+                size: .small,
+                fontWeight: .light
+            ) {
+                requestDownloadMany(selectedFiles)
+            }
+
+            ActionButton(
+                title: "Upload…",
+                systemImage: "arrow.up.circle",
+                isEnabled: true,
+                size: .small,
+                fontWeight: .light
+            ) {
+                pickAndUpload()
+            }
+
+            ActionButton(
+                title: "New Folder…",
+                systemImage: "folder.badge.plus",
+                isEnabled: true,
+                size: .small,
+                fontWeight: .light
+            ) {
+                newFolderDraft = ""
+                creatingFolder = true
+            }
+
+            ActionButton(
+                title: "Quick Look",
+                systemImage: "eye",
+                isEnabled: previewableSelection != nil,
+                size: .small,
+                fontWeight: .light
+            ) {
+                if let entry = previewableSelection { presentPreview(for: entry) }
+            }
+
+            ActionButton(
+                title: "Get Info",
+                systemImage: "info.circle",
+                isEnabled: singleSelection != nil,
+                size: .small,
+                fontWeight: .light
+            ) {
+                infoTarget = singleSelection
+            }
+
+            ActionButton(
+                title: "Refresh",
+                systemImage: "arrow.clockwise",
+                isEnabled: !viewModel.isLoading,
+                size: .small,
+                fontWeight: .light
+            ) {
+                Task { await viewModel.refresh() }
+            }
+
+            Spacer(minLength: Spacing.xxsmall.rawValue)
+
+            ActionButton(
+                title: "Delete",
+                systemImage: "xmark.circle",
+                isEnabled: !selectedEntries.isEmpty,
+                role: .destructive,
+                size: .small,
+                fontWeight: .light
+            ) {
+                deleteTargets = selectedEntries
+            }
         }
-        .background(.background)
+        .filledHeaderBox()
         .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxxsmall)
     }
 
     private var breadcrumb: some View {

@@ -244,10 +244,13 @@ public final class MessagesViewModel {
         // Dock attention: bounce only when the user can't see the new
         // message — either the app isn't active or the active thread
         // is a different conversation. The system stops the bounce
-        // automatically when the app gains focus.
-        let isVisible = NSApp.isActive && activeThreadID == socket
-        if !isVisible, Self.dockBounceEnabled() {
-            NSApp.requestUserAttention(.criticalRequest)
+        // automatically when the app gains focus. `NSApp` is nil in
+        // headless unit tests, so skip the dock side-effects there.
+        if let application = NSApp {
+            let isVisible = application.isActive && activeThreadID == socket
+            if !isVisible, Self.dockBounceEnabled() {
+                application.requestUserAttention(.criticalRequest)
+            }
         }
         refreshDockBadge()
         onIncomingMessage?(socket)
@@ -258,12 +261,14 @@ public final class MessagesViewModel {
     /// label in place. When the user has disabled the badge in Settings,
     /// we clear the label so a previously-set value doesn't linger.
     private func refreshDockBadge() {
+        // `NSApp` is nil in headless unit tests — no dock tile to update.
+        guard let application = NSApp else { return }
         guard Self.dockBadgeEnabled() else {
-            NSApp.dockTile.badgeLabel = ""
+            application.dockTile.badgeLabel = ""
             return
         }
         let unread = threads.lazy.filter(\.hasUnread).count
-        NSApp.dockTile.badgeLabel = unread > 0 ? String(unread) : ""
+        application.dockTile.badgeLabel = unread > 0 ? String(unread) : ""
     }
 
     // MARK: - Settings keys

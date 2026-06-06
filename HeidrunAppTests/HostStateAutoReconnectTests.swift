@@ -60,7 +60,13 @@ struct HostStateAutoReconnectTests {
         let secondFake = FakeHotlineClient()
         let nextClients = Mutex<[FakeHotlineClient]>([firstFake, secondFake])
 
-        let coordinator = makeCoordinator(defaults: scratch.defaults)
+        // Park the scheduled retry so the post-disconnect `.connecting`
+        // window stays observable instead of racing through to `.connected`
+        // (which would reset the counter before we can read it).
+        let coordinator = makeCoordinator(
+            defaults: scratch.defaults,
+            sleep: { _ in try? await Task.sleep(for: .seconds(60)) }
+        )
         let state = makeTestHostState(
             connector: { _, _, _ in
                 var clients = nextClients.get()
@@ -83,8 +89,9 @@ struct HostStateAutoReconnectTests {
         // Server-side drop without "server error" prefix → policy should retry.
         firstFake.simulateDisconnect(reason: "Connection reset by peer")
 
-        // Wait briefly for the watcher to run.
-        try? await Task.sleep(for: .milliseconds(30))
+        // Wait until the watcher has scheduled the retry (counter bumped);
+        // the parked retry keeps the phase in `.connecting`.
+        await poll { coordinator.attempt == 1 }
 
         // Phase should be .connecting, not .failed; counter at 1.
         if case .connecting = state.phase {
@@ -92,6 +99,7 @@ struct HostStateAutoReconnectTests {
         } else {
             Issue.record("expected .connecting (auto-reconnect), got \(String(describing: state.phase))")
         }
+        coordinator.cancel()  // stop the parked retry Task
     }
 
     @Test("successful reconnect resets the counter")
@@ -270,7 +278,19 @@ struct HostStateAutoReconnectTests {
         scratch.defaults.set(3, forKey: AppStorageKeys.autoReconnectMaxAttempts)
         scratch.defaults.set(0, forKey: AppStorageKeys.autoReconnectDelaySeconds)
 
-        let settings = makeSettings()
+        // Unique address so the keychain entry + session password cache
+        // can't collide with the sibling suites that also connect to the
+        // shared "sample.example.com" while running in parallel. The shared
+        // key was the real flake here: a sibling's keychain teardown (or a
+        // cached empty read) clobbered the entry mid-retry, so the reconnect
+        // forwarded "" instead of the saved password. Mirrors the isolation
+        // already used by `manualRetryReadsKeychain` above.
+        let settings = ConnectionSettings(
+            name: "Test",
+            address: "coordinator-retry-\(UUID().uuidString).example.com",
+            port: 5500,
+            nickname: "tester"
+        )
         // Seed the keychain with a known password for this triple. Clean
         // up after the test so other test runs aren't perturbed.
         let key = KeychainPasswordStore.Key.canonical(
@@ -303,14 +323,10 @@ struct HostStateAutoReconnectTests {
         await state.waitForSettling()
 
         firstFake.simulateDisconnect(reason: "Connection reset by peer")
-        // Give the disconnect watcher a chance to flip phase to .connecting
-        // and schedule the retry — mirrors the pattern in
-        // `unexpectedDisconnectTriggersReconnect` above. Without this the
-        // helper polls observe phase still as `.connected` from the prior
-        // fake and exit before the second connector call happens.
-        try? await Task.sleep(for: .milliseconds(30))
-        await state.acknowledgeAgreementWhenReady()
-        await state.waitForSettling()
+        // Wait until auto-reconnect fires the second connect (both passwords
+        // recorded). Polling the real condition removes the fixed-delay race
+        // that flaked under the all-tests scheme.
+        await poll(timeout: .seconds(3)) { passwordsSeen.get().count == 2 }
 
         #expect(passwordsSeen.get() == ["seekrit", "seekrit"])
     }
@@ -343,10 +359,13 @@ struct HostStateAutoReconnectTests {
         await state.waitForSettling()
 
         firstFake.simulateDisconnect(reason: "Connection reset by peer")
-        // Give the disconnect watcher time to fire, the coordinator to
-        // schedule + execute the retry, and the retry's connector throw
-        // to land in the catch block.
-        try? await Task.sleep(for: .milliseconds(80))
+        // Wait for the failed retry to land us in `.failed` (the serverError
+        // throw stops the cycle). Condition-based so it can't race the fixed
+        // window under load.
+        await poll(timeout: .seconds(3)) {
+            if case .failed = state.phase { return true }
+            return false
+        }
 
         // Exactly 2 connector calls: initial connect + one failed retry.
         #expect(connectorCalls.get() == 2)
@@ -382,8 +401,13 @@ struct HostStateAutoReconnectTests {
         await state.waitForSettling()
 
         firstFake.simulateDisconnect(reason: "Connection reset by peer")
-        // Wait long enough for all retries to fire (delay 0 + scheduling).
-        try? await Task.sleep(for: .milliseconds(250))
+        // Wait for the retry chain to exhaust maxAttempts and settle in
+        // `.failed`. Condition-based: the fixed 250 ms window was the flake.
+        await poll(timeout: .seconds(5)) {
+            guard coordinator.attempt == 3 else { return false }
+            if case .failed = state.phase { return true }
+            return false
+        }
 
         // Initial connect + 3 reconnect attempts = 4 connector calls.
         #expect(connectorCalls.get() == 4)
@@ -417,7 +441,12 @@ struct HostStateAutoReconnectTests {
         await state.waitForSettling()
 
         firstFake.simulateDisconnect(reason: "server error 5: kicked by admin")
-        try? await Task.sleep(for: .milliseconds(50))
+        // The kick filter routes straight to `.failed` with no retry; wait
+        // for that transition instead of guessing at a fixed delay.
+        await poll(timeout: .seconds(3)) {
+            if case .failed = state.phase { return true }
+            return false
+        }
 
         // No reconnect attempt — only the initial connect ran.
         #expect(connectorCalls.get() == 1)

@@ -60,59 +60,44 @@ public struct AdminView: View {
 
     private var accountEdit: some View {
         VStack(alignment: .leading, spacing: 0) {
-
-            HStack(alignment: .center, spacing: 0) {
-                GroupBox {
-                    HStack(spacing: Spacing.xxsmall.rawValue) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
-                        TextField("Find login", text: $viewModel.findQuery)
-                            .textFieldStyle(.roundedBorder)
-                            .onSubmit {
-                                Task {
-                                    await viewModel.findAndLoad()
-                                }
-                            }
-                            .font(.subheadline)
+            HStack(spacing: Spacing.xxsmall.rawValue) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Find login", text: $viewModel.findQuery)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit {
+                        Task {
+                            await viewModel.findAndLoad()
+                        }
                     }
-                    .padding(.horizontal, .xsmall)
-                    .frame(height: 24)
-                }
-                .background(.background)
-                .padding(.vertical, .xxxsmall)
+                    .font(.subheadline)
 
                 Spacer()
 
-                HStack(spacing: Spacing.xxsmall.rawValue) {
-                    ActionButton(title: "", systemImage: "person.badge.plus", isEnabled: !(viewModel.loadedAccount == nil) || !viewModel.isWorking) {
-                        viewModel.startNew()
-                    }
-                    .help("New account")
-
-                    ActionButton(title: "", systemImage: "square.and.arrow.down", isEnabled: !saveDisabled) {
-                        Task { await viewModel.save() }
-                    }
-                    .help("Save")
-
-                    ActionButton(title: "", systemImage: "arrowshape.turn.up.left.circle", isEnabled: !viewModel.isDirty || viewModel.loadedAccount != nil || viewModel.isWorking == false) {
-                        Task { await viewModel.revert() }
-                    }
-                    .help("Revert")
-
-                    ActionButton(title: "Delete", systemImage: "trash", isEnabled: viewModel.loadedAccount != nil || viewModel.isWorking == false, role: .destructive) {
-                        if let loaded = viewModel.loadedAccount {
-                            pendingDeleteLogin = loaded
-                            showDeleteConfirmation = true
-                        }
-                    }
-                    .help("Delete")
+                ActionButton(title: "", systemImage: "person.badge.plus", isEnabled: !(viewModel.loadedAccount == nil) || !viewModel.isWorking) {
+                    viewModel.startNew()
                 }
-                .font(.subheadline)
-                .padding(.vertical, .xxxsmall)
-                .padding(.horizontal, .xsmall)
-                .frame(height: 40)
-                .background(.background)
+                .help("New account")
+
+                ActionButton(title: "", systemImage: "square.and.arrow.down", isEnabled: !saveDisabled) {
+                    Task { await viewModel.save() }
+                }
+                .help("Save")
+
+                ActionButton(title: "", systemImage: "arrowshape.turn.up.left.circle", isEnabled: !viewModel.isDirty || viewModel.loadedAccount != nil || viewModel.isWorking == false) {
+                    Task { await viewModel.revert() }
+                }
+                .help("Revert")
+
+                ActionButton(title: "Delete", systemImage: "trash", isEnabled: viewModel.loadedAccount != nil || viewModel.isWorking == false, role: .destructive) {
+                    if let loaded = viewModel.loadedAccount {
+                        pendingDeleteLogin = loaded
+                        showDeleteConfirmation = true
+                    }
+                }
+                .help("Delete")
             }
+            .filledHeaderBox()
             .padding(.horizontal, .xsmall)
 
             Divider()
@@ -123,7 +108,7 @@ public struct AdminView: View {
                         noticeLabel
                             .offset(y: 8)
                     }
-                Spacer()
+                Spacer() 
             }
             .background(.background)
             .frame(maxWidth: .infinity, alignment: .topLeading)

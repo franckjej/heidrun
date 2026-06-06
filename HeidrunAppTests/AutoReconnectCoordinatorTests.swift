@@ -114,8 +114,9 @@ struct AutoReconnectCoordinatorScheduleTests {
             sleep: { _ in }
         )
         coordinator.scheduleRetry { calls.set(calls.get() + 1) }
-        // Let the scheduled Task land.
-        try? await Task.sleep(for: .milliseconds(20))
+        // Wait for the scheduled Task's closure to land (condition, not a
+        // fixed guess — see `poll`).
+        await poll { calls.get() == 1 }
         #expect(coordinator.attempt == 1)
         #expect(coordinator.maxAttempts == 3)
         #expect(calls.get() == 1)
@@ -132,7 +133,7 @@ struct AutoReconnectCoordinatorScheduleTests {
             sleep: { duration in observedDelay.set(duration) }
         )
         coordinator.scheduleRetry { }
-        try? await Task.sleep(for: .milliseconds(20))
+        await poll { observedDelay.get() != nil }
         #expect(observedDelay.get() == .seconds(7))
     }
 
@@ -149,7 +150,8 @@ struct AutoReconnectCoordinatorScheduleTests {
         coordinator.scheduleRetry { calls.set(calls.get() + 1) }
         coordinator.scheduleRetry { calls.set(calls.get() + 1) }
         coordinator.scheduleRetry { calls.set(calls.get() + 1) }  // capped
-        try? await Task.sleep(for: .milliseconds(40))
+        // Exactly two attempts pass the cap; wait for both closures to run.
+        await poll { calls.get() == 2 }
         #expect(coordinator.attempt == 2)
         #expect(calls.get() == 2)
     }

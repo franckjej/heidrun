@@ -129,33 +129,29 @@ private struct PlainNewsScreen: View {
     }
 
     private var header: some View {
-        GroupBox {
-            HStack(spacing: Spacing.xxsmall.rawValue) {
-                Image(systemName: "newspaper")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Text("News")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button {
-                    Task { await viewModel.refresh() }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.body)
-                        .frame(width: 16, height: 16)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                .disabled(viewModel.isLoading)
-                .help("Reload news feed")
+        HStack(spacing: Spacing.xxsmall.rawValue) {
+            Image(systemName: "newspaper")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Text("News")
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Button {
+                Task { await viewModel.refresh() }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.body)
+                    .frame(width: 16, height: 16)
             }
-            .font(.subheadline)
-            .padding(.horizontal, .xsmall)
-            .frame(height: 24)
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+            .disabled(viewModel.isLoading)
+            .help("Reload news feed")
         }
-        .background(.background)
+        .filledHeaderBox()
         .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxxsmall)
     }
 
     @ViewBuilder
@@ -419,137 +415,131 @@ private struct ThreadedNewsScreen: View {
     // MARK: Breadcrumb / actions
 
     private var breadcrumb: some View {
-        GroupBox {
-            HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
-                Image(systemName: "house")
-                    .resizable()
-                    .scaledToFit()
-                    .font(.subheadline)
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(.secondary)
+        HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+            Image(systemName: "house")
+                .resizable()
+                .scaledToFit()
+                .font(.subheadline)
+                .frame(width: 20, height: 20)
+                .foregroundStyle(.secondary)
+            Button {
+                Task { await viewModel.navigate(toDepth: 0) }
+            } label: {
+                Text("News")
+                    .heidrunBody()
+            }
+            .buttonStyle(.plain)
+            .controlSize(.regular)
+            .foregroundStyle(viewModel.currentPath.isRoot ? .primary : .secondary)
+            .disabled(viewModel.currentPath.isRoot)
+
+            ForEach(Array(viewModel.currentPath.components.enumerated()), id: \.offset) { index, component in
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.tertiary)
+                    .fontWeight(.light)
+                    .imageScale(.small)
+                let isCurrent = index == viewModel.currentPath.components.count - 1
                 Button {
-                    Task { await viewModel.navigate(toDepth: 0) }
+                    Task { await viewModel.navigate(toDepth: index + 1) }
                 } label: {
-                    Text("News")
+                    Text(component)
                         .heidrunBody()
                 }
                 .buttonStyle(.plain)
-                .controlSize(.regular)
-                .foregroundStyle(viewModel.currentPath.isRoot ? .primary : .secondary)
-                .disabled(viewModel.currentPath.isRoot)
+                .controlSize(.small)
+                .foregroundStyle(isCurrent ? .primary : .secondary)
+                .disabled(isCurrent)
+            }
 
-                ForEach(Array(viewModel.currentPath.components.enumerated()), id: \.offset) { index, component in
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(.tertiary)
-                        .fontWeight(.light)
-                        .imageScale(.small)
-                    let isCurrent = index == viewModel.currentPath.components.count - 1
-                    Button {
-                        Task { await viewModel.navigate(toDepth: index + 1) }
-                    } label: {
-                        Text(component)
-                            .heidrunBody()
-                    }
-                    .buttonStyle(.plain)
-                    .controlSize(.small)
-                    .foregroundStyle(isCurrent ? .primary : .secondary)
-                    .disabled(isCurrent)
-                }
+            Spacer()
 
-                Spacer()
+            ActionButton(
+                title: "Copy Post",
+                systemImage: "doc.on.doc",
+                isEnabled: selectedThread != nil,
+                size: .small,
+                fontWeight: .light
+            ) {
+                copySelectedPost()
+            }
 
+            ActionButton(
+                title: "Copy Thread",
+                systemImage: "doc.on.doc.fill",
+                isEnabled: selectedThread != nil,
+                size: .small,
+                fontWeight: .light
+            ) {
+                copySelectedThread()
+            }
+
+            ActionButton(
+                title: "Edit Post…",
+                systemImage: "pencil",
+                isEnabled: canEditSelected,
+                size: .small,
+                fontWeight: .light
+            ) {
+                editSelected()
+            }
+
+            ActionButton(
+                title: "Delete Post…",
+                systemImage: "trash",
+                isEnabled: selectedThread != nil,
+                role: .destructive,
+                size: .small,
+                fontWeight: .light
+            ) {
+                deleteSelected()
+            }
+
+            Divider().frame(height: 16)
+
+            ActionButton(
+                title: "Copy Contents",
+                systemImage: "doc.on.clipboard",
+                isEnabled: viewModel.selectedBundle != nil && !viewModel.isGatheringCopy,
+                size: .small,
+                fontWeight: .light
+            ) {
+                copySelectedBundleContents()
+            }
+
+            ActionButton(
+                title: "New Bundle or Category…",
+                systemImage: "plus",
+                isEnabled: true,
+                size: .small,
+                fontWeight: .light
+            ) {
+                creatingBundle = true
+            }
+
+            if viewModel.selectedCategoryPath != nil {
                 ActionButton(
-                    title: "Copy Post",
-                    systemImage: "doc.on.doc",
-                    isEnabled: selectedThread != nil,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    copySelectedPost()
-                }
-
-                ActionButton(
-                    title: "Copy Thread",
-                    systemImage: "doc.on.doc.fill",
-                    isEnabled: selectedThread != nil,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    copySelectedThread()
-                }
-
-                ActionButton(
-                    title: "Edit Post…",
-                    systemImage: "pencil",
-                    isEnabled: canEditSelected,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    editSelected()
-                }
-
-                ActionButton(
-                    title: "Delete Post…",
-                    systemImage: "trash",
-                    isEnabled: selectedThread != nil,
-                    role: .destructive,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    deleteSelected()
-                }
-
-                Divider().frame(height: 16)
-
-                ActionButton(
-                    title: "Copy Contents",
-                    systemImage: "doc.on.clipboard",
-                    isEnabled: viewModel.selectedBundle != nil && !viewModel.isGatheringCopy,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    copySelectedBundleContents()
-                }
-
-                ActionButton(
-                    title: "New Bundle or Category…",
-                    systemImage: "plus",
+                    title: "New Thread…",
+                    systemImage: "square.and.pencil",
                     isEnabled: true,
                     size: .small,
                     fontWeight: .light
                 ) {
-                    creatingBundle = true
-                }
-
-                if viewModel.selectedCategoryPath != nil {
-                    ActionButton(
-                        title: "New Thread…",
-                        systemImage: "square.and.pencil",
-                        isEnabled: true,
-                        size: .small,
-                        fontWeight: .light
-                    ) {
-                        composing = true
-                    }
-                }
-
-                ActionButton(
-                    title: "Reload",
-                    systemImage: "arrow.clockwise",
-                    isEnabled: !viewModel.isLoading,
-                    size: .small,
-                    fontWeight: .light
-                ) {
-                    Task { await viewModel.refresh() }
+                    composing = true
                 }
             }
-            .font(.subheadline)
-            .padding(.horizontal, .xsmall)
-            .frame(height: 24)
+
+            ActionButton(
+                title: "Reload",
+                systemImage: "arrow.clockwise",
+                isEnabled: !viewModel.isLoading,
+                size: .small,
+                fontWeight: .light
+            ) {
+                Task { await viewModel.refresh() }
+            }
         }
-        .background(.background)
+        .filledHeaderBox()
         .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxxsmall)
     }
 
     // MARK: Left pane — folders + categories
