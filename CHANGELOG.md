@@ -3,6 +3,21 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- Errors now surface through one consistent alert. Failures that used to
+  pass silently now tell you what happened — most visibly a chat or private
+  message the server rejects (e.g. when your account isn't allowed to send),
+  plus failed file, news, and account-admin actions and bookmark
+  import/export.
+
+### Fixed
+- Roster desync after an automatic reconnect (e.g. when the server
+  restarts): a user who joined during the reconnect could be missing from
+  the user list even though chat showed them entering. The roster stays in
+  sync now.
+
 ## [1.0.1] — 2026-06-05
 
 ### Added
