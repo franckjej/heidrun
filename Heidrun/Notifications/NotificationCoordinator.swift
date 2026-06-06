@@ -1,5 +1,6 @@
 import Foundation
 import HeidrunCore
+import HeidrunChat
 import HeidrunFiles
 import HeidrunUI
 

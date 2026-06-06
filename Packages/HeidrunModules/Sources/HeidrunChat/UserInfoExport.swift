@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 import HeidrunCore
+import HeidrunUI
 
 /// Drag payload for a user → Finder, exporting the *full* info. A promise:
 /// the server round-trip (`fetch`) runs only when the drag is dropped, and

@@ -155,8 +155,11 @@ public struct MessagesView: View {
                 draft: $viewModel.draft,
                 onSend: {
                     Task {
-                        do { try await viewModel.sendDraft() }
-                        catch { errorPresenter?.present(error) }
+                        do {
+                            try await viewModel.sendDraft()
+                        } catch {
+                            errorPresenter?.present(error)
+                        }
                     }
                 }
             )

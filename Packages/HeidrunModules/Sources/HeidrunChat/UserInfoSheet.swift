@@ -1,5 +1,6 @@
 import SwiftUI
 import HeidrunCore
+import HeidrunUI
 import CommonTools
 
 /// Read-only modal showing extended profile info for a single user. The

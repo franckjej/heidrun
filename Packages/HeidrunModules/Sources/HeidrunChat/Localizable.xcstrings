@@ -34,6 +34,12 @@
         }
       }
     },
+    "(no name)" : {
+
+    },
+    "%@:" : {
+
+    },
     "Cancel" : {
       "localizations" : {
         "de" : {
@@ -62,6 +68,42 @@
     "Copy" : {
 
     },
+    "Copy Nickname" : {
+
+    },
+    "Couldn't fetch user list: %@" : {
+
+    },
+    "Couldn't load info: %@" : {
+
+    },
+    "Disconnect User" : {
+
+    },
+    "Disconnect…" : {
+
+    },
+    "Done" : {
+
+    },
+    "Edit Account" : {
+
+    },
+    "Edit Account…" : {
+
+    },
+    "Get Info" : {
+
+    },
+    "Get Info…" : {
+
+    },
+    "Info for %@" : {
+
+    },
+    "Profile" : {
+
+    },
     "Recent messages" : {
       "localizations" : {
         "de" : {
@@ -77,6 +119,9 @@
           }
         }
       }
+    },
+    "Retry" : {
+
     },
     "Send" : {
       "localizations" : {
@@ -123,6 +168,9 @@
         }
       }
     },
+    "Send Message" : {
+
+    },
     "Send message ⌘+⏎" : {
       "localizations" : {
         "de" : {
@@ -138,6 +186,9 @@
           }
         }
       }
+    },
+    "Send Message…" : {
+
     },
     "Set" : {
       "localizations" : {
@@ -204,6 +255,9 @@
           }
         }
       }
+    },
+    "Start Chat" : {
+
     },
     "Subject" : {
       "localizations" : {

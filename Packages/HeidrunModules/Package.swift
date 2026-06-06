@@ -28,7 +28,8 @@ let package = Package(
             dependencies: [
                 .product(name: "HeidrunCore", package: "heidrun-protocol"),
                 .product(name: "HeidrunUI",   package: "HeidrunUI"),
-                .product(name: "CommonTools", package: "CommonTools")
+                .product(name: "CommonTools", package: "CommonTools"),
+                "HeidrunAdmin"
             ],
             resources: [.process("Localizable.xcstrings")]
         ),
@@ -45,7 +46,8 @@ let package = Package(
             dependencies: [
                 .product(name: "HeidrunCore", package: "heidrun-protocol"),
                 .product(name: "HeidrunUI",   package: "HeidrunUI"),
-                .product(name: "CommonTools", package: "CommonTools")
+                .product(name: "CommonTools", package: "CommonTools"),
+                "HeidrunChat"
             ],
             resources: [.process("Localizable.xcstrings")]
         ),

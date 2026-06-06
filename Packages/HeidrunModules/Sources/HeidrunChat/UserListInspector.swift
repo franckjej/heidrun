@@ -1,5 +1,7 @@
 import SwiftUI
+import HeidrunAdmin
 import HeidrunCore
+import HeidrunUI
 import CommonTools
 
 /// Trailing-column inspector showing the current server's user roster.
@@ -104,7 +106,7 @@ public struct UserListInspector: View {
 
             ActionButton(
                 title: "Edit Account",
-                systemImage: "person.text.rectangle",
+                systemImage: HeidrunAdmin.AdminFeature.systemImage,
                 isEnabled: selectedUser != nil
             ) {
                 if let user = selectedUser { onEditAccount(user) }

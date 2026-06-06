@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 import HeidrunCore
+import HeidrunUI
 import CommonTools
 
 /// Per-row actions the AppKit user roster invokes. Closures so the

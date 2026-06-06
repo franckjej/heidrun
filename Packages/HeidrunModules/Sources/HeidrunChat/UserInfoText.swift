@@ -1,4 +1,5 @@
 import HeidrunCore
+import HeidrunUI
 
 /// Pure plain-text formatters for exporting a user's info (drag-out).
 public enum UserInfoText {

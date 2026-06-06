@@ -2,6 +2,7 @@ import Foundation
 import Observation
 import AppKit
 import HeidrunCore
+import HeidrunChat
 import HeidrunUI
 
 /// Per-user direct-message threads.
