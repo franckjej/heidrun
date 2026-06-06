@@ -21,6 +21,10 @@ public struct ChatView: View {
     @AppStorage("Heidrun.showChatJoinLeave")  private var showJoinLeave: Bool = true
     @AppStorage("Heidrun.chatInputHistoryEnabled") private var historyEnabled: Bool = true
 
+    /// Scene-root error sink, injected by `HostView`. Optional so the view
+    /// still renders in standalone previews/tests with no presenter.
+    @Environment(ErrorPresenter.self) private var errorPresenter: ErrorPresenter?
+
     public init(viewModel: ChatViewModel) {
         self._viewModel = State(initialValue: viewModel)
     }
@@ -235,7 +239,13 @@ public struct ChatView: View {
 
     private func submit() {
         Task {
-            try? await viewModel.sendDraft()
+            do {
+                try await viewModel.sendDraft()
+            } catch {
+                // A denied send (e.g. no sendChat after strict gating)
+                // used to vanish silently; surface it.
+                errorPresenter?.present(error)
+            }
         }
     }
 }

@@ -18,7 +18,6 @@ struct HostView: View {
     @State private var imRecipient: User?
     @State private var infoRecipient: User?
     @State private var disconnectCandidate: User?
-    @State private var editAccountError: String?
 
     private var handle: ConnectionHandle? { state?.currentHandle }
     private var errorPresenter: ErrorPresenter? { handle?.errorPresenter }
@@ -155,18 +154,6 @@ struct HostView: View {
             Button("OK", role: .cancel) { }
         } message: { entry in
             Text(entry.message)
-        }
-        .alert(
-            "Can't edit account",
-            isPresented: Binding(
-                get: { editAccountError != nil },
-                set: { if !$0 { editAccountError = nil } }
-            ),
-            presenting: editAccountError
-        ) { _ in
-            Button("OK", role: .cancel) { editAccountError = nil }
-        } message: { message in
-            Text(message)
         }
         // Single scene-root alert for every VM/sheet error routed through
         // the connection's ErrorPresenter.
@@ -314,13 +301,19 @@ struct HostView: View {
                         do {
                             let login = try await vm.requestInfo(for: user.socket).accountLogin
                             if login.isEmpty {
-                                editAccountError = "\(user.nickname) is connected as a guest — there's no account to edit."
+                                errorPresenter?.present(
+                                    title: "Can't edit account",
+                                    message: "\(user.nickname) is connected as a guest — there's no account to edit."
+                                )
                             } else {
                                 await adminVM?.selectExisting(login: login)
                                 selectedIdentifier = AdminFeature.identifier
                             }
                         } catch {
-                            editAccountError = "Couldn't look up \(user.nickname)'s account — you may not have permission to edit accounts."
+                            errorPresenter?.present(
+                                title: "Can't edit account",
+                                message: "Couldn't look up \(user.nickname)'s account — you may not have permission to edit accounts."
+                            )
                         }
                     }
                 },

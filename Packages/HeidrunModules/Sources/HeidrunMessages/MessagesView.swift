@@ -12,6 +12,10 @@ public struct MessagesView: View {
     @State private var viewModel: MessagesViewModel
     @State private var confirmDeleteAll = false
 
+    /// Scene-root error sink, injected by `HostView`. Optional so the view
+    /// still renders standalone with no presenter.
+    @Environment(ErrorPresenter.self) private var errorPresenter: ErrorPresenter?
+
     public init(viewModel: MessagesViewModel) {
         self._viewModel = State(initialValue: viewModel)
     }
@@ -149,7 +153,12 @@ public struct MessagesView: View {
                 emoji: viewModel.emoji(for: id),
                 isOnline: viewModel.isOnline(socket: id),
                 draft: $viewModel.draft,
-                onSend: { Task { try? await viewModel.sendDraft() } }
+                onSend: {
+                    Task {
+                        do { try await viewModel.sendDraft() }
+                        catch { errorPresenter?.present(error) }
+                    }
+                }
             )
         } else {
             ContentUnavailableView(
