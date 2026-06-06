@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import HeidrunCore
+import HeidrunUI
 
 /// View-model behind the public/private chat surface. Filters the host's
 /// `HotlineEvent` stream down to chat lines for one scope (public chat
@@ -72,6 +73,11 @@ public final class ChatViewModel {
     public private(set) var serverName: String = ""
 
     public var draft: String = ""
+
+    /// Shell-style history of messages sent from this composer. In-memory
+    /// and per-scope (each `ChatViewModel` owns its own). Drives ↑/↓
+    /// recall in the input field and the recent-messages menu.
+    public private(set) var inputHistory = InputHistory()
 
     /// `nil` for public chat, otherwise a private room.
     public let chatScope: ChatID?
@@ -266,7 +272,41 @@ public final class ChatViewModel {
         }
         guard !text.isEmpty else { return }
         try await sendChat(text, chatScope, false)
+        inputHistory.record(text)
         draft = ""
+    }
+
+    // MARK: - Input history
+
+    /// Most-recently-sent messages, newest first — for the recent menu.
+    public var recentMessages: [String] { inputHistory.recent }
+
+    /// ↑ recall: load the previous (older) sent message into the draft.
+    /// Returns the recalled text for the input field, or `nil` to leave
+    /// the field unchanged.
+    public func recallPreviousDraft() -> String? {
+        guard let recalled = inputHistory.recallPrevious(currentDraft: draft) else { return nil }
+        draft = recalled
+        return recalled
+    }
+
+    /// ↓ recall: load the next (newer) sent message, or restore the live
+    /// draft once past the newest entry. `nil` leaves the field unchanged.
+    public func recallNextDraft() -> String? {
+        guard let recalled = inputHistory.recallNext() else { return nil }
+        draft = recalled
+        return recalled
+    }
+
+    /// End any in-progress ↑/↓ navigation (called when the user edits).
+    public func resetHistoryNavigation() {
+        inputHistory.resetNavigation()
+    }
+
+    /// Drop a recent message into the draft to edit/resend.
+    public func useRecent(_ message: String) {
+        draft = message
+        inputHistory.resetNavigation()
     }
 
     /// No-op for the public scope — vanilla Hotline servers don't accept

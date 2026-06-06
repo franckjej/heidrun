@@ -271,6 +271,47 @@ struct ChatViewModelTests {
         #expect(viewModel.lines.isEmpty)
         #expect(viewModel.draft.isEmpty)
     }
+
+    // MARK: - Input history
+
+    @Test("sendDraft records the sent message into history, newest first")
+    @MainActor
+    func sendDraftRecordsHistory() async throws {
+        let (events, _) = AsyncStream<HotlineEvent>.makeStream()
+        let viewModel = ChatViewModel(events: events, sendChat: { _, _, _ in }, chatScope: nil)
+
+        viewModel.draft = "hello"
+        try await viewModel.sendDraft()
+        viewModel.draft = "world"
+        try await viewModel.sendDraft()
+
+        #expect(viewModel.recentMessages == ["world", "hello"])
+        #expect(viewModel.draft.isEmpty)
+    }
+
+    @Test("recall steps through sent history into the draft")
+    @MainActor
+    func recallStepsHistory() async throws {
+        let (events, _) = AsyncStream<HotlineEvent>.makeStream()
+        let viewModel = ChatViewModel(events: events, sendChat: { _, _, _ in }, chatScope: nil)
+        viewModel.draft = "first";  try await viewModel.sendDraft()
+        viewModel.draft = "second"; try await viewModel.sendDraft()
+
+        #expect(viewModel.recallPreviousDraft() == "second")
+        #expect(viewModel.draft == "second")
+        #expect(viewModel.recallPreviousDraft() == "first")
+        #expect(viewModel.recallNextDraft() == "second")
+    }
+
+    @Test("useRecent loads a message into the draft")
+    @MainActor
+    func useRecentLoadsDraft() async throws {
+        let (events, _) = AsyncStream<HotlineEvent>.makeStream()
+        let viewModel = ChatViewModel(events: events, sendChat: { _, _, _ in }, chatScope: nil)
+        viewModel.draft = "earlier"; try await viewModel.sendDraft()
+        viewModel.useRecent("earlier")
+        #expect(viewModel.draft == "earlier")
+    }
 }
 
 @Suite("ChatFeature")
