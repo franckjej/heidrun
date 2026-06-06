@@ -62,6 +62,22 @@
     "Copy" : {
 
     },
+    "Recent messages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Nachrichten"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近のメッセージ"
+          }
+        }
+      }
+    },
     "Send" : {
       "localizations" : {
         "de" : {

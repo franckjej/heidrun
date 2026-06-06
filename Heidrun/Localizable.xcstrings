@@ -749,6 +749,22 @@
         }
       }
     },
+    "Can't edit account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto kann nicht bearbeitet werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アカウントを編集できません"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "de" : {
@@ -2079,6 +2095,22 @@
         }
       }
     },
+    "Input history" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingabeverlauf"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "入力履歴"
+          }
+        }
+      }
+    },
     "Keep" : {
       "localizations" : {
         "de" : {
@@ -2796,6 +2828,22 @@
         }
       }
     },
+    "Press ↑ in the chat input to recall earlier messages, plus a recent-messages menu by the Send button. Kept in memory only and cleared when you disconnect." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drücke ↑ im Chat-Eingabefeld, um frühere Nachrichten abzurufen — plus ein Menü mit letzten Nachrichten neben der Senden-Schaltfläche. Wird nur im Speicher gehalten und beim Trennen gelöscht."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チャット入力欄で↑を押すと以前のメッセージを呼び出せます。送信ボタンの横には最近のメッセージのメニューもあります。メモリ内にのみ保持され、切断時に消去されます。"
+          }
+        }
+      }
+    },
     "Preview" : {
       "localizations" : {
         "de" : {
@@ -3049,6 +3097,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近のサーバーを記憶"
+          }
+        }
+      }
+    },
+    "Remember recently sent messages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zuletzt gesendete Nachrichten merken"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近送信したメッセージを記憶する"
           }
         }
       }

@@ -168,6 +168,38 @@
         }
       }
     },
+    "Edit Account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto bearbeiten"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アカウントを編集"
+          }
+        }
+      }
+    },
+    "Edit Account…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto bearbeiten…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アカウントを編集…"
+          }
+        }
+      }
+    },
     "Get Info" : {
       "localizations" : {
         "de" : {
@@ -350,6 +382,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "メッセージを送信…"
+          }
+        }
+      }
+    },
+    "Something went wrong" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Etwas ist schiefgelaufen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "問題が発生しました"
           }
         }
       }
