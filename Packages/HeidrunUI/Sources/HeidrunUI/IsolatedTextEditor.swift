@@ -36,6 +36,18 @@ public struct IsolatedTextEditor: NSViewRepresentable {
     /// + `.onAppear { flag = true }` for callers that want the input
     /// ready to type into immediately on view appear.
     public var autoFocus: Bool
+    /// Recall the previous (older) history entry — invoked on ↑ when the
+    /// caret is on the first line. Return the text to load, or `nil` to
+    /// leave the field unchanged. A `nil` callback leaves ↑ behaving
+    /// normally (cursor movement).
+    public var onHistoryPrevious: (() -> String?)?
+    /// Recall the next (newer) history entry — invoked on ↓ when the
+    /// caret is on the last line. Return the text to load, or `nil` to
+    /// fall through to normal cursor movement.
+    public var onHistoryNext: (() -> String?)?
+    /// Invoked when the user edits (any key other than the history
+    /// arrows) so the owner can end history navigation.
+    public var onEdit: (() -> Void)?
 
     public init(
         text: Binding<String>,
@@ -44,7 +56,10 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         maxHeight: CGFloat? = nil,
         isRichText: Bool = false,
         autoFocus: Bool = false,
-        onSubmit: (() -> Void)? = nil
+        onSubmit: (() -> Void)? = nil,
+        onHistoryPrevious: (() -> String?)? = nil,
+        onHistoryNext: (() -> String?)? = nil,
+        onEdit: (() -> Void)? = nil
     ) {
         self._text = text
         self.font = font
@@ -53,6 +68,9 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         self.isRichText = isRichText
         self.autoFocus = autoFocus
         self.onSubmit = onSubmit
+        self.onHistoryPrevious = onHistoryPrevious
+        self.onHistoryNext = onHistoryNext
+        self.onEdit = onEdit
     }
 
     public func makeNSView(context: Context) -> NSScrollView {
@@ -69,6 +87,15 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         textView.string = text
         textView.onCommandSubmit = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onSubmit?()
+        }
+        textView.onHistoryPrevious = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onHistoryPrevious?() ?? nil
+        }
+        textView.onHistoryNext = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onHistoryNext?() ?? nil
+        }
+        textView.onEdit = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onEdit?()
         }
 
         let scrollView = NSScrollView()
@@ -94,6 +121,15 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         textView.font = font
         textView.onCommandSubmit = { [weak coordinator = context.coordinator] in
             coordinator?.parent.onSubmit?()
+        }
+        textView.onHistoryPrevious = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onHistoryPrevious?() ?? nil
+        }
+        textView.onHistoryNext = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onHistoryNext?() ?? nil
+        }
+        textView.onEdit = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.onEdit?()
         }
     }
 
@@ -141,6 +177,12 @@ final class IsolatedNSTextView: NSTextView {
 
     /// Called when the user presses ⌘↵. Assigned by `IsolatedTextEditor`.
     var onCommandSubmit: (() -> Void)?
+    /// ↑ on the first line — return the older history entry to load, or nil.
+    var onHistoryPrevious: (() -> String?)?
+    /// ↓ on the last line — return the newer history entry to load, or nil.
+    var onHistoryNext: (() -> String?)?
+    /// Any non-history key — lets the owner end history navigation.
+    var onEdit: (() -> Void)?
 
     override var undoManager: UndoManager? {
         Self.sharedUndoManager
@@ -168,14 +210,54 @@ final class IsolatedNSTextView: NSTextView {
     }
 
     override func keyDown(with event: NSEvent) {
-        // ⌘↵ (Return with Command held) → invoke the submit closure;
-        // anything else falls through to NSTextView's default
-        // (newline insertion, navigation keys, etc).
+        // ⌘↵ (Return with Command held) → invoke the submit closure.
         if event.modifierFlags.contains(.command),
            event.keyCode == 36 || event.keyCode == 76 {
             onCommandSubmit?()
             return
         }
+        // Shell-style history recall, edge-triggered so it doesn't fight
+        // multi-line cursor movement: ↑ recalls older only on the first
+        // line, ↓ recalls newer only on the last line.
+        if event.keyCode == 126, let recall = onHistoryPrevious, caretOnFirstLine {
+            // Consume even at the oldest entry — there's nowhere above to
+            // move the caret to anyway, and we don't want to end nav.
+            if let recalled = recall() { loadRecalledText(recalled) }
+            return
+        }
+        if event.keyCode == 125, let recall = onHistoryNext, caretOnLastLine {
+            if let recalled = recall() {
+                loadRecalledText(recalled)
+                return
+            }
+            // recall() == nil → not navigating: fall through to normal ↓.
+        }
+        // Any other key edits the field — end history navigation.
+        onEdit?()
         super.keyDown(with: event)
+    }
+
+    /// Replace the field with a recalled history entry, caret at the end,
+    /// and push the change through the SwiftUI binding (setting `.string`
+    /// directly doesn't fire the delegate's `textDidChange`).
+    private func loadRecalledText(_ newText: String) {
+        string = newText
+        setSelectedRange(NSRange(location: (newText as NSString).length, length: 0))
+        didChangeText()
+    }
+
+    /// True when the caret sits on the first display line (no newline
+    /// before it) — the gate for ↑ recalling history.
+    private var caretOnFirstLine: Bool {
+        let caret = selectedRange().location
+        return !(string as NSString).substring(to: caret).contains("\n")
+    }
+
+    /// True when the caret/selection ends on the last line (no newline
+    /// after it) — the gate for ↓ recalling history.
+    private var caretOnLastLine: Bool {
+        let selection = selectedRange()
+        let end = min(selection.location + selection.length, (string as NSString).length)
+        return !(string as NSString).substring(from: end).contains("\n")
     }
 }
