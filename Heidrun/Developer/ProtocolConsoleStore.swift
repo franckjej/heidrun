@@ -171,9 +171,9 @@ final class ProtocolConsoleStore {
     }
 
     static let inboundNameOverrides: [UInt16: String] = [
-        113: "privateChatInvitation",   // outbound: requestAttention
-        117: "privateChatJoined",       // outbound: invite
-        118: "privateChatLeft",         // outbound: createPrivateChat
+        113: "privateChatInvitation",   // outbound 113 = invite (CHAT_INVITE)
+        117: "privateChatJoined",       // inbound only — notify chat user change
+        118: "privateChatLeft",         // inbound only — notify chat user delete
         211: "transferQueueUpdate",     // outbound: downloadFolderReply (we never send this)
         354: "userAccess"               // outbound: makeUser (admin); inbound: HXD "User Access" privileges push
     ]
@@ -193,15 +193,15 @@ final class ProtocolConsoleStore {
         109: "agreement",
         110: "kick",
         111: "disconnected",
-        112: "changeChatSubject",
-        113: "requestAttention",
-        114: "showAgreement",
+        112: "createPrivateChat",
+        113: "invite",
+        114: "rejectPrivateChat",
         115: "joinPrivateChat",
         116: "leavePrivateChat",
-        117: "invite",
-        118: "createPrivateChat",
+        117: "notifyChatUserChange",
+        118: "notifyChatUserDelete",
         119: "chatSubjectChanged",
-        120: "rejectPrivateChat",
+        120: "changeChatSubject",
         121: "agreeToAgreement",
         200: "listFiles",
         202: "downloadFile",
