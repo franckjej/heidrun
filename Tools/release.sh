@@ -63,8 +63,18 @@ APP="build/Heidrun.xcarchive/Products/Applications/Heidrun.app"
 SHORT="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")"
 BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info.plist")"
 [[ "$SHORT" == "$VERSION" ]] || { echo "✗ archived version ($SHORT) != requested ($VERSION)" >&2; exit 1; }
-codesign -dvv "$APP" 2>&1 | grep -q "Daubit & Francke GmbH" || {
-    echo "✗ archived app is NOT signed by the GmbH Developer ID identity" >&2; exit 1; }
+# Capture codesign output into a variable (no pipe → no SIGPIPE/pipefail
+# false-negative, no dependency on whichever `grep` is on PATH) and match
+# the exact signing identity with a bash substring test. On mismatch,
+# echo what codesign actually reported so the failure is self-diagnosing.
+SIG_INFO="$(codesign -dvv "$APP" 2>&1 || true)"
+if [[ "$SIG_INFO" != *"$SIGN_ID"* ]]; then
+    echo "✗ archived app is NOT signed by the GmbH Developer ID identity" >&2
+    echo "  expected identity: $SIGN_ID" >&2
+    echo "  codesign reported:" >&2
+    printf '%s\n' "$SIG_INFO" | /usr/bin/grep -i "Authority=" >&2 || true
+    exit 1
+fi
 DMG="Releases/Heidrun-${SHORT}-${BUILD}.dmg"
 
 # --- DMG → codesign → notarize → staple --------------------------------------
