@@ -539,10 +539,36 @@
       }
     },
     "Your account isn't allowed to administer accounts" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr Konto darf keine Konten verwalten."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お使いのアカウントにはアカウントを管理する権限がありません"
+          }
+        }
+      }
     },
     "Your account isn't allowed to disconnect users" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr Konto darf keine Benutzer trennen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お使いのアカウントにはユーザーを切断する権限がありません"
+          }
+        }
+      }
     }
   },
   "version" : "1.2"

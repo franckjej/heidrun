@@ -1026,7 +1026,20 @@
       }
     },
     "Your account isn't allowed to post news" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ihr Konto darf keine Nachrichten veröffentlichen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "お使いのアカウントにはニュースを投稿する権限がありません"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
