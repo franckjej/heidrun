@@ -26,6 +26,18 @@ public final class ThreadedNewsViewModel {
     public private(set) var bundles: [NewsBundle] = []
     public private(set) var selectedBundleID: NewsBundle.ID?
 
+    /// Connected account's privileges (fed by the host from the User Access
+    /// push). Fail-open until set. UI hint only — the server still enforces.
+    public private(set) var selfPrivileges: UserPrivileges = []
+    public private(set) var hasPrivilegeInfo: Bool = false
+    public func updatePrivileges(_ privileges: UserPrivileges) {
+        selfPrivileges = privileges
+        hasPrivilegeInfo = true
+    }
+    public func permits(_ privilege: UserPrivileges) -> Bool {
+        !hasPrivilegeInfo || selfPrivileges.contains(privilege)
+    }
+
     // MARK: - Right pane
 
     public private(set) var threads: [NewsThread] = []

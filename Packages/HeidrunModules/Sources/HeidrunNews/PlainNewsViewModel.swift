@@ -19,6 +19,18 @@ public final class PlainNewsViewModel {
 
     public private(set) var isLoading: Bool = false
 
+    /// Connected account's privileges (fed by the host from the User Access
+    /// push). Fail-open until set. UI hint only — the server still enforces.
+    public private(set) var selfPrivileges: UserPrivileges = []
+    public private(set) var hasPrivilegeInfo: Bool = false
+    public func updatePrivileges(_ privileges: UserPrivileges) {
+        selfPrivileges = privileges
+        hasPrivilegeInfo = true
+    }
+    public func permits(_ privilege: UserPrivileges) -> Bool {
+        !hasPrivilegeInfo || selfPrivileges.contains(privilege)
+    }
+
     private let events: AsyncStream<HotlineEvent>
     private let fetchFeed: @Sendable () async throws -> String
     private let postNew: @Sendable (String) async throws -> Void

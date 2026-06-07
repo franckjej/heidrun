@@ -212,8 +212,10 @@ private struct PlainNewsScreen: View {
                 .controlSize(.large)
                 .padding(.horizontal, .small)
                 .keyboardShortcut(.return, modifiers: .command)
-                .disabled(isDraftEmpty)
-                .help("Post draft (⌘↩)")
+                .disabled(isDraftEmpty || !viewModel.permits(.postNews))
+                .help(viewModel.permits(.postNews)
+                    ? "Post draft (⌘↩)"
+                    : "Your account isn't allowed to post news")
             }
             // Errors surface through the scene-root ErrorPresenter.
         }
@@ -497,7 +499,7 @@ private struct ThreadedNewsScreen: View {
             ActionButton(
                 title: "New Bundle or Category…",
                 systemImage: "plus",
-                isEnabled: true,
+                isEnabled: viewModel.permits(.createNewsBundles) || viewModel.permits(.createCategories),
                 size: .small,
                 fontWeight: .light
             ) {
@@ -508,7 +510,7 @@ private struct ThreadedNewsScreen: View {
                 ActionButton(
                     title: "New Thread…",
                     systemImage: "square.and.pencil",
-                    isEnabled: true,
+                    isEnabled: viewModel.permits(.postNews),
                     size: .small,
                     fontWeight: .light
                 ) {
@@ -582,10 +584,12 @@ private struct ThreadedNewsScreen: View {
                 items.append(.normal(String(localized: "Copy Contents", bundle: .module)) {
                     Task { await actions.copyContents(bundle) }
                 })
-                items.append(.separator)
-                items.append(.destructive(String(localized: "Delete…", bundle: .module)) {
-                    deleteTarget = bundle
-                })
+                if viewModel.permits(bundle.kind == .bundle ? .deleteNewsBundles : .deleteCategories) {
+                    items.append(.separator)
+                    items.append(.destructive(String(localized: "Delete…", bundle: .module)) {
+                        deleteTarget = bundle
+                    })
+                }
                 return items
             }
         )
@@ -662,21 +666,25 @@ private struct ThreadedNewsScreen: View {
                 Task { await viewModel.openThread(thread) }
             },
             menuItems: { thread in
-                var items: [ThreadMenuItem] = [
-                    .normal(String(localized: "Reply…", bundle: .module)) {
+                var items: [ThreadMenuItem] = []
+                if viewModel.permits(.postNews) {
+                    items.append(.normal(String(localized: "Reply…", bundle: .module)) {
                         actions.onReply(thread)
-                    },
-                    .separator
-                ]
-                if actions.canEdit(thread) {
+                    })
+                }
+                if actions.canEdit(thread), viewModel.permits(.postNews) {
                     items.append(.normal(String(localized: "Edit…", bundle: .module)) {
                         actions.onEdit(thread)
                     })
                 }
-                items.append(.destructive(String(localized: "Delete…", bundle: .module)) {
-                    actions.onConfirmDelete(thread)
-                })
-                items.append(.separator)
+                if viewModel.permits(.deleteArticles) {
+                    items.append(.destructive(String(localized: "Delete…", bundle: .module)) {
+                        actions.onConfirmDelete(thread)
+                    })
+                }
+                if !items.isEmpty {
+                    items.append(.separator)
+                }
                 items.append(.normal(String(localized: "Copy Post", bundle: .module)) {
                     actions.copyPost(thread)
                 })
