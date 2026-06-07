@@ -251,8 +251,10 @@ struct UserTableView: NSViewRepresentable {
             add(String(localized: "Get Info…", bundle: .module)) { [actions = parent.actions] in
                 actions.getInfo(user)
             }
-            add(String(localized: "Edit Account…", bundle: .module),
-                isEnabled: parent.actions.canEditAccounts) { [actions = parent.actions] in
+            add(
+                String(localized: "Edit Account…", bundle: .module),
+                isEnabled: parent.actions.canEditAccounts
+            ) { [actions = parent.actions] in
                 actions.editAccount(user)
             }
             menu.addItem(.separator())
@@ -260,8 +262,10 @@ struct UserTableView: NSViewRepresentable {
                 self?.copy(user)
             }
             menu.addItem(.separator())
-            add(String(localized: "Disconnect…", bundle: .module),
-                isEnabled: parent.actions.canDisconnect) { [actions = parent.actions] in
+            add(
+                String(localized: "Disconnect…", bundle: .module),
+                isEnabled: parent.actions.canDisconnect
+            ) { [actions = parent.actions] in
                 actions.disconnect(user)
             }
         }
