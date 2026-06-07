@@ -80,18 +80,15 @@ public final class IconSet {
     public func cgImage(forID id: Int) -> CGImage? {
         if let cached = cgImageCache[id] { return cached }
         guard let entry = entriesByID[id] else {
-            logMissingOnce(id, "no manifest entry")
             return nil
         }
         guard let url = resolveURL(entry) else {
-            logMissingOnce(id, "bundle URL lookup failed for \(entry.file)")
             return nil
         }
         guard
             let source = CGImageSourceCreateWithURL(url as CFURL, nil),
             let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
         else {
-            logMissingOnce(id, "CGImageSource decode failed for \(entry.file)")
             return nil
         }
         cgImageCache[id] = image
@@ -102,15 +99,12 @@ public final class IconSet {
     public func image(forID id: Int) -> NSImage? {
         if let cached = nsImageCache[id] { return cached }
         guard let entry = entriesByID[id] else {
-            logMissingOnce(id, "no manifest entry")
             return nil
         }
         guard let url = resolveURL(entry) else {
-            logMissingOnce(id, "bundle URL lookup failed for \(entry.file)")
             return nil
         }
         guard let image = NSImage(contentsOf: url) else {
-            logMissingOnce(id, "NSImage decode failed for \(entry.file)")
             return nil
         }
         let pixelWidth = fixedDimensions?.width ?? entry.width
@@ -120,11 +114,6 @@ public final class IconSet {
         return image
     }
     #endif
-
-    private func logMissingOnce(_ id: Int, _ reason: String) {
-        guard loggedMissingIDs.insert(id).inserted else { return }
-        IconCatalog.log("[\(name)] icon \(id): \(reason)")
-    }
 }
 
 @MainActor
@@ -146,7 +135,6 @@ public final class IconCatalog {
             let decoded = try? JSONDecoder().decode([IconCatalogEntry].self, from: data) {
             entries = decoded
         } else {
-            Self.log("manifest not found in \(bundle.bundleURL.lastPathComponent); empty catalog")
             entries = []
         }
 
@@ -212,10 +200,6 @@ public final class IconCatalog {
         let base = pieces.dropLast().joined(separator: ".")
         let ext = pieces.last.map(String.init) ?? ""
         return bundle.url(forResource: base, withExtension: ext)
-            ?? bundle.url(forResource: file, withExtension: nil)
-    }
-
-    nonisolated static func log(_ message: String) {
-        FileHandle.standardError.write(Data("[IconCatalog] \(message)\n".utf8))
+        ?? bundle.url(forResource: file, withExtension: nil)
     }
 }

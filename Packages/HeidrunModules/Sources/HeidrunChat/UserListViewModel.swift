@@ -38,12 +38,10 @@ public final class UserListViewModel {
             // round-trip — caller is responsible for accuracy.
             users = initialRoster
             loadError = nil
-            Self.logUsers("seeded", users: users)
         } else {
             do {
                 users = try await client.fetchUserList()
                 loadError = nil
-                Self.logUsers("fetched", users: users)
             } catch {
                 loadError = String(describing: error)
             }
@@ -94,7 +92,6 @@ public final class UserListViewModel {
             users[index].icon = icon
             users[index].nickname = nickname
             users[index].emoji = emoji
-            Self.log("local self-change socket=\(socket) icon=\(icon) nick=\(nickname)")
         }
     }
 
@@ -109,39 +106,20 @@ public final class UserListViewModel {
             // depth behind the HeidrunCore engine fix that stops privs-only
             // 354 from decoding to an empty roster in the first place.
             guard !list.isEmpty else {
-                Self.log("ignored empty userListReceived push")
                 break
             }
             users = list
             loadError = nil
-            Self.logUsers("received", users: list)
         case .userChanged(let user):
             if let idx = users.firstIndex(where: { $0.socket == user.socket }) {
                 users[idx] = user
             } else {
                 users.append(user)
             }
-            Self.log("changed socket=\(user.socket) icon=\(user.icon) nick=\(user.nickname)")
         case .userLeft(let socket):
             users.removeAll { $0.socket == socket }
         default:
             break
         }
-    }
-
-    nonisolated private static func log(_ message: String) {
-        FileHandle.standardError.write(Data("[UserList] \(message)\n".utf8))
-    }
-
-    nonisolated private static func logUsers(_ source: String, users: [User]) {
-        let summary = users
-            .prefix(20)
-            .map { user in
-                let statusHex = String(user.status.rawValue, radix: 16, uppercase: false)
-                return "\(user.socket):icon=\(user.icon):color=\(user.status.color):status=0x\(statusHex):\(user.nickname)"
-            }
-            .joined(separator: ", ")
-        let suffix = users.count > 20 ? " (+\(users.count - 20) more)" : ""
-        log("\(source) \(users.count) user(s) — \(summary)\(suffix)")
     }
 }
