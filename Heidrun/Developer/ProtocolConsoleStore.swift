@@ -163,7 +163,8 @@ final class ProtocolConsoleStore {
 
     /// Some IDs mean different things server→client than client→server
     /// (e.g. TX 354 is our outbound `makeUser` admin call, but inbound
-    /// it's the HXD/Mobius `userList` push).
+    /// it's the HXD "User Access" privileges push — NOT a user list; the
+    /// roster comes from the TX 300 reply).
     static func inboundName(for transactionID: UInt16) -> String? {
         if let override = inboundNameOverrides[transactionID] { return override }
         return transactionNames[transactionID]
@@ -174,7 +175,7 @@ final class ProtocolConsoleStore {
         117: "privateChatJoined",       // outbound: invite
         118: "privateChatLeft",         // outbound: createPrivateChat
         211: "transferQueueUpdate",     // outbound: downloadFolderReply (we never send this)
-        354: "userList"                 // outbound: makeUser (admin); HXD pushes user list / privs here
+        354: "userAccess"               // outbound: makeUser (admin); inbound: HXD "User Access" privileges push
     ]
 
     /// Stays in sync with `PacketObserver.knownRequestIDs` and the
