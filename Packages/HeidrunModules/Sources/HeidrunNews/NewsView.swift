@@ -466,7 +466,7 @@ private struct ThreadedNewsScreen: View {
             ActionButton(
                 title: "Edit Post…",
                 systemImage: "pencil",
-                isEnabled: canEditSelected,
+                isEnabled: canEditSelected && viewModel.permits(.postNews),
                 size: .small,
                 fontWeight: .light
             ) {
@@ -476,7 +476,7 @@ private struct ThreadedNewsScreen: View {
             ActionButton(
                 title: "Delete Post…",
                 systemImage: "trash",
-                isEnabled: selectedThread != nil,
+                isEnabled: selectedThread != nil && viewModel.permits(.deleteArticles),
                 role: .destructive,
                 size: .small,
                 fontWeight: .light
