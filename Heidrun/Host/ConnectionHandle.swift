@@ -198,12 +198,14 @@ final class ConnectionHandle: Identifiable {
                 guard case let .userAccessReceived(privileges) = event else { continue }
                 self?.selfPrivileges = privileges
                 self?.hasPrivilegeInfo = true
+                self?.filesVM.updatePrivileges(privileges)
             }
         }
         let seededPrivileges = await client.connectionInfo.privileges
         if !seededPrivileges.isEmpty {
             selfPrivileges = seededPrivileges
             hasPrivilegeInfo = true
+            filesVM.updatePrivileges(seededPrivileges)
         }
         // Fetch the roster once and share with both chat (seeds its
         // join-event dedup set) and the user-list inspector. Otherwise

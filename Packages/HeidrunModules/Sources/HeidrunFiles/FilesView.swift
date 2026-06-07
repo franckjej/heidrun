@@ -238,6 +238,18 @@ public struct FilesView: View {
         }
     }
 
+    /// Whether the current selection can be deleted given the account's
+    /// privileges — files need `deleteFiles`, folders need `deleteFolders`.
+    /// Fail-open via `permits` (a server that doesn't advertise privileges
+    /// keeps Delete enabled). UI hint only; the server still enforces.
+    private var canDeleteSelection: Bool {
+        let entries = selectedEntries
+        let hasFile = entries.contains { !$0.isFolder }
+        let hasFolder = entries.contains { $0.isFolder }
+        return (!hasFile || viewModel.permits(.deleteFiles))
+            && (!hasFolder || viewModel.permits(.deleteFolders))
+    }
+
     // MARK: - Header
 
     /// Same vertical metrics as the chat / user-list headers so they
@@ -259,7 +271,7 @@ public struct FilesView: View {
             ActionButton(
                 title: "Download",
                 systemImage: "arrow.down.circle",
-                isEnabled: !selectedFiles.isEmpty,
+                isEnabled: !selectedFiles.isEmpty && viewModel.permits(.downloadFiles),
                 size: .small,
                 fontWeight: .light
             ) {
@@ -269,7 +281,7 @@ public struct FilesView: View {
             ActionButton(
                 title: "Upload…",
                 systemImage: "arrow.up.circle",
-                isEnabled: true,
+                isEnabled: viewModel.permits(.uploadFiles),
                 size: .small,
                 fontWeight: .light
             ) {
@@ -279,7 +291,7 @@ public struct FilesView: View {
             ActionButton(
                 title: "New Folder…",
                 systemImage: "folder.badge.plus",
-                isEnabled: true,
+                isEnabled: viewModel.permits(.createFolders),
                 size: .small,
                 fontWeight: .light
             ) {
@@ -322,7 +334,7 @@ public struct FilesView: View {
             ActionButton(
                 title: "Delete",
                 systemImage: "xmark.circle",
-                isEnabled: !selectedEntries.isEmpty,
+                isEnabled: !selectedEntries.isEmpty && canDeleteSelection,
                 role: .destructive,
                 size: .small,
                 fontWeight: .light
@@ -414,7 +426,8 @@ public struct FilesView: View {
             actions: fileRowActions,
             writeFile: { [path = viewModel.currentPath] entry, url in
                 try await viewModel.downloadFile(entry, at: path, to: url)
-            }
+            },
+            permits: { viewModel.permits($0) }
         )
     }
 

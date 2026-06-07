@@ -12,6 +12,25 @@ public final class FilesViewModel {
     public internal(set) var files: [RemoteFile] = []
     public internal(set) var isLoading: Bool = false
 
+    /// The connected account's own privileges (from the server's "User
+    /// Access" push, fed by the host). UI hint only — the server still
+    /// enforces every file op. `hasPrivilegeInfo` stays false until the
+    /// server tells us, so `permits` is **fail-open** (controls enabled)
+    /// against servers that don't advertise privileges.
+    public internal(set) var selfPrivileges: UserPrivileges = []
+    public internal(set) var hasPrivilegeInfo: Bool = false
+
+    /// Called by the host when the "User Access" push arrives.
+    public func updatePrivileges(_ privileges: UserPrivileges) {
+        selfPrivileges = privileges
+        hasPrivilegeInfo = true
+    }
+
+    /// Enabled unless we KNOW the account lacks `privilege`.
+    public func permits(_ privilege: UserPrivileges) -> Bool {
+        !hasPrivilegeInfo || selfPrivileges.contains(privilege)
+    }
+
     /// Finished entries stay until `clearFinishedTransfers()` so the UI
     /// can show "done" rows.
     public internal(set) var transfers: [UInt32: TransferState] = [:]

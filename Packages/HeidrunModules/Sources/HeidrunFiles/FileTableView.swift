@@ -43,6 +43,10 @@ struct FileTableView: NSViewRepresentable {
     /// Streams a file's bytes into the URL the drop's file promise hands
     /// us (runs after the drop, off the drag loop).
     let writeFile: @Sendable (RemoteFile, URL) async throws -> Void
+    /// Privilege check for gating mutating menu items (UI hint; the server
+    /// still enforces). Defaults to permitting everything so other callers
+    /// behave as before.
+    var permits: (UserPrivileges) -> Bool = { _ in true }
 
     @Environment(\.heidrunContentSize) private var contentSize
 
@@ -308,6 +312,8 @@ struct FileTableView: NSViewRepresentable {
         func makeMenu() -> NSMenu {
             let menu = NSMenu()
             menu.delegate = self
+            // We set per-item isEnabled ourselves for privilege gating.
+            menu.autoenablesItems = false
             return menu
         }
 
@@ -329,9 +335,10 @@ struct FileTableView: NSViewRepresentable {
             }
         }
 
-        private func addItem(to menu: NSMenu, _ title: String, _ handler: @escaping () -> Void) {
+        private func addItem(to menu: NSMenu, _ title: String, isEnabled: Bool = true, _ handler: @escaping () -> Void) {
             let item = NSMenuItem(title: title, action: #selector(menuAction(_:)), keyEquivalent: "")
             item.target = self
+            item.isEnabled = isEnabled
             item.representedObject = handler
             menu.addItem(item)
         }
@@ -339,22 +346,43 @@ struct FileTableView: NSViewRepresentable {
         /// Today's per-item menu, unchanged.
         private func buildSingleMenu(_ menu: NSMenu, for entry: RemoteFile) {
             let actions = parent.actions
+            let permits = parent.permits
             if entry.isFolder {
                 addItem(to: menu, String(localized: "Open", bundle: .module)) { actions.navigateInto(entry) }
             } else {
-                addItem(to: menu, String(localized: "Download", bundle: .module)) { actions.download(entry) }
+                addItem(
+                    to: menu,
+                    String(localized: "Download", bundle: .module),
+                    isEnabled: permits(.downloadFiles)
+                ) { actions.download(entry) }
                 if actions.isPreviewable(entry) {
                     addItem(to: menu, String(localized: "Quick Look", bundle: .module)) { actions.quickLook(entry) }
                 }
             }
-            addItem(to: menu, String(localized: "Upload Here…", bundle: .module)) { actions.uploadHere() }
-            addItem(to: menu, String(localized: "New Folder…", bundle: .module)) { actions.newFolder() }
+            addItem(
+                to: menu,
+                String(localized: "Upload Here…", bundle: .module),
+                isEnabled: permits(.uploadFiles)
+            ) { actions.uploadHere() }
+            addItem(
+                to: menu,
+                String(localized: "New Folder…", bundle: .module),
+                isEnabled: permits(.createFolders)
+            ) { actions.newFolder() }
             menu.addItem(.separator())
             addItem(to: menu, String(localized: "Get Info…", bundle: .module)) { actions.getInfo(entry) }
-            addItem(to: menu, String(localized: "Rename…", bundle: .module)) { actions.rename(entry) }
+            addItem(
+                to: menu,
+                String(localized: "Rename…", bundle: .module),
+                isEnabled: permits(entry.isFolder ? .renameFolders : .renameFiles)
+            ) { actions.rename(entry) }
             addItem(to: menu, String(localized: "Refresh", bundle: .module)) { actions.refresh() }
             menu.addItem(.separator())
-            addItem(to: menu, String(localized: "Delete…", bundle: .module)) { actions.delete(entry) }
+            addItem(
+                to: menu,
+                String(localized: "Delete…", bundle: .module),
+                isEnabled: permits(entry.isFolder ? .deleteFolders : .deleteFiles)
+            ) { actions.delete(entry) }
         }
 
         /// Batch menu for a multi-selection. Single-item actions (Open,
@@ -362,20 +390,37 @@ struct FileTableView: NSViewRepresentable {
         /// a set. Download appears only when the set contains files.
         private func buildMultiMenu(_ menu: NSMenu, for targets: [RemoteFile]) {
             let actions = parent.actions
+            let permits = parent.permits
             let fileTargets = targets.filter { !$0.isFolder }
+            let folderTargets = targets.filter { $0.isFolder }
             if !fileTargets.isEmpty {
-                addItem(to: menu, String(localized: "Download \(fileTargets.count) Items", bundle: .module)) {
-                    actions.downloadMany(fileTargets)
-                }
+                addItem(
+                    to: menu,
+                    String(localized: "Download \(fileTargets.count) Items", bundle: .module),
+                    isEnabled: permits(.downloadFiles)
+                ) { actions.downloadMany(fileTargets) }
             }
-            addItem(to: menu, String(localized: "Upload Here…", bundle: .module)) { actions.uploadHere() }
-            addItem(to: menu, String(localized: "New Folder…", bundle: .module)) { actions.newFolder() }
+            addItem(
+                to: menu,
+                String(localized: "Upload Here…", bundle: .module),
+                isEnabled: permits(.uploadFiles)
+            ) { actions.uploadHere() }
+            addItem(
+                to: menu,
+                String(localized: "New Folder…", bundle: .module),
+                isEnabled: permits(.createFolders)
+            ) { actions.newFolder() }
             menu.addItem(.separator())
             addItem(to: menu, String(localized: "Refresh", bundle: .module)) { actions.refresh() }
             menu.addItem(.separator())
-            addItem(to: menu, String(localized: "Delete \(targets.count) Items…", bundle: .module)) {
-                actions.deleteMany(targets)
-            }
+            // A mixed selection needs both delete bits.
+            let canDeleteAll = (fileTargets.isEmpty || permits(.deleteFiles))
+                && (folderTargets.isEmpty || permits(.deleteFolders))
+            addItem(
+                to: menu,
+                String(localized: "Delete \(targets.count) Items…", bundle: .module),
+                isEnabled: canDeleteAll
+            ) { actions.deleteMany(targets) }
         }
 
         @objc private func menuAction(_ sender: NSMenuItem) {
