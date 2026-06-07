@@ -69,12 +69,25 @@ final class ProtocolConsoleStore {
 
     private var nextID: UInt64 = 1
 
-    /// `taskNumber → transactionID` for recent outbound requests. Used
-    /// to recognise the matching inbound reply (commonly stamped with
-    /// `transactionID = 0`).
-    private var pendingTaskNumbers: [UInt32: UInt16] = [:]
+    /// Correlation key for an outbound request awaiting its reply. Keyed by
+    /// BOTH the connection (`server`) and the task number: each connection
+    /// runs its own task counter from 1, so two simultaneous connections
+    /// routinely reuse the same task number (e.g. both ping on task 96).
+    /// Keying by task number alone let the first reply consume the slot and
+    /// rendered the second connection's reply as `???`.
+    private struct PendingKey: Hashable {
+        let server: String
+        let taskNumber: UInt32
+    }
 
-    private init() {}
+    /// `(server, taskNumber) → transactionID` for recent outbound requests.
+    /// Used to recognise the matching inbound reply (commonly stamped with
+    /// `transactionID = 0`).
+    private var pendingTaskNumbers: [PendingKey: UInt16] = [:]
+
+    /// `shared` is the production singleton; `init()` stays accessible so
+    /// tests can exercise a fresh, isolated store.
+    init() {}
 
     func append(
         server: String,
@@ -90,7 +103,7 @@ final class ProtocolConsoleStore {
         case .outbound:
             kind = .outboundRequest
             knownName = ProtocolConsoleStore.transactionName(for: transactionID)
-            pendingTaskNumbers[taskNumber] = transactionID
+            pendingTaskNumbers[PendingKey(server: server, taskNumber: taskNumber)] = transactionID
 
         case .inbound:
             // Only class-1 packets are real replies. A class-0 inbound
@@ -99,7 +112,8 @@ final class ProtocolConsoleStore {
             // HXD/Mobius servers recycle task numbers on unsolicited
             // pushes (which caused agreement/message rows to be
             // mislabelled as "getUserList reply" in early transcripts).
-            if classID == 1, let requestTX = pendingTaskNumbers.removeValue(forKey: taskNumber) {
+            let replyKey = PendingKey(server: server, taskNumber: taskNumber)
+            if classID == 1, let requestTX = pendingTaskNumbers.removeValue(forKey: replyKey) {
                 kind = .inboundReply(replyTo: requestTX)
                 knownName = transactionID == 0
                     ? ProtocolConsoleStore.transactionName(for: requestTX)

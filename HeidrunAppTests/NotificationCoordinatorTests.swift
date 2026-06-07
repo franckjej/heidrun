@@ -2,6 +2,7 @@ import Foundation
 import Testing
 @testable import Heidrun
 @testable import HeidrunUI
+import HeidrunChat
 import HeidrunCore
 
 @MainActor
