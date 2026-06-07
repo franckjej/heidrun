@@ -19,6 +19,11 @@ public struct UserListInspector: View {
     /// message instead.
     public var onEditAccount: (User) -> Void
     public var onDisconnect: (User) -> Void
+    /// Whether the connected account may disconnect (kick) users. Drives the
+    /// enabled state of the Disconnect button — a UI hint from the server's
+    /// "User Access" push; the server still enforces it. Defaults `true`
+    /// (fail-open) so servers that don't advertise privileges behave as before.
+    public var canDisconnect: Bool
     /// Optional fetch for a user's full info. Retained for API stability
     /// (the AppKit row drag-out exports basic local info synchronously).
     public var fetchUserInfo: (@Sendable (User) async throws -> UserInfo)?
@@ -36,6 +41,7 @@ public struct UserListInspector: View {
         onGetInfo: @escaping (User) -> Void,
         onEditAccount: @escaping (User) -> Void = { _ in },
         onDisconnect: @escaping (User) -> Void = { _ in },
+        canDisconnect: Bool = true,
         fetchUserInfo: (@Sendable (User) async throws -> UserInfo)? = nil
     ) {
         self.viewModel = viewModel
@@ -45,6 +51,7 @@ public struct UserListInspector: View {
         self.onGetInfo = onGetInfo
         self.onEditAccount = onEditAccount
         self.onDisconnect = onDisconnect
+        self.canDisconnect = canDisconnect
         self.fetchUserInfo = fetchUserInfo
     }
 
@@ -117,11 +124,14 @@ public struct UserListInspector: View {
             ActionButton(
                 title: "Disconnect User",
                 systemImage: "xmark.circle",
-                isEnabled: selectedUser != nil,
+                isEnabled: selectedUser != nil && canDisconnect,
                 role: .destructive
             ) {
                 if let user = selectedUser { onDisconnect(user) }
             }
+            .help(canDisconnect
+                ? "Disconnect the selected user"
+                : "Your account isn't allowed to disconnect users")
         }
         .font(.subheadline)
         .padding(.horizontal, .small)

@@ -83,7 +83,7 @@ final class NotificationCoordinator {
         case .disconnected, .agreementReceived, .chatReceived,
              .privateChatJoined, .privateChatLeft,
              .privateChatSubjectChanged, .transferQueueUpdated,
-             .userChanged, .userLeft, .userListReceived:
+             .userChanged, .userLeft, .userListReceived, .userAccessReceived:
             break
         }
     }

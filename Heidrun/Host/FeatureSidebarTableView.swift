@@ -12,6 +12,10 @@ import CommonTools
 struct FeatureSidebarTableView: NSViewRepresentable {
     let features: [any HeidrunFeature.Type]
     @Binding var selection: String?
+    /// Feature identifiers shown but greyed-out and non-selectable — e.g.
+    /// the Admin tab for an account without account-admin privileges. A UI
+    /// hint only; the server enforces privileges regardless.
+    var disabledIdentifiers: Set<String> = []
 
     @Environment(\.heidrunContentSize) private var contentSize
 
@@ -68,7 +72,7 @@ struct FeatureSidebarTableView: NSViewRepresentable {
             tableView.rowHeight = Self.rowHeight(for: contentSize)
             tableView.reloadData()
         }
-        context.coordinator.apply(features: features, to: tableView)
+        context.coordinator.apply(features: features, disabled: disabledIdentifiers, to: tableView)
         let targetRow = Self.rowIndex(for: selection, in: features)
         let targetRows: IndexSet = targetRow.map { IndexSet(integer: $0) } ?? IndexSet()
         if tableView.selectedRowIndexes != targetRows {
@@ -86,6 +90,7 @@ struct FeatureSidebarTableView: NSViewRepresentable {
         var parent: FeatureSidebarTableView
         weak var tableView: NSTableView?
         private var features: [any HeidrunFeature.Type] = []
+        private var lastDisabled: Set<String> = []
         private var applyingSelection = false
         /// Last `ContentSize` we applied. `nil` = first render.
         var lastContentSize: ContentSize?
@@ -95,17 +100,27 @@ struct FeatureSidebarTableView: NSViewRepresentable {
         func beginProgrammaticSelection() { applyingSelection = true }
         func endProgrammaticSelection() { applyingSelection = false }
 
-        func apply(features newValue: [any HeidrunFeature.Type], to tableView: NSTableView) {
+        func apply(features newValue: [any HeidrunFeature.Type], disabled: Set<String>, to tableView: NSTableView) {
             let identifiers = newValue.map { $0.identifier }
             let existingIdentifiers = features.map { $0.identifier }
-            guard identifiers != existingIdentifiers else { return }
+            // Reload when the list OR the disabled set changes — the latter
+            // so a row re-greys when privileges arrive after the first render.
+            let changed = identifiers != existingIdentifiers || disabled != lastDisabled
             features = newValue
+            lastDisabled = disabled
+            guard changed else { return }
             tableView.reloadData()
         }
 
         // MARK: Data source
 
         func numberOfRows(in tableView: NSTableView) -> Int { features.count }
+
+        /// Disabled feature rows are visible but not selectable.
+        func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
+            guard row >= 0, row < features.count else { return false }
+            return !parent.disabledIdentifiers.contains(features[row].identifier)
+        }
 
         // MARK: Delegate
 
@@ -117,6 +132,7 @@ struct FeatureSidebarTableView: NSViewRepresentable {
                 ?? FeatureSidebarCellView(identifier: identifier)
             cell.apply(contentSize: parent.contentSize)
             cell.configure(title: feature.displayName, systemImage: feature.systemImage)
+            cell.setEnabled(!parent.disabledIdentifiers.contains(feature.identifier))
             return cell
         }
 
@@ -163,6 +179,7 @@ final class FeatureSidebarCellView: NSTableCellView {
     private var iconHeightConstraint: NSLayoutConstraint?
     private var selected = false
     private var emphasized = true
+    private var rowEnabled = true
     private var currentSize: ContentSize = .default
 
     init(identifier: NSUserInterfaceItemIdentifier) {
@@ -245,17 +262,27 @@ final class FeatureSidebarCellView: NSTableCellView {
         updateAppearance()
     }
 
+    /// Grey-out for a feature the account can't use (e.g. Admin without
+    /// account-admin privileges). The row stays visible; selection is
+    /// blocked by the table delegate.
+    func setEnabled(_ isEnabled: Bool) {
+        guard rowEnabled != isEnabled else { return }
+        rowEnabled = isEnabled
+        updateAppearance()
+    }
+
     private func updateAppearance() {
         let fill: NSColor
-        if selected {
+        if selected && rowEnabled {
             fill = emphasized ? .selectedContentBackgroundColor : .unemphasizedSelectedContentBackgroundColor
         } else {
             fill = .clear
         }
         selectionView.layer?.backgroundColor = fill.cgColor
-        let onEmphasized = selected && emphasized
-        nameLabel.textColor = onEmphasized ? .white : .labelColor
-        iconView.contentTintColor = onEmphasized ? .white : .labelColor
+        let onEmphasized = selected && emphasized && rowEnabled
+        let baseColor: NSColor = rowEnabled ? .labelColor : .tertiaryLabelColor
+        nameLabel.textColor = onEmphasized ? .white : baseColor
+        iconView.contentTintColor = onEmphasized ? .white : baseColor
     }
 }
 

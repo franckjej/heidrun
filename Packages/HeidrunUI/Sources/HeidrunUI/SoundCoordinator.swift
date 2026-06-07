@@ -43,7 +43,7 @@ public final class SoundCoordinator {
         case .agreementReceived, .disconnected, .privateChatJoined,
              .privateChatLeft, .privateChatSubjectChanged,
              .transferQueueUpdated, .userChanged, .userLeft,
-             .userListReceived:
+             .userListReceived, .userAccessReceived:
             break
         }
     }

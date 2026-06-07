@@ -18,7 +18,7 @@ let package = Package(
         // `exact:` rather than `from:` because pre-release tags compare
         // lexically in SemVer (`"rc10" < "rc9"` since '1' < '9'), so
         // `from: "1.0.0-rc11"` would happily pick rc9 as "newer".
-        .package(url: "https://github.com/franckjej/heidrun-protocol.git", exact: "1.0.0-rc18"),
+        .package(url: "https://github.com/franckjej/heidrun-protocol.git", exact: "1.0.0-rc19"),
         .package(path: "../HeidrunUI"),
         .package(path: "../CommonTools")
     ],

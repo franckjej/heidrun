@@ -111,6 +111,20 @@ struct ConnectionHandleTests {
         let seed = handle.filesVM.currentMetadataSeed()
         #expect(seed?.serverName == "hl.example.com")
     }
+
+    @MainActor
+    @Test("admin gating is fail-open until a User Access push arrives")
+    func adminGatingFailOpenByDefault() {
+        // No 354 received yet ⇒ we must NOT disable anything. The server is
+        // the real check; disabling on unknown privileges would lock out
+        // users on servers that never advertise privileges (the bug this
+        // guards against). `permits`/`canAdministerAccounts` must fail-open.
+        let handle = ConnectionHandle(settings: makeSettings(), client: ConnectionHandleFakeClient())
+        #expect(handle.hasPrivilegeInfo == false)
+        #expect(handle.permits(.disconnectUsers))
+        #expect(handle.permits(.canBroadcast))
+        #expect(handle.canAdministerAccounts)
+    }
 }
 
 // MARK: - Test helpers

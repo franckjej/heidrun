@@ -57,6 +57,30 @@ final class ConnectionHandle: Identifiable {
 
     var phase: Phase = .connected
 
+    /// The connected account's own privileges, from the server's "User
+    /// Access" push (TX 354). UI-gating hint ONLY — the server enforces
+    /// every privilege per request regardless. `hasPrivilegeInfo` tracks
+    /// whether the server actually told us: gating is **fail-open** when it
+    /// hasn't (server never sent 354, or a non-Heidrun server), so controls
+    /// stay enabled and fall back to the optimistic "try → server-denied"
+    /// path rather than disabling everything.
+    private(set) var selfPrivileges: UserPrivileges = []
+    private(set) var hasPrivilegeInfo: Bool = false
+    private var privilegesTask: Task<Void, Never>?
+
+    /// Enabled unless we KNOW the account lacks `privilege`. Fail-open while
+    /// we have no privilege info.
+    func permits(_ privilege: UserPrivileges) -> Bool {
+        !hasPrivilegeInfo || selfPrivileges.contains(privilege)
+    }
+
+    /// Whether to enable the account-admin surface — any of the
+    /// account-management bits (or unknown privileges → fail-open).
+    var canAdministerAccounts: Bool {
+        !hasPrivilegeInfo
+            || !selfPrivileges.isDisjoint(with: [.readUser, .createUser, .modifyUser, .deleteUser])
+    }
+
     /// Fetched via TX 212 `downloadBanner` shortly after login. `nil`
     /// while in flight or when the server has no banner.
     var serverBanner: ServerBanner?
@@ -158,6 +182,25 @@ final class ConnectionHandle: Identifiable {
     /// Called once on connection ready. Idempotent because each VM's
     /// start is.
     func start() async {
+        // Self-privileges from "User Access" (TX 354). Capture the event
+        // stream first (so a push can't slip between seed and subscribe),
+        // then seed from the recorded value (non-empty ⇒ the server pushed
+        // it before we got here), then observe live re-pushes (e.g. an admin
+        // editing our account mid-session). Fail-open stays intact: empty +
+        // no event ⇒ hasPrivilegeInfo false ⇒ controls enabled.
+        let eventStream = client.events
+        privilegesTask = Task { [weak self] in
+            for await event in eventStream {
+                guard case let .userAccessReceived(privileges) = event else { continue }
+                self?.selfPrivileges = privileges
+                self?.hasPrivilegeInfo = true
+            }
+        }
+        let seededPrivileges = await client.connectionInfo.privileges
+        if !seededPrivileges.isEmpty {
+            selfPrivileges = seededPrivileges
+            hasPrivilegeInfo = true
+        }
         // Fetch the roster once and share with both chat (seeds its
         // join-event dedup set) and the user-list inspector. Otherwise
         // each VM fired its own TX 300, landing within 2 ms of each
@@ -188,6 +231,8 @@ final class ConnectionHandle: Identifiable {
         notificationCoordinator.cancel()
         broadcastVM.cancel()
         userListVM.cancel()
+        privilegesTask?.cancel()
+        privilegesTask = nil
         SoundPlayer.shared.play(.logout)
     }
 

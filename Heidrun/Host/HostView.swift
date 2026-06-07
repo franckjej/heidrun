@@ -225,7 +225,13 @@ struct HostView: View {
                 .padding(.top, (Spacing.small.rawValue - Spacing.xxsmall.rawValue))
                 .ignoresSafeArea(.container)
             Spacer()
-            FeatureSidebarTableView(features: features, selection: $selectedIdentifier)
+            FeatureSidebarTableView(
+                features: features,
+                selection: $selectedIdentifier,
+                disabledIdentifiers: (handle?.canAdministerAccounts ?? true)
+                    ? []
+                    : [AdminFeature.identifier]
+            )
             Spacer()
         }
         .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 303)
@@ -318,6 +324,7 @@ struct HostView: View {
                     }
                 },
                 onDisconnect: { disconnectCandidate = $0 },
+                canDisconnect: handle?.permits(.disconnectUsers) ?? true,
                 fetchUserInfo: { user in try await vm.requestInfo(for: user.socket) }
             )
         } else {
