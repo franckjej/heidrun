@@ -608,7 +608,12 @@ private struct ThreadedNewsScreen: View {
         ) {
             threadListPane
         } bottom: {
-            bodyPane
+            // Own view so body-load mutations (isLoadingBody, loadedThread)
+            // invalidate only this subtree — not `ThreadedNewsScreen.body`,
+            // which would recreate `ThreadOutlineView` and fire a redundant
+            // `updateNSView` on every body fetch. Selection still flows
+            // through the parent via `selectedThreadID`.
+            ThreadBodyPane(viewModel: viewModel, replyTarget: $replyTarget)
         }
     }
 
@@ -701,9 +706,17 @@ private struct ThreadedNewsScreen: View {
             }
         )
     }
+}
 
-    @ViewBuilder
-    private var bodyPane: some View {
+/// The read pane for the selected post's body. Split out of
+/// `ThreadedNewsScreen` so the body-load lifecycle (`isLoadingBody`,
+/// `loadedThread`) only invalidates this subtree — keeping body fetches
+/// from recreating the sibling `ThreadOutlineView`.
+private struct ThreadBodyPane: View {
+    let viewModel: ThreadedNewsViewModel
+    @Binding var replyTarget: NewsThread?
+
+    var body: some View {
         if viewModel.isLoadingBody {
             ProgressView()
                 .controlSize(.small)

@@ -95,7 +95,7 @@ struct PersistentVSplit: NSViewControllerRepresentable {
 /// double-click delegate isn't called in this hierarchy. A gesture
 /// recogniser is the modern AppKit equivalent — no `mouseDown`
 /// hijacking, no `NSSplitView` subclass.
-final class PersistentSplitViewController: NSSplitViewController {
+final class PersistentSplitViewController: NSSplitViewController, NSGestureRecognizerDelegate {
     private let defaultTopHeight: CGFloat
 
     init(defaultTopHeight: CGFloat) {
@@ -120,8 +120,34 @@ final class PersistentSplitViewController: NSSplitViewController {
         // can tell whether it's the start of a double-click. With
         // `false` the first click starts a drag immediately and we
         // never get to recognise the second.
+        //
+        // CRITICAL: this delay is gated by the system double-click
+        // interval, and the recogniser spans the WHOLE split view — so
+        // without the delegate gate below it withholds EVERY click in
+        // both panes for that interval before the NSOutlineView (and any
+        // other content) ever sees the mouseDown. `shouldAttemptTo
+        // RecognizeWith` returns false for non-divider clicks, letting
+        // content clicks through with zero latency; only divider clicks
+        // pay the double-click wait.
         recogniser.delaysPrimaryMouseButtonEvents = true
+        recogniser.delegate = self
         splitView.addGestureRecognizer(recogniser)
+    }
+
+    /// Only let the double-click recogniser engage for clicks on a
+    /// divider. Returning false elsewhere means the event is delivered
+    /// immediately (no double-click hold), so selecting a row never
+    /// waits out the system double-click interval.
+    func gestureRecognizer(
+        _ gestureRecognizer: NSGestureRecognizer,
+        shouldAttemptToRecognizeWith event: NSEvent
+    ) -> Bool {
+        let point = splitView.convert(event.locationInWindow, from: nil)
+        for dividerIndex in 0..<max(0, splitView.arrangedSubviews.count - 1)
+        where dividerRect(at: dividerIndex).contains(point) {
+            return true
+        }
+        return false
     }
 
     @objc private func handleDoubleClick(_ recogniser: NSClickGestureRecognizer) {

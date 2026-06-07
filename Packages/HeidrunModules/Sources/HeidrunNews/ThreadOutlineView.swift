@@ -127,6 +127,7 @@ struct ThreadOutlineView: NSViewRepresentable {
         var lastContentSize: ContentSize?
         private var roots: [ThreadOutlineNode] = []
         private var nodesByID: [UInt16: ThreadOutlineNode] = [:]
+        private var appliedThreads: [NewsThread] = []
         private var applyingSelection = false
 
         init(_ parent: ThreadOutlineView) { self.parent = parent }
@@ -135,7 +136,6 @@ struct ThreadOutlineView: NSViewRepresentable {
         func endProgrammaticSelection() { applyingSelection = false }
 
         func apply(threads: [NewsThread], to outlineView: NSOutlineView) {
-            let snapshot = ThreadOutlineNode.makeTree(threads)
             // NSOutlineView identifies items by pointer. If we replace
             // `roots` / `nodesByID` with fresh node instances every call
             // — even when threads didn't change — the outline view still
@@ -143,11 +143,17 @@ struct ThreadOutlineView: NSViewRepresentable {
             // on a new node returns -1. That makes the selection sync
             // think the selected row vanished and call `deselectAll` —
             // every body-pane refresh (e.g. `isLoadingBody` toggling
-            // after a click) wipes the selection. Early-return before
-            // touching the live node graph when the signature matches.
-            let oldSig = roots.flatMap(\.signature)
-            let newSig = snapshot.roots.flatMap(\.signature)
-            guard oldSig != newSig else { return }
+            // after a click) wipes the selection.
+            //
+            // `updateNSView` fires ~4× per row click (selectedThreadID,
+            // isLoadingBody on/off, loadedThread each invalidate the
+            // shared `body`), so compare the *input* listing directly —
+            // O(n), allocation-free, short-circuiting — and bail before
+            // rebuilding the tree. The listing is unchanged by a body
+            // fetch, so a selection click never gets past this guard.
+            guard threads != appliedThreads else { return }
+            appliedThreads = threads
+            let snapshot = ThreadOutlineNode.makeTree(threads)
             roots = snapshot.roots
             nodesByID = snapshot.lookup
             outlineView.reloadData()
@@ -294,14 +300,6 @@ final class ThreadOutlineNode {
         self.thread = thread
         self.parentID = parentID
         self.children = children
-    }
-
-    /// Cheap structural signature for change detection: id, parent, and
-    /// title (so an edit-in-place reloads).
-    var signature: [String] {
-        let title = thread.elements.first?.title ?? ""
-        let mine = "\(thread.threadID)|\(parentID)|\(title)"
-        return [mine] + children.flatMap(\.signature)
     }
 
     /// Build the parent→children tree, orphan-promoting threads whose
