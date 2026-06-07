@@ -70,19 +70,19 @@ final class ProtocolConsoleStore {
     private var nextID: UInt64 = 1
 
     /// Correlation key for an outbound request awaiting its reply. Keyed by
-    /// BOTH the connection (`server`) and the task number: each connection
-    /// runs its own task counter from 1, so two simultaneous connections
-    /// routinely reuse the same task number (e.g. both ping on task 96).
-    /// Keying by task number alone let the first reply consume the slot and
-    /// rendered the second connection's reply as `???`.
+    /// the **connection token** + task number. Each connection runs its own
+    /// task counter from 1, so two connections — even two to the SAME server
+    /// — routinely reuse the same task number. Keying by a unique
+    /// per-connection id (not the server name) means two sessions to the
+    /// same host no longer cross up each other's replies (the `???` bug).
     private struct PendingKey: Hashable {
-        let server: String
+        let connection: String
         let taskNumber: UInt32
     }
 
-    /// `(server, taskNumber) → transactionID` for recent outbound requests.
-    /// Used to recognise the matching inbound reply (commonly stamped with
-    /// `transactionID = 0`).
+    /// `(connection, taskNumber) → transactionID` for recent outbound
+    /// requests. Used to recognise the matching inbound reply (commonly
+    /// stamped with `transactionID = 0`).
     private var pendingTaskNumbers: [PendingKey: UInt16] = [:]
 
     /// `shared` is the production singleton; `init()` stays accessible so
@@ -91,6 +91,7 @@ final class ProtocolConsoleStore {
 
     func append(
         server: String,
+        connectionID: String,
         direction: ProtocolConsoleEntry.Direction,
         classID: UInt16,
         transactionID: UInt16,
@@ -103,7 +104,7 @@ final class ProtocolConsoleStore {
         case .outbound:
             kind = .outboundRequest
             knownName = ProtocolConsoleStore.transactionName(for: transactionID)
-            pendingTaskNumbers[PendingKey(server: server, taskNumber: taskNumber)] = transactionID
+            pendingTaskNumbers[PendingKey(connection: connectionID, taskNumber: taskNumber)] = transactionID
 
         case .inbound:
             // Only class-1 packets are real replies. A class-0 inbound
@@ -112,7 +113,7 @@ final class ProtocolConsoleStore {
             // HXD/Mobius servers recycle task numbers on unsolicited
             // pushes (which caused agreement/message rows to be
             // mislabelled as "getUserList reply" in early transcripts).
-            let replyKey = PendingKey(server: server, taskNumber: taskNumber)
+            let replyKey = PendingKey(connection: connectionID, taskNumber: taskNumber)
             if classID == 1, let requestTX = pendingTaskNumbers.removeValue(forKey: replyKey) {
                 kind = .inboundReply(replyTo: requestTX)
                 knownName = transactionID == 0
@@ -241,9 +242,11 @@ final class ProtocolConsoleStore {
 }
 
 extension ProtocolConsoleStore {
-    /// Builds a `PacketObserver` that funnels everything from one
-    /// connection into this store, tagging entries with `server`.
-    func observer(forServer server: String) -> PacketObserver {
+    /// Builds a `PacketObserver` that funnels everything from one connection
+    /// into this store. `server` is the display label; `connectionID` is a
+    /// unique per-connection token used only for reply correlation, so two
+    /// sessions to the same server don't cross up each other's replies.
+    func observer(connectionID: String, server: String) -> PacketObserver {
         PacketObserver { [weak self] direction, header, fields in
             guard let self else { return }
             let dir: ProtocolConsoleEntry.Direction = (direction == .outbound) ? .outbound : .inbound
@@ -255,6 +258,7 @@ extension ProtocolConsoleStore {
             Task { @MainActor in
                 self.append(
                     server: server,
+                    connectionID: connectionID,
                     direction: dir,
                     classID: classID,
                     transactionID: txID,

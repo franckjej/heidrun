@@ -571,9 +571,13 @@ final class HostState {
         // sessions keep their observer state.
         let defaults = AppDataEnvironment.defaults
         let consoleEnabled = defaults.bool(forKey: AppStorageKeys.enableProtocolConsole)
+        // Unique per-connection token so the console correlates replies per
+        // connection, not per server name — two sessions to the same host
+        // no longer cross up each other's replies.
+        let connectionID = UUID().uuidString
         let observer: PacketObserver? = consoleEnabled
             ? await MainActor.run {
-                ProtocolConsoleStore.shared.observer(forServer: settings.address)
+                ProtocolConsoleStore.shared.observer(connectionID: connectionID, server: settings.address)
             }
             : nil
         return try await HotlineNetworkClient.connect(
