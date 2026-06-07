@@ -3,6 +3,25 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] — 2026-06-07
+
+### Added
+- Privilege-aware controls now cover **file** and **news** operations too
+  (1.0.4 brought them to the admin controls). When a server reports your
+  account's privileges, Download / Upload / New Folder / Rename / Delete and
+  the news Post / Reply / Edit / Delete / bundle actions disable for accounts
+  that aren't allowed to use them. A convenience only — the server still
+  enforces every action — and fail-open on servers that don't report them.
+
+### Fixed
+- News actions the server denied (e.g. deleting a post without permission)
+  used to fail silently; they now surface the server's error.
+
+### Developer
+- Protocol console: replies are correlated per connection, so two connections
+  to the same server no longer mislabel each other's replies. The User Access
+  push (TX 354) is labelled `userAccess`.
+
 ## [1.0.4] — 2026-06-07
 
 ### Added

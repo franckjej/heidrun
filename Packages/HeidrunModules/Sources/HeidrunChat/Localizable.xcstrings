@@ -105,6 +105,9 @@
         }
       }
     },
+    "Disconnect the selected user" : {
+
+    },
     "Disconnect User" : {
       "localizations" : {
         "de" : {
@@ -202,6 +205,9 @@
           }
         }
       }
+    },
+    "Edit the selected user's server account" : {
+
     },
     "Get Info" : {
       "localizations" : {
@@ -531,6 +537,12 @@
           }
         }
       }
+    },
+    "Your account isn't allowed to administer accounts" : {
+
+    },
+    "Your account isn't allowed to disconnect users" : {
+
     }
   },
   "version" : "1.2"

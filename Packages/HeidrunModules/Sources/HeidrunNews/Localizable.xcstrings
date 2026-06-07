@@ -1024,6 +1024,9 @@
           }
         }
       }
+    },
+    "Your account isn't allowed to post news" : {
+
     }
   },
   "version" : "1.0"
