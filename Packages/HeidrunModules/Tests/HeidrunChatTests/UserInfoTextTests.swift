@@ -1,6 +1,6 @@
 import Testing
 import HeidrunCore
-@testable import HeidrunUI
+@testable import HeidrunChat
 
 @Suite("UserInfoText")
 struct UserInfoTextTests {

@@ -1,6 +1,6 @@
 import Testing
 import SwiftUI
-@testable import HeidrunUI
+@testable import HeidrunChat
 
 @Suite("UserColorPalette")
 struct UserColorPaletteTests {

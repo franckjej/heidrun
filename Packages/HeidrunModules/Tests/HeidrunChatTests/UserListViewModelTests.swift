@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import HeidrunUI
+@testable import HeidrunChat
 import HeidrunCore
 
 @MainActor
@@ -57,6 +57,24 @@ struct UserListViewModelTests {
         ]))
         await vm.waitForRosterChange { $0.map(\.nickname) == ["bob", "carol"] }
         #expect(vm.users.map(\.nickname) == ["bob", "carol"])
+    }
+
+    @Test("an empty userListReceived push does not wipe a populated roster")
+    func emptyUserListReceivedDoesNotClobber() async {
+        // The HXD privs-354 shape: an unsolicited, entry-less roster push.
+        // It must be ignored, not applied as "the roster is now empty".
+        let client = FakeUserListClient()
+        client.fetchUserListResponse = .success([User(socket: 1, nickname: "alice")])
+        let vm = UserListViewModel(client: client)
+        await vm.start()
+        #expect(vm.users.map(\.nickname) == ["alice"])
+
+        client.emit(.userListReceived(users: []))
+        // userChanged sentinel: proves the empty push was processed without
+        // clobbering alice. Had it wiped the roster, we'd see only ["bob"].
+        client.emit(.userChanged(user: User(socket: 2, nickname: "bob")))
+        await vm.waitForRosterChange { roster in roster.contains { $0.socket == 2 } }
+        #expect(vm.users.map(\.nickname) == ["alice", "bob"])
     }
 
     @Test("userChanged updates an existing socket in place")

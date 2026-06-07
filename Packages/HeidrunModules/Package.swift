@@ -18,7 +18,7 @@ let package = Package(
         // `exact:` rather than `from:` because pre-release tags compare
         // lexically in SemVer (`"rc10" < "rc9"` since '1' < '9'), so
         // `from: "1.0.0-rc11"` would happily pick rc9 as "newer".
-        .package(url: "https://github.com/franckjej/heidrun-protocol.git", exact: "1.0.0-rc17"),
+        .package(url: "https://github.com/franckjej/heidrun-protocol.git", exact: "1.0.0-rc18"),
         .package(path: "../HeidrunUI"),
         .package(path: "../CommonTools")
     ],
@@ -31,7 +31,12 @@ let package = Package(
                 .product(name: "CommonTools", package: "CommonTools"),
                 "HeidrunAdmin"
             ],
-            resources: [.process("Localizable.xcstrings")]
+            resources: [
+                .process("Localizable.xcstrings"),
+                // Classic 256-entry user-name colour palette, moved here with
+                // UserColorPalette when the user-list UI left HeidrunUI.
+                .process("Resources/user_colors.data")
+            ]
         ),
         .target(
             name: "HeidrunAgreement",

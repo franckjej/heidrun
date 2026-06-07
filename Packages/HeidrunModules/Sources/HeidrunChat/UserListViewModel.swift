@@ -101,6 +101,17 @@ public final class UserListViewModel {
     private func apply(event: HotlineEvent) {
         switch event {
         case .userListReceived(let list):
+            // Every .userListReceived here is an UNSOLICITED server push —
+            // the explicit roster fetch uses the request/reply path, not the
+            // event stream. An empty one is always spurious (e.g. an HXD
+            // privileges TX 354, or a push whose entries all failed to
+            // decode) and must never wipe a populated roster. Defense-in-
+            // depth behind the HeidrunCore engine fix that stops privs-only
+            // 354 from decoding to an empty roster in the first place.
+            guard !list.isEmpty else {
+                Self.log("ignored empty userListReceived push")
+                break
+            }
             users = list
             loadError = nil
             Self.logUsers("received", users: list)
