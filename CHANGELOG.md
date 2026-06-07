@@ -3,6 +3,11 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.6] — 2026-06-07
+
+### Fixed
+- Fixed slow displaying of selected threads in threaded news.
+
 ## [1.0.5] — 2026-06-07
 
 ### Added
