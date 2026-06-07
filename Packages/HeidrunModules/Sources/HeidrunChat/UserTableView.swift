@@ -13,6 +13,10 @@ struct UserRowActions {
     var getInfo: (User) -> Void
     var editAccount: (User) -> Void
     var disconnect: (User) -> Void
+    /// Privilege gates (UI hint; the server still enforces). Default `true`
+    /// so callers that don't gate behave as before.
+    var canEditAccounts: Bool = true
+    var canDisconnect: Bool = true
 }
 
 /// AppKit `NSTableView` user roster, wrapped for SwiftUI. A SwiftUI
@@ -217,6 +221,9 @@ struct UserTableView: NSViewRepresentable {
         func makeMenu() -> NSMenu {
             let menu = NSMenu()
             menu.delegate = self
+            // We set per-item `isEnabled` ourselves (privilege gating), so
+            // don't let AppKit auto-enable based on target/action alone.
+            menu.autoenablesItems = false
             return menu
         }
 
@@ -227,9 +234,10 @@ struct UserTableView: NSViewRepresentable {
             guard row >= 0, row < users.count else { return }
             let user = users[row]
 
-            func add(_ title: String, _ handler: @escaping () -> Void) {
+            func add(_ title: String, isEnabled: Bool = true, _ handler: @escaping () -> Void) {
                 let item = NSMenuItem(title: title, action: #selector(menuAction(_:)), keyEquivalent: "")
                 item.target = self
+                item.isEnabled = isEnabled
                 item.representedObject = handler
                 menu.addItem(item)
             }
@@ -243,7 +251,8 @@ struct UserTableView: NSViewRepresentable {
             add(String(localized: "Get Info…", bundle: .module)) { [actions = parent.actions] in
                 actions.getInfo(user)
             }
-            add(String(localized: "Edit Account…", bundle: .module)) { [actions = parent.actions] in
+            add(String(localized: "Edit Account…", bundle: .module),
+                isEnabled: parent.actions.canEditAccounts) { [actions = parent.actions] in
                 actions.editAccount(user)
             }
             menu.addItem(.separator())
@@ -251,7 +260,8 @@ struct UserTableView: NSViewRepresentable {
                 self?.copy(user)
             }
             menu.addItem(.separator())
-            add(String(localized: "Disconnect…", bundle: .module)) { [actions = parent.actions] in
+            add(String(localized: "Disconnect…", bundle: .module),
+                isEnabled: parent.actions.canDisconnect) { [actions = parent.actions] in
                 actions.disconnect(user)
             }
         }

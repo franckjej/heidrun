@@ -74,11 +74,15 @@ final class ConnectionHandle: Identifiable {
         !hasPrivilegeInfo || selfPrivileges.contains(privilege)
     }
 
-    /// Whether to enable the account-admin surface — any of the
-    /// account-management bits (or unknown privileges → fail-open).
+    /// Whether to enable the account-admin surface — any of the account
+    /// **write** bits (or unknown privileges → fail-open). Deliberately
+    /// excludes `.readUser` (canonically "Open User", bit 16): that's a
+    /// view-only capability classic Hotline servers commonly grant guests,
+    /// so counting it as "admin" wrongly lit up the Admin tab for MacDomain
+    /// guests. Editing/creating/deleting accounts is what gates this.
     var canAdministerAccounts: Bool {
         !hasPrivilegeInfo
-            || !selfPrivileges.isDisjoint(with: [.readUser, .createUser, .modifyUser, .deleteUser])
+            || !selfPrivileges.isDisjoint(with: [.createUser, .modifyUser, .deleteUser])
     }
 
     /// Fetched via TX 212 `downloadBanner` shortly after login. `nil`

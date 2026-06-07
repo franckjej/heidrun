@@ -325,7 +325,7 @@ struct HostView: View {
                 },
                 onDisconnect: { disconnectCandidate = $0 },
                 canDisconnect: handle?.permits(.disconnectUsers) ?? true,
-                canEditAccounts: handle?.canAdministerAccounts ?? true,
+                canEditAccounts: handle?.permits(.modifyUser) ?? true,
                 fetchUserInfo: { user in try await vm.requestInfo(for: user.socket) }
             )
         } else {

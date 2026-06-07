@@ -178,7 +178,9 @@ public struct UserListInspector: View {
                     startPrivateChat: onStartPrivateChat,
                     getInfo: onGetInfo,
                     editAccount: onEditAccount,
-                    disconnect: onDisconnect
+                    disconnect: onDisconnect,
+                    canEditAccounts: canEditAccounts,
+                    canDisconnect: canDisconnect
                 )
             )
             // Drop a stale selection when its user leaves.
