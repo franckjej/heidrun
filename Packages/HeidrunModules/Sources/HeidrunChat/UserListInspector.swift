@@ -19,6 +19,11 @@ public struct UserListInspector: View {
     /// message instead.
     public var onEditAccount: (User) -> Void
     public var onDisconnect: (User) -> Void
+    /// Whether the connected account may administer accounts. Drives the
+    /// enabled state of the "Edit Account" button (which opens the account
+    /// editor). UI hint from "User Access"; the server still enforces it.
+    /// Defaults `true` (fail-open).
+    public var canEditAccounts: Bool
     /// Whether the connected account may disconnect (kick) users. Drives the
     /// enabled state of the Disconnect button — a UI hint from the server's
     /// "User Access" push; the server still enforces it. Defaults `true`
@@ -42,6 +47,7 @@ public struct UserListInspector: View {
         onEditAccount: @escaping (User) -> Void = { _ in },
         onDisconnect: @escaping (User) -> Void = { _ in },
         canDisconnect: Bool = true,
+        canEditAccounts: Bool = true,
         fetchUserInfo: (@Sendable (User) async throws -> UserInfo)? = nil
     ) {
         self.viewModel = viewModel
@@ -52,6 +58,7 @@ public struct UserListInspector: View {
         self.onEditAccount = onEditAccount
         self.onDisconnect = onDisconnect
         self.canDisconnect = canDisconnect
+        self.canEditAccounts = canEditAccounts
         self.fetchUserInfo = fetchUserInfo
     }
 
@@ -114,10 +121,13 @@ public struct UserListInspector: View {
             ActionButton(
                 title: "Edit Account",
                 systemImage: HeidrunAdmin.AdminFeature.systemImage,
-                isEnabled: selectedUser != nil
+                isEnabled: selectedUser != nil && canEditAccounts
             ) {
                 if let user = selectedUser { onEditAccount(user) }
             }
+            .help(canEditAccounts
+                ? "Edit the selected user's server account"
+                : "Your account isn't allowed to administer accounts")
 
             Spacer(minLength: Spacing.xxsmall.rawValue)
 
