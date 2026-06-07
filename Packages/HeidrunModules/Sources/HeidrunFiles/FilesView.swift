@@ -347,22 +347,25 @@ public struct FilesView: View {
     }
 
     private var breadcrumb: some View {
-        HStack(spacing: Spacing.xxsmall.rawValue) {
+        HStack(alignment: .center, spacing: 0) {
             Image(systemName: "folder")
-                .foregroundStyle(.secondary)
+
             Text(viewModel.currentPath.isRoot ? "/" : viewModel.currentPath.displayPath)
-                .font(.caption)
-                .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
+
             Spacer()
+
             if viewModel.isLoading {
                 ProgressView()
                     .controlSize(.small)
             }
         }
+        .font(.body.weight(.light))
+        .foregroundStyle(.secondary)
         .padding(.horizontal, .small)
         .padding(.vertical, .xxsmall)
+        .frame(height: 28)
     }
 
     /// Every selected entry, in listing order (files and folders).
