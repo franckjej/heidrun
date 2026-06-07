@@ -3,6 +3,24 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] — 2026-06-07
+
+### Added
+- Privilege-aware admin controls. When a server reports your account's
+  access privileges, the Admin tab, **Edit Account**, and **Disconnect
+  User** now disable for accounts that aren't allowed to use them — instead
+  of letting you try and hit a permission error. A convenience only; the
+  server still enforces every privilege.
+
+### Fixed
+- Access privileges are now read in the canonical Hotline bit order, so the
+  privilege-aware controls work correctly against classic Hotline servers,
+  not just Heidrun's own server.
+
+### Developer
+- The protocol console labels the User Access push (TX 354) as `userAccess`
+  rather than the misleading `userList`.
+
 ## [1.0.3] — 2026-06-07
 
 ### Fixed
