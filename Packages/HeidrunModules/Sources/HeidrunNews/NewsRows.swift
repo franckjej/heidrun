@@ -26,6 +26,6 @@ extension Date {
     /// Absolute-style description, or `nil` if the date is implausibly old.
     var displayableAbsolute: String? {
         guard self >= Self.plausibleEpoch else { return nil }
-        return formatted(date: .abbreviated, time: .shortened)
+        return formatted(date: .numeric, time: .shortened)
     }
 }

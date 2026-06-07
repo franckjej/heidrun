@@ -57,6 +57,8 @@ struct BundleTableView: NSViewRepresentable {
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = false
         scrollView.borderType = .noBorder
+        scrollView.automaticallyAdjustsContentInsets = false
+        scrollView.contentInsets = NSEdgeInsets(top: 0, left: 6, bottom: 0, right: 2)
         return scrollView
     }
 

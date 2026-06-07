@@ -83,7 +83,7 @@ struct ThreadOutlineView: NSViewRepresentable {
         column.resizingMask = .autoresizingMask
         outlineView.addTableColumn(column)
         outlineView.outlineTableColumn = column
-        outlineView.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
+        outlineView.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
 
         context.coordinator.outlineView = outlineView
 

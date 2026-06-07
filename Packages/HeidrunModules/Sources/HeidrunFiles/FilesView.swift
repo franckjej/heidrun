@@ -363,7 +363,7 @@ public struct FilesView: View {
         }
         .font(.body.weight(.light))
         .foregroundStyle(.secondary)
-        .padding(.horizontal, .small)
+        .padding(.horizontal, .medium)
         .padding(.vertical, .xxsmall)
         .frame(height: 28)
     }
