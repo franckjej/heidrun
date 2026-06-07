@@ -173,6 +173,10 @@ public struct ChatView: View {
             IsolatedTextEditor(
                 text: $viewModel.draft,
                 minHeight: 50,
+                // The chat field doubles as the slash-command surface;
+                // smart dashes would rewrite a typed `--type` into `—type`
+                // and break command flags like `/audit --type auth`.
+                disablesAutomaticSubstitutions: true,
                 autoFocus: true,
                 onSubmit: submit,
                 onHistoryPrevious: historyEnabled ? { viewModel.recallPreviousDraft() } : nil,

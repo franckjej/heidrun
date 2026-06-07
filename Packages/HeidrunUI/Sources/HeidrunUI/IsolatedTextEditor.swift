@@ -27,6 +27,12 @@ public struct IsolatedTextEditor: NSViewRepresentable {
     public var minHeight: CGFloat
     public var maxHeight: CGFloat?
     public var isRichText: Bool
+    /// Turn off macOS automatic text substitutions (smart dashes, smart
+    /// quotes, user text replacements) for this field. Set on inputs that
+    /// double as a command surface — e.g. the public-chat composer, where
+    /// smart dashes silently rewrite a typed `--type` into `—type` and
+    /// break slash-command flags like `/audit --type auth`.
+    public var disablesAutomaticSubstitutions: Bool
     /// Invoked when the user presses ⌘↵ inside the text view. Use for
     /// "send on Cmd+Enter" semantics in chat composers etc. `nil`
     /// leaves the key combination unhandled.
@@ -55,6 +61,7 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         minHeight: CGFloat = 50,
         maxHeight: CGFloat? = nil,
         isRichText: Bool = false,
+        disablesAutomaticSubstitutions: Bool = false,
         autoFocus: Bool = false,
         onSubmit: (() -> Void)? = nil,
         onHistoryPrevious: (() -> String?)? = nil,
@@ -66,6 +73,7 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         self.minHeight = minHeight
         self.maxHeight = maxHeight
         self.isRichText = isRichText
+        self.disablesAutomaticSubstitutions = disablesAutomaticSubstitutions
         self.autoFocus = autoFocus
         self.onSubmit = onSubmit
         self.onHistoryPrevious = onHistoryPrevious
@@ -77,6 +85,13 @@ public struct IsolatedTextEditor: NSViewRepresentable {
         let textView = IsolatedNSTextView()
         textView.delegate = context.coordinator
         textView.isRichText = isRichText
+        if disablesAutomaticSubstitutions {
+            // Command surface: keep what the user typed byte-for-byte so
+            // slash-command flags survive (see the property doc).
+            textView.isAutomaticDashSubstitutionEnabled = false
+            textView.isAutomaticQuoteSubstitutionEnabled = false
+            textView.isAutomaticTextReplacementEnabled = false
+        }
         textView.allowsUndo = true
         textView.font = font
         textView.isEditable = true
