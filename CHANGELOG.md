@@ -3,6 +3,16 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] — 2026-06-07
+
+### Fixed
+- The user list could appear empty when connecting to some servers —
+  classic Hotline/HXD servers that send a "user access" privileges
+  message right after login. The roster now stays populated.
+- Developer protocol console: a reply on a second simultaneous
+  connection no longer shows as unknown (`???`) when both connections
+  reuse the same task number.
+
 ## [1.0.2] — 2026-06-06
 
 ### Changed
