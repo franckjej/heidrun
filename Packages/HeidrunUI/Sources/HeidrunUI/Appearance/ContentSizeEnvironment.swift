@@ -50,12 +50,14 @@ public extension View {
 }
 
 private struct ContentSizeFromStorageModifier: ViewModifier {
+    @Environment(\.sidebarRowSize) private var sidebarRowSize
+
     @AppStorage(ContentSizeReader.presetStorageKey)
-    private var presetRawValue: String = ContentSize.default.preset.rawValue
+    private var modeRawValue: String = ContentSize.default.preset.rawValue
 
     // `0` means "use the preset's built-in body size". The picker's +/-
     // writes here; the storage modifier reads the one matching the
-    // picked preset.
+    // resolved preset.
     @AppStorage(ContentSizeReader.bodyOverrideKey(for: .compact))
     private var compactBody: Double = 0
     @AppStorage(ContentSizeReader.bodyOverrideKey(for: .standard))
@@ -64,10 +66,21 @@ private struct ContentSizeFromStorageModifier: ViewModifier {
     private var comfortableBody: Double = 0
 
     func body(content: Content) -> some View {
-        let preset = ContentSize.Preset(rawValue: presetRawValue) ?? .standard
+        let mode = ContentSize.DensityMode(rawValue: modeRawValue) ?? .standard
+        let preset = mode.resolvedPreset(systemRowSize: sidebarRowSize)
         let override = bodyOverride(for: preset)
         let resolved = ContentSize(preset: preset, bodyPointSize: override)
-        return content.heidrunContentSize(resolved)
+        return content
+            .heidrunContentSize(resolved)
+            // Mirror the resolved preset for AppKit one-shot reads that
+            // can't see `\.sidebarRowSize`. Only meaningful in system
+            // mode; harmless otherwise.
+            .onChange(of: preset, initial: true) { _, newPreset in
+                guard mode == .system else { return }
+                UserDefaults.standard.set(
+                    newPreset.rawValue, forKey: ContentSizeReader.systemResolvedKey
+                )
+            }
     }
 
     private func bodyOverride(for preset: ContentSize.Preset) -> CGFloat? {
@@ -113,9 +126,18 @@ public let HeidrunContentSizeNotificationKey = "contentSize"
 /// explicitly via `init` when the call site has the SwiftUI env.
 public enum ContentSizeReader {
     public static func current(in defaults: UserDefaults = .standard) -> ContentSize {
-        guard let raw = defaults.string(forKey: presetStorageKey),
-              let preset = ContentSize.Preset(rawValue: raw)
-        else { return .default }
+        let stored = defaults.string(forKey: presetStorageKey)
+            ?? ContentSize.default.preset.rawValue
+        let mode = ContentSize.DensityMode(rawValue: stored) ?? .standard
+        let preset: ContentSize.Preset
+        if mode == .system {
+            // No SwiftUI env here; read the preset the scene-root
+            // resolver mirrored. Absent → standard.
+            preset = (defaults.string(forKey: systemResolvedKey))
+                .flatMap(ContentSize.Preset.init(rawValue:)) ?? .standard
+        } else {
+            preset = ContentSize.Preset(rawValue: stored) ?? .standard
+        }
         let override = defaults.double(forKey: bodyOverrideKey(for: preset))
         return ContentSize(
             preset: preset,
@@ -126,6 +148,11 @@ public enum ContentSizeReader {
     /// Mirrors `AppStorageKeys.contentSize` — kept as a literal so
     /// HeidrunUI doesn't have to depend on the app target.
     public static let presetStorageKey = "Heidrun.contentSize"
+
+    /// Preset rawValue the scene-root resolver mirrors while the user is
+    /// on `.system` density, so this UserDefaults-only read (no SwiftUI
+    /// env, hence no `\.sidebarRowSize`) can resolve it. Absent → standard.
+    public static let systemResolvedKey = "Heidrun.contentSize.systemResolved"
 
     /// `0` means "no override, use the preset's built-in body size".
     public static func bodyOverrideKey(for preset: ContentSize.Preset) -> String {
