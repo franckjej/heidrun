@@ -52,6 +52,7 @@ struct SettingsView: View {
     @State private var downloadFolderPath: String = SettingsView.resolveDownloadFolder()
     @State private var showingClearConfirm = false
     @State private var notificationAuthorization: UNAuthorizationStatus = .notDetermined
+    @Environment(\.sidebarRowSize) private var sidebarRowSize
 
     private let labelColumnWidth: CGFloat = 130
     private let outerPadding: Spacing = .medium
@@ -130,9 +131,9 @@ struct SettingsView: View {
         tabBody {
             GroupBox {
                 VStack(alignment: .leading, spacing: rowSpacing.rawValue) {
-                    Picker(selection: presetBinding) {
-                        ForEach(Self.contentSizeChoices, id: \.preset) { choice in
-                            choiceRow(choice).tag(choice.preset)
+                    Picker(selection: densityModeBinding) {
+                        ForEach(Self.contentSizeChoices, id: \.mode) { choice in
+                            choiceRow(choice).tag(choice.mode)
                         }
                     } label: { EmptyView() }
                     .pickerStyle(.radioGroup)
@@ -153,11 +154,12 @@ struct SettingsView: View {
 
     @ViewBuilder
     private func choiceRow(_ choice: ContentSizeChoice) -> some View {
+        let displayPreset = choice.mode.resolvedPreset(systemRowSize: sidebarRowSize)
         HStack(alignment: .firstTextBaseline, spacing: Spacing.small.rawValue) {
             // "Aa" at the preset's DEFAULT size — stable reference that
             // doesn't morph when the override is nudged.
             Text("Aa")
-                .font(.system(size: choice.preset.defaultBodyPointSize, weight: .semibold))
+                .font(.system(size: displayPreset.defaultBodyPointSize, weight: .semibold))
                 .foregroundStyle(.primary)
                 .frame(width: 32, alignment: .leading)
             VStack(alignment: .leading, spacing: 0) {
@@ -220,14 +222,19 @@ struct SettingsView: View {
             .contentShape(Rectangle())
     }
 
-    private var presetBinding: Binding<ContentSize.Preset> {
+    private var densityModeBinding: Binding<ContentSize.DensityMode> {
         Binding(
-            get: { ContentSize.Preset(rawValue: contentSizeRawValue) ?? .standard },
+            get: { ContentSize.DensityMode(rawValue: contentSizeRawValue) ?? .standard },
             set: { contentSizeRawValue = $0.rawValue }
         )
     }
+    private var selectedMode: ContentSize.DensityMode {
+        ContentSize.DensityMode(rawValue: contentSizeRawValue) ?? .standard
+    }
+    /// Concrete preset the selection currently renders as — resolves
+    /// `.system` through the live `\.sidebarRowSize`.
     private var selectedPreset: ContentSize.Preset {
-        ContentSize.Preset(rawValue: contentSizeRawValue) ?? .standard
+        selectedMode.resolvedPreset(systemRowSize: sidebarRowSize)
     }
     private func resolvedBodySize(for preset: ContentSize.Preset) -> CGFloat {
         let override = bodyOverride(for: preset)
@@ -264,14 +271,15 @@ struct SettingsView: View {
     }
 
     private struct ContentSizeChoice {
-        let preset: ContentSize.Preset
+        let mode: ContentSize.DensityMode
         let title: LocalizedStringKey
         let subtitle: LocalizedStringKey
     }
     private static let contentSizeChoices: [ContentSizeChoice] = [
-        ContentSizeChoice(preset: .compact, title: "Compact", subtitle: "Smaller text, tighter rows"),
-        ContentSizeChoice(preset: .standard, title: "Standard", subtitle: "The default macOS size"),
-        ContentSizeChoice(preset: .comfortable, title: "Comfortable", subtitle: "Bigger text, roomier rows")
+        ContentSizeChoice(mode: .compact, title: "Compact", subtitle: "Smaller text, tighter rows"),
+        ContentSizeChoice(mode: .standard, title: "Standard", subtitle: "The default macOS size"),
+        ContentSizeChoice(mode: .comfortable, title: "Comfortable", subtitle: "Bigger text, roomier rows"),
+        ContentSizeChoice(mode: .system, title: "System Setting", subtitle: "Match the macOS sidebar icon size")
     ]
 
     @ViewBuilder
