@@ -128,18 +128,13 @@ public enum ContentSizeReader {
     public static func current(in defaults: UserDefaults = .standard) -> ContentSize {
         let stored = defaults.string(forKey: presetStorageKey)
             ?? ContentSize.default.preset.rawValue
+        // Named modes ignore the row size; `.system` resolves the OS
+        // "Sidebar icon size" — which lives in `UserDefaults` (NSGlobalDomain),
+        // so this read needs no SwiftUI environment.
         let mode = ContentSize.DensityMode(rawValue: stored) ?? .standard
-        let preset: ContentSize.Preset
-        if mode == .system {
-            // Resolve the OS "Sidebar icon size" directly — it lives in
-            // `UserDefaults` (NSGlobalDomain), so this read needs no SwiftUI
-            // environment.
-            preset = mode.resolvedPreset(
-                systemRowSize: ContentSize.DensityMode.systemRowSize(from: defaults)
-            )
-        } else {
-            preset = ContentSize.Preset(rawValue: stored) ?? .standard
-        }
+        let preset = mode.resolvedPreset(
+            systemRowSize: ContentSize.DensityMode.systemRowSize(from: defaults)
+        )
         let override = defaults.double(forKey: bodyOverrideKey(for: preset))
         return ContentSize(
             preset: preset,

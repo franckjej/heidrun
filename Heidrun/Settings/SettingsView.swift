@@ -237,7 +237,7 @@ struct SettingsView: View {
         ContentSize.DensityMode(rawValue: contentSizeRawValue) ?? .standard
     }
     /// The OS "Sidebar icon size" mapped to a `SidebarRowSize`, tracking
-    /// the `@AppStorage` mirror of `NSTableViewDefaultSizeMode`.
+    /// the live `NSTableViewDefaultSizeMode` global default via `@AppStorage`.
     private var systemRowSize: SidebarRowSize {
         ContentSize.DensityMode.sidebarRowSize(forSizeMode: systemSizeMode)
     }
