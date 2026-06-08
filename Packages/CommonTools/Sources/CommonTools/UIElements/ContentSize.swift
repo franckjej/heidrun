@@ -87,6 +87,41 @@ public struct ContentSize: Sendable, Hashable {
         }
     }
 
+    /// The user-facing density *selection*. Persisted under
+    /// `Heidrun.contentSize`. The three named cases keep `Preset`'s raw
+    /// values so existing stored prefs parse unchanged; `system` follows
+    /// the macOS sidebar icon size (`EnvironmentValues.sidebarRowSize`)
+    /// and resolves to a concrete `Preset` at render time.
+    @frozen public enum DensityMode: String, CaseIterable, Hashable, Sendable {
+        case compact
+        case standard
+        case comfortable
+        case system
+
+        /// Concrete preset this selection renders as. `system` maps the
+        /// OS sidebar row size; any non-small/large value (incl. medium)
+        /// resolves to `.standard`.
+        public func resolvedPreset(systemRowSize: SidebarRowSize) -> Preset {
+            switch self {
+            case .compact:
+                return .compact
+            case .standard:
+                return .standard
+            case .comfortable:
+                return .comfortable
+            case .system:
+                switch systemRowSize {
+                case .small:
+                    return .compact
+                case .large:
+                    return .comfortable
+                default:
+                    return .standard
+                }
+            }
+        }
+    }
+
     /// Bounds on the inline +/- so the user can't go unreadable or
     /// overshoot the preset's row height geometry.
     public static let bodyPointSizeRange: ClosedRange<CGFloat> = 9...20
