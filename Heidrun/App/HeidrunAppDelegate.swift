@@ -24,10 +24,10 @@ final class HeidrunAppDelegate: NSObject, NSApplicationDelegate {
     /// both appear side-by-side.
     func applicationWillUpdate(_ notification: Notification) {
         DispatchQueue.main.async {
-            guard let fileMenu = NSApplication.shared.mainMenu?
-                .items.first(where: { $0.title == "File" })?.submenu else { return }
-            if let openRecent = fileMenu.items.first(where: { $0.title == "Open Recent" }) {
-                fileMenu.removeItem(openRecent)
+            if let menu = NSApplication.shared.mainMenu {
+                if let file = menu.items.first(where: { $0.title == "File"})?.submenu?.items.first(where: {$0.title == "Open Recent"}), file.isKind(of: NSMenuItem.self) {
+                    menu.items.first(where: { $0.title == "File"})?.submenu?.removeItem(file)
+                }
             }
         }
     }
