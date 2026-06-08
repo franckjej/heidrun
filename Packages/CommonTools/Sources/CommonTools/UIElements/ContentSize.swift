@@ -90,8 +90,8 @@ public struct ContentSize: Sendable, Hashable {
     /// The user-facing density *selection*. Persisted under
     /// `Heidrun.contentSize`. The three named cases keep `Preset`'s raw
     /// values so existing stored prefs parse unchanged; `system` follows
-    /// the macOS sidebar icon size (`EnvironmentValues.sidebarRowSize`)
-    /// and resolves to a concrete `Preset` at render time.
+    /// the macOS "Sidebar icon size" preference and resolves to a concrete
+    /// `Preset` at render time.
     @frozen public enum DensityMode: String, CaseIterable, Hashable, Sendable {
         case compact
         case standard
@@ -119,6 +119,36 @@ public struct ContentSize: Sendable, Hashable {
                     return .standard
                 }
             }
+        }
+
+        /// `NSGlobalDomain` key backing System Settings → Appearance →
+        /// "Sidebar icon size" (1 small, 2 medium, 3 large; unset → medium).
+        ///
+        /// This is the value `EnvironmentValues.sidebarRowSize` mirrors, but
+        /// SwiftUI only seeds that env value inside a `.sidebar`-styled
+        /// `List`. Heidrun's sidebars are AppKit `NSTableView` wrappers, so
+        /// we read the underlying default directly — it's available app-wide
+        /// (`UserDefaults.standard` falls through to the global domain) and
+        /// drives SwiftUI invalidation via `@AppStorage`.
+        public static let systemSidebarSizeDefaultsKey = "NSTableViewDefaultSizeMode"
+
+        /// Maps the raw `NSTableViewDefaultSizeMode` integer to a
+        /// `SidebarRowSize`. Anything but 1/3 (incl. unset `0` and medium `2`)
+        /// is `.medium`.
+        public static func sidebarRowSize(forSizeMode raw: Int) -> SidebarRowSize {
+            switch raw {
+            case 1:
+                return .small
+            case 3:
+                return .large
+            default:
+                return .medium
+            }
+        }
+
+        /// The current OS sidebar row size, read from `UserDefaults`.
+        public static func systemRowSize(from defaults: UserDefaults = .standard) -> SidebarRowSize {
+            sidebarRowSize(forSizeMode: defaults.integer(forKey: systemSidebarSizeDefaultsKey))
         }
     }
 

@@ -50,10 +50,16 @@ public extension View {
 }
 
 private struct ContentSizeFromStorageModifier: ViewModifier {
-    @Environment(\.sidebarRowSize) private var sidebarRowSize
-
     @AppStorage(ContentSizeReader.presetStorageKey)
     private var modeRawValue: String = ContentSize.default.preset.rawValue
+
+    // The macOS "Sidebar icon size" preference (NSGlobalDomain). Read via
+    // `@AppStorage` so SwiftUI re-resolves the density when the user
+    // changes it. `\.sidebarRowSize` can't be used: SwiftUI only seeds it
+    // inside a `.sidebar`-styled `List`, which Heidrun's AppKit sidebars
+    // are not. `2` (medium) matches the OS default when the key is unset.
+    @AppStorage(ContentSize.DensityMode.systemSidebarSizeDefaultsKey)
+    private var systemSizeMode: Int = 2
 
     // `0` means "use the preset's built-in body size". The picker's +/-
     // writes here; the storage modifier reads the one matching the
@@ -67,20 +73,14 @@ private struct ContentSizeFromStorageModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         let mode = ContentSize.DensityMode(rawValue: modeRawValue) ?? .standard
-        let preset = mode.resolvedPreset(systemRowSize: sidebarRowSize)
+        let rowSize = ContentSize.DensityMode.sidebarRowSize(forSizeMode: systemSizeMode)
+        let preset = mode.resolvedPreset(systemRowSize: rowSize)
         let override = bodyOverride(for: preset)
         let resolved = ContentSize(preset: preset, bodyPointSize: override)
-        return content
-            .heidrunContentSize(resolved)
-            // Mirror the resolved preset for AppKit one-shot reads that
-            // can't see `\.sidebarRowSize`. Only meaningful in system
-            // mode; harmless otherwise.
-            .onChange(of: preset, initial: true) { _, newPreset in
-                guard mode == .system else { return }
-                UserDefaults.standard.set(
-                    newPreset.rawValue, forKey: ContentSizeReader.systemResolvedKey
-                )
-            }
+        // `heidrunContentSize(_:)` posts `.heidrunContentSizeChanged` when
+        // `resolved` changes, so AppKit consumers reflow when the OS
+        // sidebar size flips while on system mode.
+        return content.heidrunContentSize(resolved)
     }
 
     private func bodyOverride(for preset: ContentSize.Preset) -> CGFloat? {
@@ -131,10 +131,12 @@ public enum ContentSizeReader {
         let mode = ContentSize.DensityMode(rawValue: stored) ?? .standard
         let preset: ContentSize.Preset
         if mode == .system {
-            // No SwiftUI env here; read the preset the scene-root
-            // resolver mirrored. Absent → standard.
-            preset = (defaults.string(forKey: systemResolvedKey))
-                .flatMap(ContentSize.Preset.init(rawValue:)) ?? .standard
+            // Resolve the OS "Sidebar icon size" directly — it lives in
+            // `UserDefaults` (NSGlobalDomain), so this read needs no SwiftUI
+            // environment.
+            preset = mode.resolvedPreset(
+                systemRowSize: ContentSize.DensityMode.systemRowSize(from: defaults)
+            )
         } else {
             preset = ContentSize.Preset(rawValue: stored) ?? .standard
         }
@@ -148,11 +150,6 @@ public enum ContentSizeReader {
     /// Mirrors `AppStorageKeys.contentSize` — kept as a literal so
     /// HeidrunUI doesn't have to depend on the app target.
     public static let presetStorageKey = "Heidrun.contentSize"
-
-    /// Preset rawValue the scene-root resolver mirrors while the user is
-    /// on `.system` density, so this UserDefaults-only read (no SwiftUI
-    /// env, hence no `\.sidebarRowSize`) can resolve it. Absent → standard.
-    public static let systemResolvedKey = "Heidrun.contentSize.systemResolved"
 
     /// `0` means "no override, use the preset's built-in body size".
     public static func bodyOverrideKey(for preset: ContentSize.Preset) -> String {

@@ -17,16 +17,13 @@ import CommonTools
         #expect(ContentSizeReader.current(in: defaults).preset == .comfortable)
     }
 
-    @Test func systemModeReadsResolvedMirror() {
-        let defaults = makeDefaults("contentReader.systemMirror")
+    @Test func systemModeResolvesFromOSSidebarSizeKey() {
+        let defaults = makeDefaults("contentReader.systemSmall")
         defaults.set("system", forKey: ContentSizeReader.presetStorageKey)
-        defaults.set("compact", forKey: ContentSizeReader.systemResolvedKey)
+        defaults.set(1, forKey: ContentSize.DensityMode.systemSidebarSizeDefaultsKey)
         #expect(ContentSizeReader.current(in: defaults).preset == .compact)
-    }
 
-    @Test func systemModeWithoutMirrorFallsBackToStandard() {
-        let defaults = makeDefaults("contentReader.systemNoMirror")
-        defaults.set("system", forKey: ContentSizeReader.presetStorageKey)
-        #expect(ContentSizeReader.current(in: defaults).preset == .standard)
+        defaults.set(3, forKey: ContentSize.DensityMode.systemSidebarSizeDefaultsKey)
+        #expect(ContentSizeReader.current(in: defaults).preset == .comfortable)
     }
 }

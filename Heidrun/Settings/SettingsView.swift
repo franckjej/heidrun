@@ -52,7 +52,12 @@ struct SettingsView: View {
     @State private var downloadFolderPath: String = SettingsView.resolveDownloadFolder()
     @State private var showingClearConfirm = false
     @State private var notificationAuthorization: UNAuthorizationStatus = .notDetermined
-    @Environment(\.sidebarRowSize) private var sidebarRowSize
+    // macOS "Sidebar icon size" (NSGlobalDomain) — drives the System Setting
+    // row's resolved preset. Read via @AppStorage (not `\.sidebarRowSize`,
+    // which SwiftUI only seeds inside a `.sidebar` List) so the "Aa" preview
+    // tracks the OS pref live. `2` (medium) matches the unset OS default.
+    @AppStorage(ContentSize.DensityMode.systemSidebarSizeDefaultsKey)
+    private var systemSizeMode: Int = 2
 
     private let labelColumnWidth: CGFloat = 130
     private let outerPadding: Spacing = .medium
@@ -154,7 +159,7 @@ struct SettingsView: View {
 
     @ViewBuilder
     private func choiceRow(_ choice: ContentSizeChoice) -> some View {
-        let displayPreset = choice.mode.resolvedPreset(systemRowSize: sidebarRowSize)
+        let displayPreset = choice.mode.resolvedPreset(systemRowSize: systemRowSize)
         HStack(alignment: .firstTextBaseline, spacing: Spacing.small.rawValue) {
             // "Aa" at the preset's DEFAULT size — stable reference that
             // doesn't morph when the override is nudged.
@@ -231,10 +236,15 @@ struct SettingsView: View {
     private var selectedMode: ContentSize.DensityMode {
         ContentSize.DensityMode(rawValue: contentSizeRawValue) ?? .standard
     }
+    /// The OS "Sidebar icon size" mapped to a `SidebarRowSize`, tracking
+    /// the `@AppStorage` mirror of `NSTableViewDefaultSizeMode`.
+    private var systemRowSize: SidebarRowSize {
+        ContentSize.DensityMode.sidebarRowSize(forSizeMode: systemSizeMode)
+    }
     /// Concrete preset the selection currently renders as — resolves
-    /// `.system` through the live `\.sidebarRowSize`.
+    /// `.system` through the live OS sidebar icon size.
     private var selectedPreset: ContentSize.Preset {
-        selectedMode.resolvedPreset(systemRowSize: sidebarRowSize)
+        selectedMode.resolvedPreset(systemRowSize: systemRowSize)
     }
     private func resolvedBodySize(for preset: ContentSize.Preset) -> CGFloat {
         let override = bodyOverride(for: preset)
