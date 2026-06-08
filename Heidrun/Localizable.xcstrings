@@ -2204,6 +2204,28 @@
         }
       }
     },
+    "Match the macOS sidebar icon size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An die Symbolgröße der macOS-Seitenleiste anpassen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Match the macOS sidebar icon size"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOSのサイドバーアイコンのサイズに合わせる"
+          }
+        }
+      }
+    },
     "macOS will ask for permission the first time a notification needs to fire." : {
       "localizations" : {
         "de" : {
@@ -4039,6 +4061,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "記号"
+          }
+        }
+      }
+    },
+    "System Setting" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Systemeinstellung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Setting"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "システム設定"
           }
         }
       }
