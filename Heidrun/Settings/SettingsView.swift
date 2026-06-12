@@ -62,7 +62,7 @@ struct SettingsView: View {
     private let labelColumnWidth: CGFloat = 130
     private let outerPadding: Spacing = .medium
     private let groupSpacing: Spacing = .medium
-    private let rowSpacing: Spacing = .small
+    private let rowSpacing: Spacing = .xsmall
     private let insidePadding: Spacing = .xsmall
 
     var body: some View {
@@ -139,6 +139,7 @@ struct SettingsView: View {
                     Picker(selection: densityModeBinding) {
                         ForEach(Self.contentSizeChoices, id: \.mode) { choice in
                             choiceRow(choice).tag(choice.mode)
+                                .offset(y: -1)
                         }
                     } label: { EmptyView() }
                     .pickerStyle(.radioGroup)
@@ -150,6 +151,7 @@ struct SettingsView: View {
                 }
                 .padding(insidePadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, .xxsmall)
             } label: {
                 Label("Content density", systemImage: "textformat.size")
                     .font(.headline)
@@ -164,9 +166,9 @@ struct SettingsView: View {
             // "Aa" at the preset's DEFAULT size — stable reference that
             // doesn't morph when the override is nudged.
             Text("Aa")
-                .font(.system(size: displayPreset.defaultBodyPointSize, weight: .semibold))
+                .font(.system(size: displayPreset.defaultBodyPointSize, weight: .regular))
                 .foregroundStyle(.primary)
-                .frame(width: 32, alignment: .leading)
+                .frame(width: 32, alignment: .center)
             VStack(alignment: .leading, spacing: 0) {
                 Text(choice.title)
                 // System `.caption` (stable) instead of `.heidrunCaption()`

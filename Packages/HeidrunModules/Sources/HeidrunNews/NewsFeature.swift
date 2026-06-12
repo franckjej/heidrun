@@ -5,7 +5,7 @@ import HeidrunUI
 public enum NewsFeature: HeidrunFeature {
     public static let identifier  = "com.heidrun.news"
     public static let displayName = "News"
-    public static let systemImage = "newspaper"
+    public static let systemImage = "text.pad.header"
 
     @MainActor
     public static func makeContentView(client: any HotlineClient) -> AnyView {

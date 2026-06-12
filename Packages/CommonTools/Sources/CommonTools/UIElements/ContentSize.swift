@@ -26,9 +26,9 @@ public struct ContentSize: Sendable, Hashable {
         public var defaultBodyPointSize: CGFloat {
             switch self {
             case .compact:
-                return 11
+                return 13
             case .standard:
-                return 13   // matches `NSFont.systemFontSize`
+                return 14
             case .comfortable:
                 return 15
             }
@@ -39,9 +39,9 @@ public struct ContentSize: Sendable, Hashable {
         public var iconSize: CGFloat {
             switch self {
             case .compact:
-                return 20
-            case .standard:
                 return 24
+            case .standard:
+                return 25
             case .comfortable:
                 return 26
             }
