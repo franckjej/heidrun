@@ -223,7 +223,7 @@ final class FeatureSidebarCellView: NSTableCellView {
 
             nameLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: Spacing.small.rawValue),
             nameLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Spacing.medium.rawValue),
-            nameLabel.centerYAnchor.constraint(equalTo: centerYAnchor)
+            nameLabel.centerYAnchor.constraint(equalTo: iconView.centerYAnchor)
         ])
         updateAppearance()
     }

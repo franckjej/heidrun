@@ -39,11 +39,11 @@ public struct ContentSize: Sendable, Hashable {
         public var iconSize: CGFloat {
             switch self {
             case .compact:
-                return 16
-            case .standard:
                 return 20
-            case .comfortable:
+            case .standard:
                 return 24
+            case .comfortable:
+                return 26
             }
         }
 

@@ -11,7 +11,7 @@ import HeidrunUI
 public enum ChatFeature: HeidrunFeature {
     public static let identifier  = "com.heidrun.chat"
     public static let displayName = "Chat"
-    public static let systemImage = "bubble.left.and.bubble.right"
+    public static let systemImage = "text.bubble"
 
     /// Chat is the only feature that needs the connected-users list visible
     /// alongside its content (for DMs and info lookups).

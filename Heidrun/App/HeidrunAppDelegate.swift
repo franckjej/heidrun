@@ -26,6 +26,7 @@ final class HeidrunAppDelegate: NSObject, NSApplicationDelegate {
         DispatchQueue.main.async {
             if let menu = NSApplication.shared.mainMenu {
                 if let file = menu.items.first(where: { $0.title == "File"})?.submenu?.items.first(where: {$0.title == "Open Recent"}), file.isKind(of: NSMenuItem.self) {
+                    FileHandle.standardError.write(Data("\(file)".utf8))
                     menu.items.first(where: { $0.title == "File"})?.submenu?.removeItem(file)
                 }
             }
