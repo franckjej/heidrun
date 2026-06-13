@@ -187,7 +187,7 @@ final class FeatureSidebarCellView: NSTableCellView {
         self.identifier = identifier
 
         selectionView.wantsLayer = true
-        selectionView.layer?.cornerRadius = 12
+        selectionView.layer?.cornerRadius = .cornerUltraMed
         selectionView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(selectionView)
 
@@ -274,15 +274,15 @@ final class FeatureSidebarCellView: NSTableCellView {
     private func updateAppearance() {
         let fill: NSColor
         if selected && rowEnabled {
-            fill = emphasized ? .selectedContentBackgroundColor : .unemphasizedSelectedContentBackgroundColor
+            fill = .textBackgroundColor
         } else {
             fill = .clear
         }
         selectionView.layer?.backgroundColor = fill.cgColor
-        let onEmphasized = selected && emphasized && rowEnabled
+        let onEmphasized = selected && rowEnabled
         let baseColor: NSColor = rowEnabled ? .labelColor : .tertiaryLabelColor
-        nameLabel.textColor = onEmphasized ? .white : baseColor
-        iconView.contentTintColor = onEmphasized ? .white : baseColor
+        nameLabel.textColor = onEmphasized ? .controlAccentColor : baseColor
+        iconView.contentTintColor = onEmphasized ? .controlAccentColor : baseColor
     }
 }
 

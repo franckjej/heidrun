@@ -7,6 +7,8 @@ public extension CGFloat {
     static let cornerLow: CGFloat = 4
     static let cornerMed: CGFloat = 6
     static let cornerHigh: CGFloat = 8
+    static let cornerUltraLow: CGFloat = 12
+    static let cornerUltraMed: CGFloat = 14
     static let cornerUltraHigh: CGFloat = 16
 
     @MainActor static var initialAngle: CGFloat = -(.pi * 35)
