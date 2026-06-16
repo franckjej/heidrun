@@ -26,20 +26,20 @@ public struct AgreementView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             } else {
                 ContentUnavailableView(
-                    "Waiting for the server agreement…",
+                    String(localized: "Waiting for the server agreement…", bundle: .module),
                     systemImage: "doc.text"
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
             HStack {
-                TextField("Nickname", text: $viewModel.nickname)
+                TextField(String(localized: "Nickname", bundle: .module), text: $viewModel.nickname)
                     .textFieldStyle(.roundedBorder)
 
                 Stepper(value: $viewModel.icon, in: 0...UInt16.max) {
                     HStack {
-                        Text("Icon")
-                        Text("\(viewModel.icon.formatted(.number.grouping(.never)))")
+                        Text("Icon", bundle: .module)
+                        Text("\(viewModel.icon.formatted(.number.grouping(.never)))", bundle: .module)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                     }
@@ -48,7 +48,7 @@ public struct AgreementView: View {
             }
 
             HStack {
-                Button("Decline", role: .destructive) {
+                Button(String(localized: "Decline", bundle: .module), role: .destructive) {
                     Task {
                         working = true
                         await viewModel.decline()
@@ -59,7 +59,7 @@ public struct AgreementView: View {
 
                 Spacer()
 
-                Button("Agree") {
+                Button(String(localized: "Agree", bundle: .module)) {
                     Task {
                         working = true
                         try? await viewModel.accept()

@@ -165,7 +165,7 @@ struct SettingsView: View {
         HStack(alignment: .firstTextBaseline, spacing: Spacing.small.rawValue) {
             // "Aa" at the preset's DEFAULT size — stable reference that
             // doesn't morph when the override is nudged.
-            Text("Aa")
+            Text(verbatim: "Aa")
                 .font(.system(size: displayPreset.defaultBodyPointSize, weight: .regular))
                 .foregroundStyle(.primary)
                 .frame(width: 32, alignment: .center)
@@ -305,12 +305,12 @@ struct SettingsView: View {
             // line's pill stays rectangular as text grows.
             HStack(alignment: .firstTextBaseline, spacing: Spacing.xsmall.rawValue) {
                 Image(systemName: "bubble.left.fill").foregroundStyle(.tint)
-                Text("Erika: Welcome to Heidrun.")
+                Text(verbatim: "Erika: Welcome to Heidrun.")
                     .heidrunBody()
                     .foregroundStyle(.primary)
                 Spacer(minLength: 0)
             }
-            Text("12:34")
+            Text(verbatim: "12:34")
                 .heidrunCaption()
                 .foregroundStyle(.secondary)
         }

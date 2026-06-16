@@ -32,15 +32,15 @@ public struct MessagesView: View {
         }
         .padding(.bottom, .xlarge)
         .confirmationDialog(
-            "Delete all conversations?",
+            String(localized: "Delete all conversations?", bundle: .module),
             isPresented: $confirmDeleteAll
         ) {
-            Button("Delete All", role: .destructive) {
+            Button(String(localized: "Delete All", bundle: .module), role: .destructive) {
                 viewModel.deleteAll()
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: {
-            Text("Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only.")
+            Text("Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only.", bundle: .module)
         }
     }
 
@@ -91,7 +91,7 @@ public struct MessagesView: View {
                 .font(.subheadline)
                 .frame(width: 20, height: 20)
                 .foregroundStyle(.secondary)
-            Text("Conversations")
+            Text("Conversations", bundle: .module)
                 .heidrunBody()
                 .foregroundStyle(.primary)
             if !viewModel.threads.isEmpty {
@@ -109,7 +109,8 @@ public struct MessagesView: View {
                 isEnabled: viewModel.activeThreadID != nil,
                 role: .destructive,
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 if let socket = viewModel.activeThreadID {
                     viewModel.deleteConversation(socket: socket)
@@ -122,7 +123,8 @@ public struct MessagesView: View {
                 isEnabled: !viewModel.threads.isEmpty,
                 role: .destructive,
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 confirmDeleteAll = true
             }
@@ -133,9 +135,9 @@ public struct MessagesView: View {
 
     private var emptyList: some View {
         ContentUnavailableView {
-            Label("No conversations", systemImage: "tray")
+            Label(String(localized: "No conversations", bundle: .module), systemImage: "tray")
         } description: {
-            Text("Private messages from other users will show up here. Start one from the user list in Chat.")
+            Text("Private messages from other users will show up here. Start one from the user list in Chat.", bundle: .module)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -165,9 +167,9 @@ public struct MessagesView: View {
             )
         } else {
             ContentUnavailableView(
-                "Pick a conversation",
+                String(localized: "Pick a conversation", bundle: .module),
                 systemImage: "envelope.open",
-                description: Text("Select a thread on the left to read and reply.")
+                description: Text("Select a thread on the left to read and reply.", bundle: .module)
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -209,7 +211,7 @@ private struct ThreadDetail: View {
                     .lineLimit(1)
                 Text(verbatim: "·")
                     .foregroundStyle(.tertiary)
-                Text(isOnline ? "online" : "offline")
+                Text(isOnline ? "online" : "offline", bundle: .module)
                     .heidrunCaption()
                     .foregroundStyle(isOnline ? .secondary : .tertiary)
                 Spacer()
@@ -263,12 +265,12 @@ private struct ThreadDetail: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: .cornerMed, style: .continuous))
 
-            Button("Send", action: onSend)
+            Button(String(localized: "Send", bundle: .module), action: onSend)
                 .padding(.top, .xxsmall)
                 .disabled(isDraftEmpty || !isOnline)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.return, modifiers: [.command])
-                .help("Send message \u{2318}+\u{23CE}")
+                .help(String(localized: "Send message \u{2318}+\u{23CE}", bundle: .module))
         }
         .padding(.horizontal, .xsmall)
         .frame(maxWidth: .infinity, alignment: .topLeading)

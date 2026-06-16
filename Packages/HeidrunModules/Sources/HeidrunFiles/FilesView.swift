@@ -64,17 +64,17 @@ public struct FilesView: View {
             )
         }
         .alert(
-            "Already in your download folder",
+            String(localized: "Already in your download folder", bundle: .module),
             isPresented: conflictBinding,
             presenting: conflictEntry
         ) { entry in
-            Button("Replace") {
+            Button(String(localized: "Replace", bundle: .module)) {
                 Task { await viewModel.download(entry, mode: .fresh) }
             }
-            Button("Resume") {
+            Button(String(localized: "Resume", bundle: .module)) {
                 Task { await viewModel.download(entry, mode: .resume) }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: { entry in
             Text(
                 "“\(entry.name)” already exists locally. " +
@@ -82,27 +82,27 @@ public struct FilesView: View {
             )
         }
         .alert(deleteAlertTitle, isPresented: deleteBinding) {
-            Button("Delete", role: .destructive) {
+            Button(String(localized: "Delete", bundle: .module), role: .destructive) {
                 let targets = deleteTargets
                 deleteTargets = []
                 selection = []
                 Task { await viewModel.deleteAll(targets) }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: {
             Text(deleteAlertMessage)
         }
         .alert(
-            "Some files already exist",
+            String(localized: "Some files already exist", bundle: .module),
             isPresented: downloadRequestBinding,
             presenting: downloadRequest
         ) { request in
-            Button("Replace All") {
+            Button(String(localized: "Replace All", bundle: .module)) {
                 for file in request.files {
                     Task { await viewModel.download(file, mode: .fresh) }
                 }
             }
-            Button("Resume All") {
+            Button(String(localized: "Resume All", bundle: .module)) {
                 let conflictIDs = Set(request.conflicts.map(\.id))
                 for file in request.files {
                     let mode: FilesViewModel.DownloadMode =
@@ -110,7 +110,7 @@ public struct FilesView: View {
                     Task { await viewModel.download(file, mode: mode) }
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: { request in
             Text(
                 "\(request.conflicts.count) of \(request.files.count) selected files " +
@@ -128,13 +128,13 @@ public struct FilesView: View {
             // before the dispatched Task body runs, so reading
             // viewModel.pendingUploadConflict inside the Task would
             // always be nil.
-            Button("Replace") {
+            Button(String(localized: "Replace", bundle: .module)) {
                 Task { await viewModel.replacePendingUpload(pending) }
             }
-            Button("Resume") {
+            Button(String(localized: "Resume", bundle: .module)) {
                 Task { await viewModel.resumePendingUpload(pending) }
             }
-            Button("Cancel", role: .cancel) {
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {
                 viewModel.cancelPendingUpload()
             }
         } message: { pending in
@@ -177,10 +177,10 @@ public struct FilesView: View {
         )
     }
 
-    private var uploadConflictTitle: LocalizedStringKey {
+    private var uploadConflictTitle: String {
         viewModel.pendingUploadConflict?.replaceAttemptFailed == true
-            ? "Couldn't replace the file"
-            : "Already on the server"
+            ? String(localized: "Couldn't replace the file", bundle: .module)
+            : String(localized: "Already on the server", bundle: .module)
     }
 
     private var uploadConflictBinding: Binding<Bool> {
@@ -190,8 +190,10 @@ public struct FilesView: View {
         )
     }
 
-    private var deleteAlertTitle: LocalizedStringKey {
-        deleteTargets.count == 1 ? "Delete this item?" : "Delete \(deleteTargets.count) items?"
+    private var deleteAlertTitle: String {
+        deleteTargets.count == 1
+            ? String(localized: "Delete this item?", bundle: .module)
+            : String(localized: "Delete \(deleteTargets.count) items?", bundle: .module)
     }
 
     private var deleteAlertMessage: String {
@@ -261,7 +263,8 @@ public struct FilesView: View {
                 systemImage: "chevron.up",
                 isEnabled: !viewModel.currentPath.isRoot,
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 Task { await viewModel.navigateUp() }
             }
@@ -273,7 +276,8 @@ public struct FilesView: View {
                 systemImage: "arrow.down.circle",
                 isEnabled: !selectedFiles.isEmpty && viewModel.permits(.downloadFiles),
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 requestDownloadMany(selectedFiles)
             }
@@ -283,7 +287,8 @@ public struct FilesView: View {
                 systemImage: "arrow.up.circle",
                 isEnabled: viewModel.permits(.uploadFiles),
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 pickAndUpload()
             }
@@ -293,7 +298,8 @@ public struct FilesView: View {
                 systemImage: "folder.badge.plus",
                 isEnabled: viewModel.permits(.createFolders),
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 newFolderDraft = ""
                 creatingFolder = true
@@ -304,7 +310,8 @@ public struct FilesView: View {
                 systemImage: "eye",
                 isEnabled: previewableSelection != nil,
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 if let entry = previewableSelection { presentPreview(for: entry) }
             }
@@ -314,7 +321,8 @@ public struct FilesView: View {
                 systemImage: "info.circle",
                 isEnabled: singleSelection != nil,
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 infoTarget = singleSelection
             }
@@ -324,7 +332,8 @@ public struct FilesView: View {
                 systemImage: "arrow.clockwise",
                 isEnabled: !viewModel.isLoading,
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 Task { await viewModel.refresh() }
             }
@@ -337,7 +346,8 @@ public struct FilesView: View {
                 isEnabled: !selectedEntries.isEmpty && canDeleteSelection,
                 role: .destructive,
                 size: .small,
-                fontWeight: .light
+                fontWeight: .light,
+                bundle: .module
             ) {
                 deleteTargets = selectedEntries
             }
@@ -495,12 +505,12 @@ public struct FilesView: View {
     private var transferDrawer: some View {
         VStack(alignment: .leading, spacing: Spacing.xsmall.rawValue) {
             HStack(spacing: Spacing.xsmall.rawValue) {
-                Label("Transfers", systemImage: "arrow.up.arrow.down.circle")
+                Label(String(localized: "Transfers", bundle: .module), systemImage: "arrow.up.arrow.down.circle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
                 if hasFinishedTransfers {
-                    Button("Clear") {
+                    Button(String(localized: "Clear", bundle: .module)) {
                         viewModel.clearFinishedTransfers()
                     }
                     .buttonStyle(.borderless)
@@ -590,16 +600,16 @@ public struct FilesView: View {
     @ViewBuilder
     private func renameSheet(_ target: RemoteFile) -> some View {
         VStack(alignment: .leading, spacing: Spacing.small.rawValue) {
-            Text("Rename \(target.name)")
+            Text("Rename \(target.name)", bundle: .module)
                 .font(.headline)
-            TextField("New name", text: $renameDraft)
+            TextField(String(localized: "New name", bundle: .module), text: $renameDraft)
                 .textFieldStyle(.roundedBorder)
                 .frame(minWidth: 280)
             HStack {
                 Spacer()
-                Button("Cancel") { renameTarget = nil }
+                Button(String(localized: "Cancel", bundle: .module)) { renameTarget = nil }
                     .keyboardShortcut(.cancelAction)
-                Button("Rename") {
+                Button(String(localized: "Rename", bundle: .module)) {
                     let new = renameDraft
                     let entry = target
                     renameTarget = nil
@@ -616,16 +626,16 @@ public struct FilesView: View {
     @ViewBuilder
     private var newFolderSheet: some View {
         VStack(alignment: .leading, spacing: Spacing.small.rawValue) {
-            Text("New Folder in \(viewModel.currentPath.isRoot ? "/" : viewModel.currentPath.displayPath)")
+            Text("New Folder in \(viewModel.currentPath.isRoot ? "/" : viewModel.currentPath.displayPath)", bundle: .module)
                 .font(.headline)
-            TextField("Folder name", text: $newFolderDraft)
+            TextField(String(localized: "Folder name", bundle: .module), text: $newFolderDraft)
                 .textFieldStyle(.roundedBorder)
                 .frame(minWidth: 280)
             HStack {
                 Spacer()
-                Button("Cancel") { creatingFolder = false }
+                Button(String(localized: "Cancel", bundle: .module)) { creatingFolder = false }
                     .keyboardShortcut(.cancelAction)
-                Button("Create") {
+                Button(String(localized: "Create", bundle: .module)) {
                     let name = newFolderDraft.trimmingCharacters(in: .whitespacesAndNewlines)
                     creatingFolder = false
                     Task { await viewModel.createFolder(named: name) }

@@ -90,7 +90,7 @@ struct FileInfoSheet: View {
             if isLoading {
                 HStack(spacing: Spacing.xsmall.rawValue) {
                     ProgressView().controlSize(.small)
-                    Text("Loading…").foregroundStyle(.secondary)
+                    Text("Loading…", bundle: .module).foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.xxsmall)
@@ -128,13 +128,13 @@ struct FileInfoSheet: View {
                     .padding(.xxsmall)
             }
         } label: {
-            Label("File", systemImage: "info.circle")
+            Label(String(localized: "File", bundle: .module), systemImage: "info.circle")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .contextMenu {
             if let info {
-                Button("Copy File Info") {
+                Button(String(localized: "Copy File Info", bundle: .module)) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(
                         copyableInfoBlock(info: info),
@@ -183,16 +183,16 @@ struct FileInfoSheet: View {
         if info != nil {
             VStack(alignment: .leading, spacing: Spacing.xxsmall.rawValue) {
                 HStack(spacing: Spacing.xxsmall.rawValue) {
-                    Label("Comment", systemImage: "text.bubble")
+                    Label(String(localized: "Comment", bundle: .module), systemImage: "text.bubble")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     if isCommentDirty {
-                        Text("Unsaved")
+                        Text("Unsaved", bundle: .module)
                             .font(.caption2)
                             .foregroundStyle(.orange)
                     } else if showSavedBadge {
-                        Label("Saved", systemImage: "checkmark.circle.fill")
+                        Label(String(localized: "Saved", bundle: .module), systemImage: "checkmark.circle.fill")
                             .font(.caption2)
                             .foregroundStyle(.green)
                             .labelStyle(.titleAndIcon)
@@ -223,7 +223,7 @@ struct FileInfoSheet: View {
     private var footer: some View {
         HStack(spacing: Spacing.xsmall.rawValue) {
             Spacer()
-            Button("Close", action: onClose)
+            Button(String(localized: "Close", bundle: .module), action: onClose)
                 .keyboardShortcut(.cancelAction)
             Button {
                 Task { await commit() }
@@ -231,7 +231,7 @@ struct FileInfoSheet: View {
                 if isSavingComment {
                     ProgressView().controlSize(.small)
                 } else {
-                    Text("Save")
+                    Text("Save", bundle: .module)
                 }
             }
             .buttonStyle(.borderedProminent)

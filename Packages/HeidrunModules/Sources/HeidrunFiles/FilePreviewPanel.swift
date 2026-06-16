@@ -30,7 +30,7 @@ struct FilePreviewPanel: View {
                 .truncationMode(.middle)
             Spacer()
             if case .loading = viewModel.previewState {
-                Button("Cancel") { viewModel.cancelPreview() }
+                Button(String(localized: "Cancel", bundle: .module)) { viewModel.cancelPreview() }
                     .buttonStyle(.borderless)
                     .controlSize(.small)
             }
@@ -49,7 +49,7 @@ struct FilePreviewPanel: View {
                 ProgressView(value: fraction)
                     .progressViewStyle(.linear)
                     .frame(maxWidth: 240)
-                Text("Loading…")
+                Text("Loading…", bundle: .module)
                     .foregroundStyle(.secondary)
                     .font(.callout)
             }

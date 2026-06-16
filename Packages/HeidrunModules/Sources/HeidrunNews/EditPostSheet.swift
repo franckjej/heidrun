@@ -34,11 +34,11 @@ struct EditPostSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.small.rawValue) {
-            Text("Edit Post")
+            Text("Edit Post", bundle: .module)
                 .font(.title3)
                 .fontWeight(.semibold)
 
-            TextField("Subject", text: $title)
+            TextField(String(localized: "Subject", bundle: .module), text: $title)
                 .textFieldStyle(.roundedBorder)
                 .focused($titleFocused)
 
@@ -57,7 +57,7 @@ struct EditPostSheet: View {
 
             HStack {
                 Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
 
                 Button {
@@ -66,7 +66,7 @@ struct EditPostSheet: View {
                     if isSubmitting {
                         ProgressView().controlSize(.small)
                     } else {
-                        Text("Save")
+                        Text("Save", bundle: .module)
                     }
                 }
                 .buttonStyle(.borderedProminent)

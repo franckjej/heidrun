@@ -285,7 +285,7 @@ struct ConversationRow: View {
                         .foregroundStyle(isSelected ? Color.white : .primary)
                         .lineLimit(1)
                     if conversation?.isOnline == false {
-                        Text("offline")
+                        Text("offline", bundle: .module)
                             .heidrunCaption()
                             .foregroundStyle(
                                 isSelected

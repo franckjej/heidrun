@@ -15,7 +15,7 @@ import HeidrunUI
 @MainActor
 struct NewPostSheet: View {
     let onSubmit: @Sendable (String, String) async -> Void
-    let sheetTitle: LocalizedStringKey
+    let sheetTitle: String
 
     @Environment(\.dismiss) private var dismiss
     @State private var title: String
@@ -24,7 +24,7 @@ struct NewPostSheet: View {
     @FocusState private var titleFocused: Bool
 
     init(
-        title sheetTitle: LocalizedStringKey = "New Post",
+        title sheetTitle: String = String(localized: "New Post", bundle: .module),
         initialTitle: String = "",
         onSubmit: @escaping @Sendable (String, String) async -> Void
     ) {
@@ -35,11 +35,11 @@ struct NewPostSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.small.rawValue) {
-            Text(sheetTitle)
+            Text(verbatim: sheetTitle)
                 .font(.title3)
                 .fontWeight(.semibold)
 
-            TextField("Title", text: $title)
+            TextField(String(localized: "Title", bundle: .module), text: $title)
                 .textFieldStyle(.roundedBorder)
                 .focused($titleFocused)
 
@@ -58,7 +58,7 @@ struct NewPostSheet: View {
 
             HStack {
                 Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
 
                 Button {
@@ -67,7 +67,7 @@ struct NewPostSheet: View {
                     if isSubmitting {
                         ProgressView().controlSize(.small)
                     } else {
-                        Text("Post")
+                        Text("Post", bundle: .module)
                     }
                 }
                 .buttonStyle(.borderedProminent)

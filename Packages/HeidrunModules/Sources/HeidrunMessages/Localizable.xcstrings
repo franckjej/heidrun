@@ -1,9 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Cancel" : {
-
-    },
+    "Cancel" : {},
     "Conversations" : {
       "localizations" : {
         "de" : {
@@ -20,21 +18,26 @@
         }
       }
     },
-    "Delete" : {
-
-    },
-    "Delete All" : {
-
-    },
+    "Delete" : {},
+    "Delete All" : {},
+    "Delete Conversation" : {},
     "Delete all conversations?" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Unterhaltungen löschen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべての会話を削除しますか？"
+          }
+        }
+      }
     },
-    "Delete Conversation" : {
-
-    },
-    "Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only." : {
-
-    },
+    "Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only." : {},
     "Messages" : {
       "localizations" : {
         "de" : {
@@ -69,38 +72,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "会話なし"
-          }
-        }
-      }
-    },
-    "offline" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "offline"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オフライン"
-          }
-        }
-      }
-    },
-    "online" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "online"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オンライン"
           }
         }
       }
@@ -198,8 +169,38 @@
         }
       }
     },
-    "Send message ⌘+⏎" : {
-
+    "Send message ⌘+⏎" : {},
+    "offline" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "offline"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オフライン"
+          }
+        }
+      }
+    },
+    "online" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "online"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オンライン"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

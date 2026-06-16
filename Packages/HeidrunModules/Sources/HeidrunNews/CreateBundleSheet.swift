@@ -20,31 +20,31 @@ struct CreateBundleSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.small.rawValue) {
-            Text("New News Folder")
+            Text("New News Folder", bundle: .module)
                 .font(.title3)
                 .fontWeight(.semibold)
 
-            Picker("Kind", selection: $kind) {
-                Text("Folder").tag(Kind.folder)
-                Text("Category").tag(Kind.category)
+            Picker(String(localized: "Kind", bundle: .module), selection: $kind) {
+                Text("Folder", bundle: .module).tag(Kind.folder)
+                Text("Category", bundle: .module).tag(Kind.category)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
 
-            TextField("Name", text: $name)
+            TextField(String(localized: "Name", bundle: .module), text: $name)
                 .textFieldStyle(.roundedBorder)
                 .focused($nameFocused)
                 .onSubmit(submit)
 
             Text(kind == .folder
-                 ? "A folder holds more folders or categories."
-                 : "A category holds news threads (posts).")
+                 ? String(localized: "A folder holds more folders or categories.", bundle: .module)
+                 : String(localized: "A category holds news threads (posts).", bundle: .module))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             HStack {
                 Spacer()
-                Button("Cancel", role: .cancel) { dismiss() }
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel) { dismiss() }
                     .keyboardShortcut(.cancelAction)
 
                 Button {
@@ -53,7 +53,7 @@ struct CreateBundleSheet: View {
                     if isSubmitting {
                         ProgressView().controlSize(.small)
                     } else {
-                        Text("Create")
+                        Text("Create", bundle: .module)
                     }
                 }
                 .buttonStyle(.borderedProminent)

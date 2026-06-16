@@ -33,17 +33,17 @@ public struct AdminView: View {
         // Errors surface through the scene-root ErrorPresenter (injected
         // via the VM's `present` closure), not a per-view alert.
         .confirmationDialog(
-            "Delete \(pendingDeleteLogin ?? "")?",
+            String(localized: "Delete \(pendingDeleteLogin ?? "")?", bundle: .module),
             isPresented: $showDeleteConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Delete", role: .destructive) {
+            Button(String(localized: "Delete", bundle: .module), role: .destructive) {
                 if let target = pendingDeleteLogin {
                     Task { await viewModel.deleteRow(login: target) }
                 }
                 pendingDeleteLogin = nil
             }
-            Button("Cancel", role: .cancel) { pendingDeleteLogin = nil }
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) { pendingDeleteLogin = nil }
         }
     }
 
@@ -54,7 +54,7 @@ public struct AdminView: View {
             HStack(spacing: Spacing.xxsmall.rawValue) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                TextField("Find login", text: $viewModel.findQuery)
+                TextField(String(localized: "Find login", bundle: .module), text: $viewModel.findQuery)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit {
                         Task {
@@ -68,17 +68,17 @@ public struct AdminView: View {
                 ActionButton(title: "", systemImage: "person.badge.plus", isEnabled: !(viewModel.loadedAccount == nil) || !viewModel.isWorking) {
                     viewModel.startNew()
                 }
-                .help("New account")
+                .help(String(localized: "New account", bundle: .module))
 
                 ActionButton(title: "", systemImage: "square.and.arrow.down", isEnabled: !saveDisabled) {
                     Task { await viewModel.save() }
                 }
-                .help("Save")
+                .help(String(localized: "Save", bundle: .module))
 
                 ActionButton(title: "", systemImage: "arrowshape.turn.up.left.circle", isEnabled: !viewModel.isDirty || viewModel.loadedAccount != nil || viewModel.isWorking == false) {
                     Task { await viewModel.revert() }
                 }
-                .help("Revert")
+                .help(String(localized: "Revert", bundle: .module))
 
                 ActionButton(title: "Delete", systemImage: "trash", isEnabled: viewModel.loadedAccount != nil || viewModel.isWorking == false, role: .destructive) {
                     if let loaded = viewModel.loadedAccount {
@@ -86,7 +86,7 @@ public struct AdminView: View {
                         showDeleteConfirmation = true
                     }
                 }
-                .help("Delete")
+                .help(String(localized: "Delete", bundle: .module))
             }
             .filledHeaderBox()
             .padding(.horizontal, .xsmall)
@@ -114,42 +114,42 @@ public struct AdminView: View {
     private var detail: some View {
         if viewModel.selection == nil {
             ContentUnavailableView(
-                "Pick an account",
+                String(localized: "Pick an account", bundle: .module),
                 systemImage: "person.crop.circle.badge.questionmark",
-                description: Text("Find a login or hit + to create one.")
+                description: Text("Find a login or hit + to create one.", bundle: .module)
             )
             .padding(.small)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         } else {
             Form {
-                Section("Identity") {
-                    TextField("Login", text: $viewModel.login)
+                Section(String(localized: "Identity", bundle: .module)) {
+                    TextField(String(localized: "Login", bundle: .module), text: $viewModel.login)
                         .disabled(viewModel.loadedAccount != nil)
                         .textFieldStyle(.roundedBorder)
-                    TextField("Nickname", text: $viewModel.nickname)
+                    TextField(String(localized: "Nickname", bundle: .module), text: $viewModel.nickname)
                         .textFieldStyle(.roundedBorder)
                 }
 
-                Section("Password") {
+                Section(String(localized: "Password", bundle: .module)) {
                     if viewModel.loadedAccount != nil {
-                        Toggle("Change password", isOn: $viewModel.changePassword)
+                        Toggle(String(localized: "Change password", bundle: .module), isOn: $viewModel.changePassword)
                     }
                     if viewModel.loadedAccount == nil || viewModel.changePassword {
-                        SecureField("Password", text: $viewModel.password)
+                        SecureField(String(localized: "Password", bundle: .module), text: $viewModel.password)
                             .textFieldStyle(.roundedBorder)
                     }
                 }
 
-                Section("Preset") {
-                    Picker("Preset", selection: Binding(
+                Section(String(localized: "Preset", bundle: .module)) {
+                    Picker(String(localized: "Preset", bundle: .module), selection: Binding(
                         get: { viewModel.preset },
                         set: { next in viewModel.selectPreset(next) }
                     )) {
-                        Text("Guest").tag(AdminPrivilegePresets.Name.guest)
-                        Text("User").tag(AdminPrivilegePresets.Name.user)
-                        Text("Moderator").tag(AdminPrivilegePresets.Name.moderator)
-                        Text("Admin").tag(AdminPrivilegePresets.Name.admin)
-                        Text("Custom").tag(AdminPrivilegePresets.Name.custom)
+                        Text("Guest", bundle: .module).tag(AdminPrivilegePresets.Name.guest)
+                        Text("User", bundle: .module).tag(AdminPrivilegePresets.Name.user)
+                        Text("Moderator", bundle: .module).tag(AdminPrivilegePresets.Name.moderator)
+                        Text("Admin", bundle: .module).tag(AdminPrivilegePresets.Name.admin)
+                        Text("Custom", bundle: .module).tag(AdminPrivilegePresets.Name.custom)
                     }
                     .pickerStyle(.menu)
                 }

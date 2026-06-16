@@ -22,7 +22,7 @@ public struct CertificateTrustSheet: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label(
-                isMismatch ? "Certificate changed" : "Untrusted certificate",
+                isMismatch ? String(localized: "Certificate changed", bundle: .module) : String(localized: "Untrusted certificate", bundle: .module),
                 systemImage: isMismatch ? "exclamationmark.triangle" : "lock.trianglebadge.exclamationmark"
             )
             .font(.headline)
@@ -38,10 +38,10 @@ public struct CertificateTrustSheet: View {
             }
 
             HStack {
-                Button("Cancel", role: .cancel) { onDecision(.reject) }
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel) { onDecision(.reject) }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
-                Button(isMismatch ? "Trust New Certificate" : "Trust & Connect") {
+                Button(isMismatch ? String(localized: "Trust New Certificate", bundle: .module) : String(localized: "Trust & Connect", bundle: .module)) {
                     onDecision(.trust)
                 }
                 .keyboardShortcut(.defaultAction)

@@ -10,17 +10,17 @@ struct NewsActionsMenuItems: View {
     let thread: NewsThread
 
     var body: some View {
-        Button("Reply…") { actions.onReply(thread) }
+        Button(String(localized: "Reply…", bundle: .module)) { actions.onReply(thread) }
             .disabled(!actions.viewModel.permits(.postNews))
         Divider()
         if actions.canEdit(thread) {
-            Button("Edit…") { actions.onEdit(thread) }
+            Button(String(localized: "Edit…", bundle: .module)) { actions.onEdit(thread) }
                 .disabled(!actions.viewModel.permits(.postNews))
         }
-        Button("Delete…", role: .destructive) { actions.onConfirmDelete(thread) }
+        Button(String(localized: "Delete…", bundle: .module), role: .destructive) { actions.onConfirmDelete(thread) }
             .disabled(!actions.viewModel.permits(.deleteArticles))
         Divider()
-        Button("Copy Post") { actions.copyPost(thread) }
-        Button("Copy Thread") { actions.copyThread(thread) }
+        Button(String(localized: "Copy Post", bundle: .module)) { actions.copyPost(thread) }
+        Button(String(localized: "Copy Thread", bundle: .module)) { actions.copyThread(thread) }
     }
 }

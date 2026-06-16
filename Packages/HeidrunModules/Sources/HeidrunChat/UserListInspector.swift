@@ -97,7 +97,8 @@ public struct UserListInspector: View {
             ActionButton(
                 title: "Send Message",
                 systemImage: "envelope",
-                isEnabled: selectedUser != nil
+                isEnabled: selectedUser != nil,
+                bundle: .module
             ) {
                 if let user = selectedUser { onSendMessage(user) }
             }
@@ -105,7 +106,8 @@ public struct UserListInspector: View {
             ActionButton(
                 title: "Start Chat",
                 systemImage: "bubble.left.and.bubble.right",
-                isEnabled: selectedUser != nil
+                isEnabled: selectedUser != nil,
+                bundle: .module
             ) {
                 if let user = selectedUser { onStartPrivateChat(user) }
             }
@@ -113,7 +115,8 @@ public struct UserListInspector: View {
             ActionButton(
                 title: "Get Info",
                 systemImage: "info.circle",
-                isEnabled: selectedUser != nil
+                isEnabled: selectedUser != nil,
+                bundle: .module
             ) {
                 if let user = selectedUser { onGetInfo(user) }
             }
@@ -121,13 +124,14 @@ public struct UserListInspector: View {
             ActionButton(
                 title: "Edit Account",
                 systemImage: HeidrunAdmin.AdminFeature.systemImage,
-                isEnabled: selectedUser != nil && canEditAccounts
+                isEnabled: selectedUser != nil && canEditAccounts,
+                bundle: .module
             ) {
                 if let user = selectedUser { onEditAccount(user) }
             }
             .help(canEditAccounts
-                ? "Edit the selected user's server account"
-                : "Your account isn't allowed to administer accounts")
+                ? String(localized: "Edit the selected user's server account", bundle: .module)
+                : String(localized: "Your account isn't allowed to administer accounts", bundle: .module))
 
             Spacer(minLength: Spacing.xxsmall.rawValue)
 
@@ -135,13 +139,14 @@ public struct UserListInspector: View {
                 title: "Disconnect User",
                 systemImage: "xmark.circle",
                 isEnabled: selectedUser != nil && canDisconnect,
-                role: .destructive
+                role: .destructive,
+                bundle: .module
             ) {
                 if let user = selectedUser { onDisconnect(user) }
             }
             .help(canDisconnect
-                ? "Disconnect the selected user"
-                : "Your account isn't allowed to disconnect users")
+                ? String(localized: "Disconnect the selected user", bundle: .module)
+                : String(localized: "Your account isn't allowed to disconnect users", bundle: .module))
         }
         .font(.subheadline)
         .padding(.horizontal, .small)
@@ -161,7 +166,7 @@ public struct UserListInspector: View {
     private var list: some View {
         VStack(spacing: 0) {
             if let loadError = viewModel.loadError {
-                Text("Couldn't fetch user list: \(loadError)")
+                Text("Couldn't fetch user list: \(loadError)", bundle: .module)
                     .font(.callout)
                     .foregroundStyle(.red)
                     .textSelection(.enabled)

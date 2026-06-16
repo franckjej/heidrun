@@ -91,7 +91,7 @@ struct TransferTile: View {
                 }
                 Spacer(minLength: Spacing.xsmall.rawValue)
                 if state.status == .running {
-                    Button("Cancel", action: onCancel)
+                    Button(String(localized: "Cancel", bundle: .module), action: onCancel)
                         .buttonStyle(.borderless)
                         .controlSize(.small)
                         .foregroundStyle(.secondary)
@@ -109,7 +109,7 @@ struct TransferTile: View {
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
                 if state.status == .running, let speed = speedText {
-                    Text("•")
+                    Text("•", bundle: .module)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                     Text(speed)
@@ -217,14 +217,14 @@ struct TransferTaskManagerSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: Spacing.small.rawValue) {
-                Label("Task Manager", systemImage: "list.bullet.rectangle")
+                Label(String(localized: "Task Manager", bundle: .module), systemImage: "list.bullet.rectangle")
                     .font(.headline)
                 Spacer()
                 if hasFinished {
-                    Button("Clear Finished", action: onClear)
+                    Button(String(localized: "Clear Finished", bundle: .module), action: onClear)
                         .controlSize(.small)
                 }
-                Button("Close", action: onClose)
+                Button(String(localized: "Close", bundle: .module), action: onClose)
                     .keyboardShortcut(.cancelAction)
                     .controlSize(.small)
             }
@@ -232,9 +232,9 @@ struct TransferTaskManagerSheet: View {
             Divider()
             if transfers.isEmpty {
                 ContentUnavailableView(
-                    "No Transfers",
+                    String(localized: "No Transfers", bundle: .module),
                     systemImage: "arrow.up.arrow.down.circle",
-                    description: Text("Uploads and downloads will appear here while they're running and after they finish.")
+                    description: Text("Uploads and downloads will appear here while they're running and after they finish.", bundle: .module)
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {

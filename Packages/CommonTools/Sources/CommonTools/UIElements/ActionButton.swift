@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct ActionButton: View {
-    public init(title: LocalizedStringKey, systemImage: String, isEnabled: Bool, role: ButtonRole? = nil, size: ControlSize? = .regular, fontWeight: Font.Weight? = .light, action: @escaping () -> Void) {
+    public init(title: LocalizedStringKey, systemImage: String, isEnabled: Bool, role: ButtonRole? = nil, size: ControlSize? = .regular, fontWeight: Font.Weight? = .light, bundle: Bundle? = nil, action: @escaping () -> Void) {
         self.title = title
         self.systemImage = systemImage
         self.isEnabled = isEnabled
@@ -9,9 +9,14 @@ public struct ActionButton: View {
         self.size = size
         self.action = action
         self.fontWeight = fontWeight
+        self.bundle = bundle
     }
 
     let title: LocalizedStringKey
+    // Bundle the `title` key is resolved against. Callers in SwiftPM feature
+    // modules pass `.module` so the tooltip localizes from the module catalog;
+    // nil keeps the default `Bundle.main` lookup.
+    let bundle: Bundle?
     let systemImage: String
     let isEnabled: Bool
     let role: ButtonRole?
@@ -34,7 +39,7 @@ public struct ActionButton: View {
         .buttonStyle(.accessoryBarAction)
         .controlSize(size ?? .regular)
         .disabled(!isEnabled)
-        .help(title)
+        .help(Text(title, bundle: bundle))
     }
 
     func sizeForControlSize(_ size: ControlSize) -> CGFloat {

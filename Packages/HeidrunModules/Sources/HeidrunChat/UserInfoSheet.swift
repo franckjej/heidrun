@@ -41,7 +41,7 @@ public struct UserInfoSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 12) {
                 headerIcon
-                Text("Info for \(nickname)")
+                Text("Info for \(nickname)", bundle: .module)
                     .font(.headline)
             }
 
@@ -49,7 +49,7 @@ public struct UserInfoSheet: View {
 
             HStack {
                 Spacer()
-                Button("Done", action: onDismiss)
+                Button(String(localized: "Done", bundle: .module), action: onDismiss)
                     .keyboardShortcut(.return, modifiers: [])
                     .buttonStyle(.borderedProminent)
             }
@@ -87,10 +87,10 @@ public struct UserInfoSheet: View {
                 .frame(maxWidth: .infinity)
         } else if let error {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Couldn't load info: \(error)")
+                Text("Couldn't load info: \(error)", bundle: .module)
                     .foregroundStyle(.red)
                     .textSelection(.enabled)
-                Button("Retry") { Task { await load() } }
+                Button(String(localized: "Retry", bundle: .module)) { Task { await load() } }
             }
         } else if let info {
             VStack(alignment: .leading, spacing: 6) {
@@ -98,7 +98,7 @@ public struct UserInfoSheet: View {
                 row("Socket", "\(info.user.socket)")
                 row("Status", info.user.status.flags.displayLabel)
                 Divider()
-                Text("Profile")
+                Text("Profile", bundle: .module)
                     .font(.subheadline.bold())
                 profileScrollView(text: info.infoText)
             }
@@ -134,7 +134,7 @@ public struct UserInfoSheet: View {
     @ViewBuilder
     private func row(_ label: String, _ value: String) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text("\(label):")
+            Text("\(label):", bundle: .module)
                 .foregroundStyle(.secondary)
                 .frame(width: 90, alignment: .trailing)
             Text(value)

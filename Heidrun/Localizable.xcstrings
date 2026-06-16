@@ -17,60 +17,6 @@
         }
       }
     },
-    "…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "…"
-          }
-        }
-      }
-    },
-    "…and %@ more" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "…und %@ weitere"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "…他 %@ 件"
-          }
-        }
-      }
-    },
-    "(%@:%@)" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "(%@:%@)"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "(%1$@:%2$@)"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "(%@:%@)"
-          }
-        }
-      }
-    },
     "%@ (%@) — %@" : {
       "localizations" : {
         "de" : {
@@ -290,25 +236,29 @@
         }
       }
     },
-    "•" : {
+    "(%@:%@)" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "•"
+            "value" : "(%@:%@)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "(%1$@:%2$@)"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "•"
+            "value" : "(%@:%@)"
           }
         }
       }
     },
-    "12:34" : {
-
-    },
+    "12:34" : {},
     "A Mac client for the Hotline protocol." : {
       "localizations" : {
         "de" : {
@@ -325,9 +275,7 @@
         }
       }
     },
-    "Aa" : {
-
-    },
+    "Aa" : {},
     "About Heidrun…" : {
       "localizations" : {
         "de" : {
@@ -410,6 +358,22 @@
         }
       }
     },
+    "Adds a Window → Protocol Console item that shows every Hotline transaction sent to and received from any open connection. Unknown transaction IDs are flagged red — useful for spotting non-standard server dialects. New connections opened after this toggle is changed pick up the new state." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fügt unter „Fenster“ → „Protokollkonsole“ einen Eintrag hinzu, der jede an eine offene Verbindung gesendete und von ihr empfangene Hotline-Transaktion anzeigt. Unbekannte Transaktions-IDs werden rot markiert – nützlich, um nicht standardkonforme Server-Dialekte zu erkennen. Verbindungen, die nach dem Ändern dieser Option geöffnet werden, übernehmen den neuen Zustand."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「ウインドウ」→「プロトコルコンソール」の項目を追加し、開いている接続との間で送受信されるすべてのHotlineトランザクションを表示します。不明なトランザクションIDは赤で表示され、非標準のサーバ方言を見つけるのに役立ちます。この設定を変更した後に開いた接続から、新しい状態が適用されます。"
+          }
+        }
+      }
+    },
     "Adds a system line in public chat when someone connects or disconnects." : {
       "localizations" : {
         "de" : {
@@ -431,9 +395,6 @@
           }
         }
       }
-    },
-    "Adds a Window → Protocol Console item that shows every Hotline transaction sent to and received from any open connection. Unknown transaction IDs are flagged red — useful for spotting non-standard server dialects. New connections opened after this toggle is changed pick up the new state." : {
-
     },
     "Affects the user list, file list, chat transcript, and other written content. Settings windows themselves stay at the macOS default." : {
       "localizations" : {
@@ -581,9 +542,7 @@
         }
       }
     },
-    "Auto-scroll" : {
-
-    },
+    "Auto-scroll" : {},
     "Automatically reconnect after an unexpected disconnect" : {
       "localizations" : {
         "de" : {
@@ -693,7 +652,20 @@
       }
     },
     "Bounce the dock on a new private message" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock-Symbol bei einer neuen privaten Nachricht hüpfen lassen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいプライベートメッセージでDockアイコンをバウンスさせる"
+          }
+        }
+      }
     },
     "Bring Window to Front" : {
       "localizations" : {
@@ -833,7 +805,20 @@
       }
     },
     "Change emoji…" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emoji ändern…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "絵文字を変更…"
+          }
+        }
+      }
     },
     "Chat" : {
       "localizations" : {
@@ -988,9 +973,7 @@
         }
       }
     },
-    "Clear the trusted certificate; the next connection re-prompts. Save the bookmark to persist." : {
-
-    },
+    "Clear the trusted certificate; the next connection re-prompts. Save the bookmark to persist." : {},
     "Click Add tracker to start." : {
       "localizations" : {
         "de" : {
@@ -1008,10 +991,36 @@
       }
     },
     "Close" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じる"
+          }
+        }
+      }
     },
     "Close All" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle schließen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて閉じる"
+          }
+        }
+      }
     },
     "Closing this window will end your session on %@." : {
       "localizations" : {
@@ -1232,9 +1241,7 @@
         }
       }
     },
-    "Copy" : {
-
-    },
+    "Copy" : {},
     "Copy Folder/Category Contents" : {
       "localizations" : {
         "de" : {
@@ -1485,9 +1492,7 @@
         }
       }
     },
-    "Delete…" : {
-
-    },
+    "Delete…" : {},
     "Description" : {
       "localizations" : {
         "de" : {
@@ -1505,7 +1510,20 @@
       }
     },
     "Developer" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entwickler"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開発者"
+          }
+        }
+      }
     },
     "Disconnect" : {
       "localizations" : {
@@ -1578,7 +1596,20 @@
       }
     },
     "Dock attention" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock-Hinweis"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock通知"
+          }
+        }
+      }
     },
     "Done" : {
       "localizations" : {
@@ -1715,11 +1746,22 @@
       }
     },
     "Enable protocol console" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokollkonsole aktivieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロトコルコンソールを有効にする"
+          }
+        }
+      }
     },
-    "Erika: Welcome to Heidrun." : {
-
-    },
+    "Erika: Welcome to Heidrun." : {},
     "Export as CSV…" : {
       "localizations" : {
         "de" : {
@@ -1790,23 +1832,23 @@
         }
       }
     },
-    "File" : {
+    "FileItem" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "Datei"
           }
         },
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "File"
           }
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "ファイル"
           }
         }
@@ -1927,7 +1969,20 @@
       }
     },
     "Forget" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergessen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "破棄"
+          }
+        }
+      }
     },
     "From %@" : {
       "localizations" : {
@@ -1994,6 +2049,22 @@
         }
       }
     },
+    "ID %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ID %lld"
+          }
+        }
+      }
+    },
     "Icon" : {
       "localizations" : {
         "de" : {
@@ -2022,22 +2093,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "アイコン ID %lld はバンドルされたカタログにありません"
-          }
-        }
-      }
-    },
-    "ID %lld" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ID %lld"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ID %lld"
           }
         }
       }
@@ -2226,22 +2281,6 @@
         }
       }
     },
-    "macOS will ask for permission the first time a notification needs to fire." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS fragt beim ersten Anzeigen einer Mitteilung nach Erlaubnis."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通知を初めて表示する際に、macOS が許可を求めます。"
-          }
-        }
-      }
-    },
     "Name" : {
       "localizations" : {
         "de" : {
@@ -2276,22 +2315,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "再接続しない"
-          }
-        }
-      }
-    },
-    "New bookmark" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neues Lesezeichen"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新規ブックマーク"
           }
         }
       }
@@ -2335,7 +2358,24 @@
         }
       }
     },
+    "New bookmark" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues Lesezeichen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新規ブックマーク"
+          }
+        }
+      }
+    },
     "News" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2389,22 +2429,6 @@
         }
       }
     },
-    "no backdrop" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "kein Hintergrund"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "背景なし"
-          }
-        }
-      }
-    },
     "No Bookmarks" : {
       "localizations" : {
         "de" : {
@@ -2417,22 +2441,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ブックマークなし"
-          }
-        }
-      }
-    },
-    "No bookmarks yet" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Noch keine Lesezeichen"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "まだブックマークがありません"
           }
         }
       }
@@ -2465,6 +2473,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "サーバーなし"
+          }
+        }
+      }
+    },
+    "No bookmarks yet" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Noch keine Lesezeichen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "まだブックマークがありません"
           }
         }
       }
@@ -2585,6 +2609,22 @@
         }
       }
     },
+    "OK" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
     "Objects" : {
       "localizations" : {
         "de" : {
@@ -2607,22 +2647,6 @@
         }
       }
     },
-    "OK" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
-          }
-        }
-      }
-    },
     "Only retries when the connection drops mid-session. Server kicks and login failures are never retried." : {
       "localizations" : {
         "de" : {
@@ -2639,22 +2663,6 @@
         }
       }
     },
-    "Open a new connection window" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neues Verbindungsfenster öffnen"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新しい接続ウィンドウを開く"
-          }
-        }
-      }
-    },
     "Open System Settings" : {
       "localizations" : {
         "de" : {
@@ -2667,6 +2675,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "システム設定を開く"
+          }
+        }
+      }
+    },
+    "Open a new connection window" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neues Verbindungsfenster öffnen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しい接続ウィンドウを開く"
           }
         }
       }
@@ -2763,11 +2787,22 @@
         }
       }
     },
-    "Pick an emoji" : {
-
-    },
+    "Pick an emoji" : {},
     "Pinned cert: %@…" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angeheftetes Zertifikat: %@…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "固定された証明書：%@…"
+          }
+        }
+      }
     },
     "Play" : {
       "localizations" : {
@@ -2938,7 +2973,20 @@
       }
     },
     "Protocol Console" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Protokollkonsole"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロトコルコンソール"
+          }
+        }
+      }
     },
     "Quit" : {
       "localizations" : {
@@ -3200,28 +3248,6 @@
         }
       }
     },
-    "Remove from list" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aus der Liste entfernen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove from list"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リストから削除"
-          }
-        }
-      }
-    },
     "Remove from List" : {
       "localizations" : {
         "de" : {
@@ -3234,6 +3260,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove from List"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リストから削除"
+          }
+        }
+      }
+    },
+    "Remove from list" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus der Liste entfernen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove from list"
           }
         },
         "ja" : {
@@ -3298,22 +3346,6 @@
         }
       }
     },
-    "Replace “%@”?" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ ersetzen?"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」を置き換えますか？"
-          }
-        }
-      }
-    },
     "Replace All" : {
       "localizations" : {
         "de" : {
@@ -3326,6 +3358,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "すべて置き換え"
+          }
+        }
+      }
+    },
+    "Replace “%@”?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ ersetzen?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」を置き換えますか？"
           }
         }
       }
@@ -3619,22 +3667,6 @@
         }
       }
     },
-    "seconds between attempts" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sekunden zwischen Versuchen"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "試行間隔（秒）"
-          }
-        }
-      }
-    },
     "Security" : {
       "localizations" : {
         "de" : {
@@ -3738,7 +3770,20 @@
       }
     },
     "Servername" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servername"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバ名"
+          }
+        }
+      }
     },
     "Servers" : {
       "localizations" : {
@@ -3855,7 +3900,20 @@
       }
     },
     "Show unread message count on the dock icon" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzahl ungelesener Nachrichten am Dock-Symbol anzeigen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未読メッセージ数をDockアイコンに表示する"
+          }
+        }
+      }
     },
     "Sign in to chat, browse files, and read news." : {
       "localizations" : {
@@ -4239,22 +4297,6 @@
         }
       }
     },
-    "times" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mal"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "回"
-          }
-        }
-      }
-    },
     "Timestamps" : {
       "localizations" : {
         "de" : {
@@ -4395,22 +4437,6 @@
         }
       }
     },
-    "Use default" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Standard verwenden"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "デフォルトを使用"
-          }
-        }
-      }
-    },
     "Use Server" : {
       "localizations" : {
         "de" : {
@@ -4445,6 +4471,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "TLS を使用"
+          }
+        }
+      }
+    },
+    "Use default" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard verwenden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "デフォルトを使用"
           }
         }
       }
@@ -4563,6 +4605,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "このブックマークの値を変更しました。置き換えますか、それとも変更を新しいブックマークとして保存しますか？"
+          }
+        }
+      }
+    },
+    "macOS will ask for permission the first time a notification needs to fire." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "macOS fragt beim ersten Anzeigen einer Mitteilung nach Erlaubnis."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知を初めて表示する際に、macOS が許可を求めます。"
+          }
+        }
+      }
+    },
+    "no backdrop" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kein Hintergrund"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "背景なし"
+          }
+        }
+      }
+    },
+    "seconds between attempts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sekunden zwischen Versuchen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "試行間隔（秒）"
+          }
+        }
+      }
+    },
+    "times" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mal"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "回"
+          }
+        }
+      }
+    },
+    "•" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "•"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "•"
+          }
+        }
+      }
+    },
+    "…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…"
+          }
+        }
+      }
+    },
+    "…and %@ more" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…und %@ weitere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "…他 %@ 件"
           }
         }
       }

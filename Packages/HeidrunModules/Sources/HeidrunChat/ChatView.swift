@@ -92,7 +92,7 @@ public struct ChatView: View {
                 .lineLimit(1)
                 .textSelection(.enabled)
                 .contextMenu {
-                    Button("Copy") {
+                    Button(String(localized: "Copy", bundle: .module)) {
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(headerTitle, forType: .string)
                     }
@@ -113,7 +113,7 @@ public struct ChatView: View {
                 }
                 .buttonStyle(.plain)
                 .controlSize(.regular)
-                .help("Set chat subject")
+                .help(String(localized: "Set chat subject", bundle: .module))
             }
         }
         .filledHeaderBox()
@@ -127,7 +127,7 @@ public struct ChatView: View {
     private var headerTitle: String {
         if !viewModel.subject.isEmpty { return viewModel.subject }
         if !viewModel.serverName.isEmpty { return viewModel.serverName }
-        return String(localized: "Chat")
+        return String(localized: "Chat", bundle: .module)
     }
 
     // MARK: - Messages
@@ -193,11 +193,11 @@ public struct ChatView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: .cornerMed, style: .continuous))
             VStack(spacing: Spacing.xxsmall.rawValue) {
-                Button("Send", action: submit)
+                Button(String(localized: "Send", bundle: .module), action: submit)
                     .disabled(isDraftEmpty)
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.return, modifiers: [.command])
-                    .help("Send message \u{2318}+\u{23CE}")
+                    .help(String(localized: "Send message \u{2318}+\u{23CE}", bundle: .module))
                 if historyEnabled {
                     recentMenu
                 }
@@ -226,7 +226,7 @@ public struct ChatView: View {
         .menuStyle(.borderlessButton)
         .fixedSize()
         .disabled(viewModel.recentMessages.isEmpty)
-        .help("Recent messages")
+        .help(String(localized: "Recent messages", bundle: .module))
     }
 
     /// One-line, length-capped label for a recent-message menu item.
@@ -265,18 +265,18 @@ private struct SubjectEditorSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.small.rawValue) {
-            Text("Set Chat Subject")
+            Text("Set Chat Subject", bundle: .module)
                 .font(.title3)
                 .fontWeight(.semibold)
 
-            TextField("Subject", text: $text)
+            TextField(String(localized: "Subject", bundle: .module), text: $text)
                 .textFieldStyle(.roundedBorder)
 
             HStack {
                 Spacer()
-                Button("Cancel", role: .cancel, action: onCancel)
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel, action: onCancel)
                     .keyboardShortcut(.cancelAction)
-                Button("Set") {
+                Button(String(localized: "Set", bundle: .module)) {
                     Task { @MainActor in await onSubmit(text) }
                 }
                 .buttonStyle(.borderedProminent)

@@ -25,7 +25,7 @@ public struct IMSendSheet: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Send message to \(recipient.nickname)")
+            Text("Send message to \(recipient.nickname)", bundle: .module)
                 .font(.headline)
 
             TextEditor(text: $messageBody)
@@ -45,9 +45,9 @@ public struct IMSendSheet: View {
 
             HStack {
                 Spacer()
-                Button("Cancel", action: onDismiss)
+                Button(String(localized: "Cancel", bundle: .module), action: onDismiss)
                     .keyboardShortcut(.escape, modifiers: [])
-                Button("Send") { Task { await send() } }
+                Button(String(localized: "Send", bundle: .module)) { Task { await send() } }
                     .keyboardShortcut(.return, modifiers: [.command])
                     .disabled(canSubmit == false || sending)
                     .buttonStyle(.borderedProminent)

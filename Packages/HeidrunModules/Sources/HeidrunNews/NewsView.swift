@@ -133,7 +133,7 @@ private struct PlainNewsScreen: View {
             Image(systemName: "newspaper")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text("News")
+            Text("News", bundle: .module)
                 .foregroundStyle(.secondary)
 
             Spacer()
@@ -148,7 +148,7 @@ private struct PlainNewsScreen: View {
             .buttonStyle(.bordered)
             .controlSize(.regular)
             .disabled(viewModel.isLoading)
-            .help("Reload news feed")
+            .help(String(localized: "Reload news feed", bundle: .module))
         }
         .filledHeaderBox()
         .padding(.horizontal, .xsmall)
@@ -157,14 +157,14 @@ private struct PlainNewsScreen: View {
     @ViewBuilder
     private var feed: some View {
         if viewModel.isLoading && posts.isEmpty {
-            ProgressView("Loading news…")
+            ProgressView(String(localized: "Loading news…", bundle: .module))
                 .controlSize(.large)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if posts.isEmpty {
             ContentUnavailableView(
-                "No News Yet",
+                String(localized: "No News Yet", bundle: .module),
                 systemImage: "newspaper",
-                description: Text("Posts will appear here when someone shares an update.")
+                description: Text("Posts will appear here when someone shares an update.", bundle: .module)
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -186,7 +186,7 @@ private struct PlainNewsScreen: View {
                         .scrollContentBackground(.hidden)
 
                     if viewModel.draft.isEmpty {
-                        Text("Share an update with the server…")
+                        Text("Share an update with the server…", bundle: .module)
                             .font(.body)
                             .foregroundStyle(.tertiary)
                             // Align to the TextEditor's text origin (NSTextView
@@ -206,7 +206,7 @@ private struct PlainNewsScreen: View {
                 Button {
                     Task { await viewModel.postDraft() }
                 } label: {
-                    Label("Post", systemImage: "paperplane.fill")
+                    Label(String(localized: "Post", bundle: .module), systemImage: "paperplane.fill")
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -214,8 +214,8 @@ private struct PlainNewsScreen: View {
                 .keyboardShortcut(.return, modifiers: .command)
                 .disabled(isDraftEmpty || !viewModel.permits(.postNews))
                 .help(viewModel.permits(.postNews)
-                    ? "Post draft (⌘↩)"
-                    : "Your account isn't allowed to post news")
+                    ? String(localized: "Post draft (⌘↩)", bundle: .module)
+                    : String(localized: "Your account isn't allowed to post news", bundle: .module))
             }
             // Errors surface through the scene-root ErrorPresenter.
         }
@@ -314,7 +314,7 @@ private struct ThreadedNewsScreen: View {
         }
         .sheet(item: $replyTarget) { thread in
             NewPostSheet(
-                title: "Reply",
+                title: String(localized: "Reply", bundle: .module),
                 initialTitle: NewsThreadActions.replyTitle(
                     forParent: thread.elements.first?.title ?? ""
                 )
@@ -332,19 +332,19 @@ private struct ThreadedNewsScreen: View {
             }
         }
         .alert(
-            "Delete this bundle?",
+            String(localized: "Delete this bundle?", bundle: .module),
             isPresented: deleteBinding,
             presenting: deleteTarget
         ) { bundle in
-            Button("Delete", role: .destructive) {
+            Button(String(localized: "Delete", bundle: .module), role: .destructive) {
                 Task { await viewModel.deleteBundle(bundle) }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: { bundle in
             Text(
                 bundle.kind == .category
-                    ? "“\(bundle.title)” and every thread inside it will be removed from the server. This can't be undone."
-                    : "“\(bundle.title)” and everything inside it will be removed from the server. This can't be undone."
+                    ? String(localized: "“\(bundle.title)” and every thread inside it will be removed from the server. This can't be undone.", bundle: .module)
+                    : String(localized: "“\(bundle.title)” and everything inside it will be removed from the server. This can't be undone.", bundle: .module)
             )
         }
         .sheet(item: $editThreadTarget) { thread in
@@ -357,14 +357,14 @@ private struct ThreadedNewsScreen: View {
             }
         }
         .confirmationDialog(
-            "Delete this post?",
+            String(localized: "Delete this post?", bundle: .module),
             isPresented: Binding(
                 get: { deleteThreadTarget != nil },
                 set: { if !$0 { deleteThreadTarget = nil } }
             ),
             presenting: deleteThreadTarget
         ) { thread in
-            Button("Delete", role: .destructive) {
+            Button(String(localized: "Delete", bundle: .module), role: .destructive) {
                 Task {
                     await viewModel.deleteThread(
                         threadID: thread.threadID,
@@ -373,9 +373,9 @@ private struct ThreadedNewsScreen: View {
                 }
                 deleteThreadTarget = nil
             }
-            Button("Cancel", role: .cancel) { deleteThreadTarget = nil }
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) { deleteThreadTarget = nil }
         } message: { _ in
-            Text("Any replies will remain visible as orphan posts.")
+            Text("Any replies will remain visible as orphan posts.", bundle: .module)
         }
         // Publish the selection + actions so the macOS "News" menu can
         // drive the same handlers as the toolbar. Only present while the
@@ -415,7 +415,7 @@ private struct ThreadedNewsScreen: View {
             Button {
                 Task { await viewModel.navigate(toDepth: 0) }
             } label: {
-                Text("News")
+                Text("News", bundle: .module)
                     .heidrunBody()
             }
             .buttonStyle(.plain)
@@ -447,8 +447,7 @@ private struct ThreadedNewsScreen: View {
                 title: "Copy Post",
                 systemImage: "doc.on.doc",
                 isEnabled: selectedThread != nil,
-                size: .small,
-                fontWeight: .light
+                size: .small, fontWeight: .light, bundle: .module
             ) {
                 copySelectedPost()
             }
@@ -457,8 +456,7 @@ private struct ThreadedNewsScreen: View {
                 title: "Copy Thread",
                 systemImage: "doc.on.doc.fill",
                 isEnabled: selectedThread != nil,
-                size: .small,
-                fontWeight: .light
+                size: .small, fontWeight: .light, bundle: .module
             ) {
                 copySelectedThread()
             }
@@ -467,8 +465,7 @@ private struct ThreadedNewsScreen: View {
                 title: "Edit Post…",
                 systemImage: "pencil",
                 isEnabled: canEditSelected && viewModel.permits(.postNews),
-                size: .small,
-                fontWeight: .light
+                size: .small, fontWeight: .light, bundle: .module
             ) {
                 editSelected()
             }
@@ -478,8 +475,7 @@ private struct ThreadedNewsScreen: View {
                 systemImage: "trash",
                 isEnabled: selectedThread != nil && viewModel.permits(.deleteArticles),
                 role: .destructive,
-                size: .small,
-                fontWeight: .light
+                size: .small, fontWeight: .light, bundle: .module
             ) {
                 deleteSelected()
             }
@@ -490,8 +486,7 @@ private struct ThreadedNewsScreen: View {
                 title: "Copy Contents",
                 systemImage: "doc.on.clipboard",
                 isEnabled: viewModel.selectedBundle != nil && !viewModel.isGatheringCopy,
-                size: .small,
-                fontWeight: .light
+                size: .small, fontWeight: .light, bundle: .module
             ) {
                 copySelectedBundleContents()
             }
@@ -500,8 +495,7 @@ private struct ThreadedNewsScreen: View {
                 title: "New Bundle or Category…",
                 systemImage: "plus",
                 isEnabled: viewModel.permits(.createNewsBundles) || viewModel.permits(.createCategories),
-                size: .small,
-                fontWeight: .light
+                size: .small, fontWeight: .light, bundle: .module
             ) {
                 creatingBundle = true
             }
@@ -511,8 +505,7 @@ private struct ThreadedNewsScreen: View {
                     title: "New Thread…",
                     systemImage: "square.and.pencil",
                     isEnabled: viewModel.permits(.postNews),
-                    size: .small,
-                    fontWeight: .light
+                    size: .small, fontWeight: .light, bundle: .module
                 ) {
                     composing = true
                 }
@@ -522,8 +515,7 @@ private struct ThreadedNewsScreen: View {
                 title: "Reload",
                 systemImage: "arrow.clockwise",
                 isEnabled: !viewModel.isLoading,
-                size: .small,
-                fontWeight: .light
+                size: .small, fontWeight: .light, bundle: .module
             ) {
                 Task { await viewModel.refresh() }
             }
@@ -542,11 +534,11 @@ private struct ThreadedNewsScreen: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if viewModel.bundles.isEmpty {
             ContentUnavailableView {
-                Label("Empty Folder", systemImage: "folder")
+                Label(String(localized: "Empty Folder", bundle: .module), systemImage: "folder")
             } description: {
-                Text("Nothing here yet.")
+                Text("Nothing here yet.", bundle: .module)
             } actions: {
-                Button("Create…") { creatingBundle = true }
+                Button(String(localized: "Create…", bundle: .module)) { creatingBundle = true }
                     .controlSize(.small)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -629,24 +621,26 @@ private struct ThreadedNewsScreen: View {
     private var threadListPane: some View {
         if viewModel.selectedCategoryPath == nil {
             ContentUnavailableView(
-                selectedFolder == nil ? "No Category Selected" : "Folder Selected",
+                selectedFolder == nil
+                    ? String(localized: "No Category Selected", bundle: .module)
+                    : String(localized: "Folder Selected", bundle: .module),
                 systemImage: "tray",
                 description: Text(
                     selectedFolder == nil
-                        ? "Pick a category on the left to see its threads."
-                        : "Double-click \u{201C}\(selectedFolder?.title ?? "")\u{201D} to open it, or pick a category."
+                        ? String(localized: "Pick a category on the left to see its threads.", bundle: .module)
+                        : String(localized: "Double-click \u{201C}\(selectedFolder?.title ?? "")\u{201D} to open it, or pick a category.", bundle: .module)
                 )
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if viewModel.isLoadingThreads && viewModel.threads.isEmpty {
-            ProgressView("Loading posts…")
+            ProgressView(String(localized: "Loading posts…", bundle: .module))
                 .controlSize(.small)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if viewModel.threads.isEmpty {
             ContentUnavailableView(
-                "No Posts Yet",
+                String(localized: "No Posts Yet", bundle: .module),
                 systemImage: "tray",
-                description: Text("This category is empty. Use the pencil button above to start a thread.")
+                description: Text("This category is empty. Use the pencil button above to start a thread.", bundle: .module)
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
@@ -740,7 +734,7 @@ private struct ThreadBodyPane: View {
                         Button {
                             replyTarget = thread
                         } label: {
-                            Label("Reply…", systemImage: "arrowshape.turn.up.left")
+                            Label(String(localized: "Reply…", bundle: .module), systemImage: "arrowshape.turn.up.left")
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
@@ -764,7 +758,7 @@ private struct ThreadBodyPane: View {
                                 HotlineLinkClick.post(url) ? .handled : .systemAction
                             })
                     } else {
-                        Text("(empty)")
+                        Text("(empty)", bundle: .module)
                             .heidrunBody()
                             .foregroundStyle(.tertiary)
                     }
@@ -774,9 +768,9 @@ private struct ThreadBodyPane: View {
             }
         } else {
             ContentUnavailableView(
-                "No Thread Selected",
+                String(localized: "No Thread Selected", bundle: .module),
                 systemImage: "doc.text",
-                description: Text("Pick a thread above to read its body here.")
+                description: Text("Pick a thread above to read its body here.", bundle: .module)
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
