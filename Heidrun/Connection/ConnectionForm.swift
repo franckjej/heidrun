@@ -506,9 +506,9 @@ struct ConnectionForm: View {
 
     private var passwordPrompt: String {
         if rememberPassword && password.isEmpty {
-            return "Saved password will be used"
+            return String(localized: "Saved password will be used")
         }
-        return "Optional"
+        return String(localized: "Optional")
     }
 
     private func submit() {

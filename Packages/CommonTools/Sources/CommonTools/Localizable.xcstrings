@@ -1,6 +1,18 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "…" : {
+
+    },
+    "Hi" : {
+
+    },
+    "Pop ScrollView Sheet" : {
+
+    },
+    "Pop Sheet" : {
+
+    },
     "Unlock Heidrun saved passwords" : {
       "localizations" : {
         "de" : {
