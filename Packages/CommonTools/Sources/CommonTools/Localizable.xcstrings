@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Unlock Heidrun saved passwords" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespeicherte Heidrun-Passwörter entsperren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存されたHeidrunのパスワードのロックを解除"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -98,7 +98,7 @@ public enum KeychainPasswordStore {
         let payload: Data
         if requireBiometric {
             guard let vaultKey = BiometricVaultKeyStore.unlock(
-                prompt: unlockPrompt ?? "Unlock Heidrun saved passwords"
+                prompt: unlockPrompt ?? String(localized: "Unlock Heidrun saved passwords", bundle: .module)
             ) else {
                 throw KeychainError.vaultKeyUnavailable
             }
@@ -200,7 +200,7 @@ public enum KeychainPasswordStore {
            data[data.startIndex] == encryptedMagic[0],
            data[data.startIndex + 1] == encryptedMagic[1] {
             guard let vaultKey = BiometricVaultKeyStore.unlock(
-                prompt: unlockPrompt ?? "Unlock Heidrun saved passwords"
+                prompt: unlockPrompt ?? String(localized: "Unlock Heidrun saved passwords", bundle: .module)
             ) else {
                 return nil
             }

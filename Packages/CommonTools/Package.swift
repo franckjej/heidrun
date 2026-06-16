@@ -10,6 +10,7 @@ let settings: [SwiftSetting] = [
 
 let package = Package(
     name: "CommonTools",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v15)
     ],
@@ -25,7 +26,8 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "CommonTools",
-            dependencies: []
+            dependencies: [],
+            resources: [.process("Localizable.xcstrings")]
         ),
         .testTarget(
             name: "CommonToolsTests",
