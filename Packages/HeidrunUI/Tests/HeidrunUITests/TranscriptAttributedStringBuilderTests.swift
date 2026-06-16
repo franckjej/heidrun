@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import CommonTools
 @testable import HeidrunUI
 
 @Suite("TranscriptAttributedStringBuilder — plain text")
@@ -144,7 +145,7 @@ struct TranscriptAttributedStringBuilderAttributeTests {
     func timestampAttributes() throws {
         let attrs = attributes(for: .timestamp, text: "12:34:56")
         let font = try #require(attrs[.font] as? NSFont)
-        #expect(font.pointSize == NSFont.smallSystemFontSize)
+        #expect(font.pointSize == ContentSize.default.captionPointSize)
         #expect(font.fontDescriptor.symbolicTraits.contains(.italic))
         #expect(attrs[.foregroundColor] as? NSColor == NSColor.tertiaryLabelColor)
     }
@@ -153,7 +154,7 @@ struct TranscriptAttributedStringBuilderAttributeTests {
     func senderAttributes() throws {
         let attrs = attributes(for: .sender, text: "Jens")
         let font = try #require(attrs[.font] as? NSFont)
-        #expect(font.pointSize == NSFont.systemFontSize)
+        #expect(font.pointSize == ContentSize.default.bodyPointSize)
         #expect(font.fontDescriptor.symbolicTraits.contains(.bold))
         #expect(attrs[.foregroundColor] as? NSColor == NSColor.labelColor)
     }
@@ -168,7 +169,7 @@ struct TranscriptAttributedStringBuilderAttributeTests {
     func bodyAttributes() throws {
         let attrs = attributes(for: .body, text: "hello")
         let font = try #require(attrs[.font] as? NSFont)
-        #expect(font.pointSize == NSFont.systemFontSize)
+        #expect(font.pointSize == ContentSize.default.bodyPointSize)
         #expect(!font.fontDescriptor.symbolicTraits.contains(.italic))
         #expect(!font.fontDescriptor.symbolicTraits.contains(.bold))
         #expect(attrs[.foregroundColor] as? NSColor == NSColor.labelColor)
@@ -178,7 +179,7 @@ struct TranscriptAttributedStringBuilderAttributeTests {
     func actionAttributes() throws {
         let attrs = attributes(for: .action, text: "* waves")
         let font = try #require(attrs[.font] as? NSFont)
-        #expect(font.pointSize == NSFont.systemFontSize)
+        #expect(font.pointSize == ContentSize.default.bodyPointSize)
         #expect(font.fontDescriptor.symbolicTraits.contains(.italic))
         #expect(attrs[.foregroundColor] as? NSColor == NSColor.secondaryLabelColor)
     }
@@ -187,7 +188,7 @@ struct TranscriptAttributedStringBuilderAttributeTests {
     func systemAttributes() throws {
         let attrs = attributes(for: .system, text: "joined")
         let font = try #require(attrs[.font] as? NSFont)
-        #expect(font.pointSize == NSFont.smallSystemFontSize)
+        #expect(font.pointSize == ContentSize.default.captionPointSize)
         #expect(font.fontDescriptor.symbolicTraits.contains(.italic))
         #expect(attrs[.foregroundColor] as? NSColor == NSColor.secondaryLabelColor)
     }
