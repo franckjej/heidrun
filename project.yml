@@ -166,7 +166,15 @@ targets:
           CODE_SIGN_IDENTITY: "9445B1D48BFF86F3644463D95D5FCDDB6854FA50"
           CODE_SIGN_STYLE: Manual
           DEVELOPMENT_TEAM: "6QDCK94P7Y"
-          PROVISIONING_PROFILE_SPECIFIER: "heidrun developer id application"
+          # Pin the profile by UUID, NOT the name: two profiles named
+          # "heidrun developer id application" are installed (one per GmbH
+          # Developer ID cert — see CODE_SIGN_IDENTITY above), and resolving by
+          # name grabbed the wrong one (embeds the 99985F9F re-issue, not our
+          # pinned 9445B1D4 cert) → "profile doesn't include signing certificate".
+          # This UUID is the profile that embeds 9445B1D4 (expires 2044-05-13).
+          # Refresh if the profile is regenerated:
+          #   ls ~/Library/MobileDevice/Provisioning\ Profiles/
+          PROVISIONING_PROFILE_SPECIFIER: "ce8503da-c15b-4537-9c72-e664a7632bf6"
     dependencies:
       - package: HeidrunCore
         product: HeidrunCore
