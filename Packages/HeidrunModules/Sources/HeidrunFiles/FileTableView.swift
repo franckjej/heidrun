@@ -205,8 +205,8 @@ struct FileTableView: NSViewRepresentable {
             cell.textField?.font = key == .size
                 ? .systemFont(ofSize: size.captionPointSize)
                 : .systemFont(ofSize: size.bodyPointSize)
-            cell.imageWidthConstraint?.constant = size.iconSize
-            cell.imageHeightConstraint?.constant = size.iconSize
+            cell.imageWidthConstraint?.constant = size.fileIconSize
+            cell.imageHeightConstraint?.constant = size.fileIconSize
 
             if key == .size {
                 cell.textField?.stringValue = parent.actions.secondaryLabel(entry)
@@ -219,7 +219,7 @@ struct FileTableView: NSViewRepresentable {
                 cell.textField?.textColor = .labelColor
                 cell.imageView?.image = FileIconRenderer.icon(
                     for: entry,
-                    size: NSSize(width: size.iconSize, height: size.iconSize)
+                    size: NSSize(width: size.fileIconSize, height: size.fileIconSize)
                 )
                 // Real Finder icons carry their own colours — clear any
                 // residual tint from the previous SF-Symbol-only path.

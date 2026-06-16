@@ -143,7 +143,7 @@ struct HeidrunMainApp: App {
             CommandMenu("Bookmarks") {
                 BookmarksMenuContent()
             }
-            CommandMenu("News") {
+            CommandGroup(before: .textEditing) {
                 NewsCommands()
             }
             CommandGroup(after: .windowList) {

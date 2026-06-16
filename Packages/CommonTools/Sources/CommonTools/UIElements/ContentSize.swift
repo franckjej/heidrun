@@ -47,6 +47,11 @@ public struct ContentSize: Sendable, Hashable {
             }
         }
 
+        /// File-table icon size
+        public var filesIconSize: CGFloat {
+            iconSize - 4.0
+        }
+
         /// File-table row height. Generous enough that `.inset`
         /// selection has visible padding.
         public var rowHeight: CGFloat {
@@ -167,6 +172,7 @@ public struct ContentSize: Sendable, Hashable {
 
     public var iconSize: CGFloat { preset.iconSize }
     public var rowHeight: CGFloat { preset.rowHeight }
+    public var fileIconSize: CGFloat { preset.filesIconSize }
     public var sidebarRowHeight: CGFloat { preset.sidebarRowHeight }
     public var userListRowHeight: CGFloat { preset.userListRowHeight }
     public var bookmarkRowHeight: CGFloat { preset.bookmarkRowHeight }

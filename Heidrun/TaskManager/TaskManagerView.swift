@@ -245,7 +245,7 @@ struct TaskManagerView: View {
                     // to THAT cell only — calling `liveState(for:)`
                     // straight from the column builder subscribed the
                     // body to `filesVM` and killed row selection.
-                    TableColumn("File") { row in
+                    TableColumn("FileItem") { row in
                         TransferFileCell(row: row)
                     }
 
