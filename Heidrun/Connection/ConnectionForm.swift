@@ -704,7 +704,7 @@ struct ConnectionForm: View {
             droppedImport = PendingBookmarksImport(url: destination)
         } catch {
             errorPresenter.present(
-                title: "Couldn't import bookmarks",
+                title: String(localized: "Couldn't import bookmarks"),
                 message: error.localizedDescription
             )
         }

@@ -46,6 +46,12 @@
             "state" : "translated",
             "value" : "(Ohne Name)"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（無題）"
+          }
         }
       }
     },

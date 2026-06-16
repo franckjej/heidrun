@@ -43,7 +43,7 @@ struct BannerPickerButton: View {
     }
 
     private var triggerLabel: String {
-        if bannerID == 0 { return "None" }
+        if bannerID == 0 { return String(localized: "None") }
         return IconCatalog.shared.banners.label(forID: Int(bannerID)) ?? "Banner #\(bannerID)"
     }
 }
@@ -67,7 +67,7 @@ private struct BannerPickerPopover: View {
 
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 4) {
-                    BannerRow(id: 0, label: "None", isSelected: selectedID == 0) {
+                    BannerRow(id: 0, label: String(localized: "None"), isSelected: selectedID == 0) {
                         selectedID = 0
                         onPick()
                     }

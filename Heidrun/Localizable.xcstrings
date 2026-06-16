@@ -62,6 +62,22 @@
         }
       }
     },
+    "%@ is connected as a guest — there's no account to edit." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ist als Gast verbunden – es gibt kein Konto zum Bearbeiten."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@はゲストとして接続しているため、編集できるアカウントはありません。"
+          }
+        }
+      }
+    },
     "%@ of %@ downloaded" : {
       "localizations" : {
         "de" : {
@@ -97,27 +113,21 @@
             "state" : "new",
             "value" : "%1$lld / %2$llu"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld / %2$llu"
+          }
         }
       }
     },
     "%lld bookmarks found." : {
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Lesezeichen gefunden."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Lesezeichen gefunden."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Lesezeichen gefunden."
           }
         },
         "en" : {
@@ -139,15 +149,9 @@
           }
         },
         "ja" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld 件のブックマークが見つかりました。"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld件のブックマークが見つかりました。"
           }
         }
       }
@@ -155,21 +159,9 @@
     "%lld connections" : {
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Verbindung"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Verbindungen"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Verbindungen"
           }
         },
         "en" : {
@@ -191,15 +183,9 @@
           }
         },
         "ja" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld 件の接続"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld件の接続"
           }
         }
       }
@@ -531,6 +517,12 @@
             "state" : "translated",
             "value" : "Automatisch Scrollen"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動スクロール"
+          }
         }
       }
     },
@@ -708,6 +700,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "トラッカーを参照…"
+          }
+        }
+      }
+    },
+    "Can't edit account" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konto kann nicht bearbeitet werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アカウントを編集できません"
           }
         }
       }
@@ -936,6 +944,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Lösche den vertrauten Zertifikate; Beim nächsten Verbindungsaufbau kann das Zertifikat angenommen und das Lesezeichen gespeichert werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信頼された証明書を消去します。次回の接続時に再度確認されます。保持するにはブックマークを保存してください。"
           }
         }
       }
@@ -1191,6 +1205,12 @@
             "state" : "translated",
             "value" : "Kopieren"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピー"
+          }
         }
       }
     },
@@ -1254,6 +1274,70 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ に接続できませんでした"
+          }
+        }
+      }
+    },
+    "Couldn't export CSV" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSV konnte nicht exportiert werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CSVをエクスポートできませんでした"
+          }
+        }
+      }
+    },
+    "Couldn't export bookmarks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen konnten nicht exportiert werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブックマークをエクスポートできませんでした"
+          }
+        }
+      }
+    },
+    "Couldn't import bookmarks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen konnten nicht importiert werden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブックマークをインポートできませんでした"
+          }
+        }
+      }
+    },
+    "Couldn't look up %@'s account — you may not have permission to edit accounts." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@s Konto konnte nicht abgerufen werden – möglicherweise fehlt Ihnen die Berechtigung, Konten zu bearbeiten."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のアカウントを照会できませんでした。アカウントを編集する権限がない可能性があります。"
           }
         }
       }
@@ -1363,21 +1447,9 @@
     "Delete %lld bookmarks?" : {
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Lesezeichen löschen?"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld Lesezeichen löschen?"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Lesezeichen löschen?"
           }
         },
         "en" : {
@@ -1399,15 +1471,9 @@
           }
         },
         "ja" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "%lld 件のブックマークを削除しますか？"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld件のブックマークを削除しますか？"
           }
         }
       }
@@ -1450,6 +1516,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Löschen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除…"
           }
         }
       }
@@ -1754,6 +1826,54 @@
         }
       }
     },
+    "Export bookmarks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen exportieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブックマークをエクスポート"
+          }
+        }
+      }
+    },
+    "Export bookmarks as CSV" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen als CSV exportieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブックマークをCSVとしてエクスポート"
+          }
+        }
+      }
+    },
+    "Export saved password for %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gespeichertes Passwort für %@ exportieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@の保存済みパスワードをエクスポート"
+          }
+        }
+      }
+    },
     "Failed" : {
       "localizations" : {
         "de" : {
@@ -1808,7 +1928,7 @@
         },
         "ja" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "ファイル"
           }
         }
@@ -2058,6 +2178,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "アイデンティティ"
+          }
+        }
+      }
+    },
+    "Import bookmarks" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen importieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブックマークをインポート"
           }
         }
       }
@@ -2399,21 +2535,9 @@
     "No servers reported across your %lld enabled trackers." : {
       "localizations" : {
         "de" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Keine Server von Ihrem %lld aktivierten Tracker gemeldet."
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Keine Server von Ihren %lld aktivierten Trackern gemeldet."
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über deine %lld aktivierten Tracker wurden keine Server gemeldet."
           }
         },
         "en" : {
@@ -2435,15 +2559,9 @@
           }
         },
         "ja" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "有効な %lld 個のトラッカーからサーバーは報告されませんでした。"
-                }
-              }
-            }
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有効な%lld件のトラッカーからサーバが報告されませんでした。"
           }
         }
       }
@@ -2460,6 +2578,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "トラッカーが設定されていません"
+          }
+        }
+      }
+    },
+    "None" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "なし"
           }
         }
       }
@@ -2690,7 +2825,22 @@
         }
       }
     },
-    "Pick an emoji" : {},
+    "Pick an emoji" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emoji auswählen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "絵文字を選択"
+          }
+        }
+      }
+    },
     "Pinned cert: %@…" : {
       "localizations" : {
         "de" : {
@@ -4313,6 +4463,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最大"
+          }
+        }
+      }
+    },
+    "Unknown error." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannter Fehler."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不明なエラー。"
           }
         }
       }

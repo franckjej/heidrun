@@ -308,8 +308,8 @@ struct HostView: View {
                             let login = try await vm.requestInfo(for: user.socket).accountLogin
                             if login.isEmpty {
                                 errorPresenter?.present(
-                                    title: "Can't edit account",
-                                    message: "\(user.nickname) is connected as a guest — there's no account to edit."
+                                    title: String(localized: "Can't edit account"),
+                                    message: String(localized: "\(user.nickname) is connected as a guest — there's no account to edit.")
                                 )
                             } else {
                                 await adminVM?.selectExisting(login: login)
@@ -317,8 +317,8 @@ struct HostView: View {
                             }
                         } catch {
                             errorPresenter?.present(
-                                title: "Can't edit account",
-                                message: "Couldn't look up \(user.nickname)'s account — you may not have permission to edit accounts."
+                                title: String(localized: "Can't edit account"),
+                                message: String(localized: "Couldn't look up \(user.nickname)'s account — you may not have permission to edit accounts.")
                             )
                         }
                     }

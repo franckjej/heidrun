@@ -26,7 +26,7 @@ enum BookmarkFileActions {
         onError: (String, String) -> Void
     ) -> Int? {
         let panel = NSOpenPanel()
-        panel.title = "Import bookmarks"
+        panel.title = String(localized: "Import bookmarks")
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         if let contentType = UTType(filenameExtension: "heidrunbookmarks") {
@@ -46,10 +46,10 @@ enum BookmarkFileActions {
             store.replaceAll(with: imported)
             return imported.count
         } catch let error as BookmarkArchiveError {
-            onError("Couldn't import bookmarks", error.errorDescription ?? "Unknown error.")
+            onError(String(localized: "Couldn't import bookmarks"), error.errorDescription ?? String(localized: "Unknown error."))
             return nil
         } catch {
-            onError("Couldn't import bookmarks", error.localizedDescription)
+            onError(String(localized: "Couldn't import bookmarks"), error.localizedDescription)
             return nil
         }
     }
@@ -62,7 +62,7 @@ enum BookmarkFileActions {
         onError: (String, String) -> Void
     ) -> Bool {
         let panel = NSSavePanel()
-        panel.title = "Export bookmarks"
+        panel.title = String(localized: "Export bookmarks")
         panel.nameFieldStringValue = "Heidrun Bookmarks"
         if let contentType = UTType(filenameExtension: "heidrunbookmarks") {
             panel.allowedContentTypes = [contentType]
@@ -84,13 +84,13 @@ enum BookmarkFileActions {
                 let exportLabel = key.address
                 return KeychainPasswordStore.cachedOrRead(
                     for: keychainKey,
-                    prompt: "Export saved password for \(exportLabel)"
+                    prompt: String(localized: "Export saved password for \(exportLabel)")
                 )
             }
             try data.write(to: url)
             return true
         } catch {
-            onError("Couldn't export bookmarks", error.localizedDescription)
+            onError(String(localized: "Couldn't export bookmarks"), error.localizedDescription)
             return false
         }
     }
@@ -102,7 +102,7 @@ enum BookmarkFileActions {
         onError: (String, String) -> Void
     ) -> Bool {
         let panel = NSSavePanel()
-        panel.title = "Export bookmarks as CSV"
+        panel.title = String(localized: "Export bookmarks as CSV")
         panel.nameFieldStringValue = "bookmarks"
         panel.allowedContentTypes = [.commaSeparatedText]
         guard panel.runModal() == .OK, let url = panel.url else { return false }
@@ -111,7 +111,7 @@ enum BookmarkFileActions {
             try Data(text.utf8).write(to: url)
             return true
         } catch {
-            onError("Couldn't export CSV", error.localizedDescription)
+            onError(String(localized: "Couldn't export CSV"), error.localizedDescription)
             return false
         }
     }

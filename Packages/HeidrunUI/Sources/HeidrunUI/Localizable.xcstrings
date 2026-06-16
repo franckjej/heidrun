@@ -33,6 +33,12 @@
             "state" : "translated",
             "value" : "Zertifikat wurde verändert"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "証明書が変更されました"
+          }
         }
       }
     },
@@ -97,6 +103,12 @@
             "state" : "translated",
             "value" : "Vertrauen und Verbind aufbauen"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信頼して接続"
+          }
         }
       }
     },
@@ -107,6 +119,12 @@
             "state" : "translated",
             "value" : "Dem neuen Zertifikat vertrauen"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しい証明書を信頼"
+          }
         }
       }
     },
@@ -116,6 +134,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zertifikat nicht vertrauen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "信頼されていない証明書"
           }
         }
       }

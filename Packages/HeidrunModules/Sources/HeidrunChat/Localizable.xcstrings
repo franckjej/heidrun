@@ -1,13 +1,34 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%@:" : {},
+    "%@:" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@:"
+          }
+        }
+      }
+    },
     "(no name)" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "(Ohne Name)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（名前なし）"
           }
         }
       }
@@ -72,6 +93,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kopieren"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コピー"
           }
         }
       }

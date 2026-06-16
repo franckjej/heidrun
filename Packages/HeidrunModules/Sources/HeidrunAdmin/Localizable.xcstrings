@@ -1,7 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {},
+    "" : {
+      "shouldTranslate" : false
+    },
     "Admin" : {
       "localizations" : {
         "de" : {

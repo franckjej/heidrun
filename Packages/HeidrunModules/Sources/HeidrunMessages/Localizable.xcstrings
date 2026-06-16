@@ -8,6 +8,12 @@
             "state" : "translated",
             "value" : "Abbrechen"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キャンセル"
+          }
         }
       }
     },
@@ -34,6 +40,12 @@
             "state" : "translated",
             "value" : "Löschen"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
+          }
         }
       }
     },
@@ -44,6 +56,12 @@
             "state" : "translated",
             "value" : "Alles Löschen"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべて削除"
+          }
         }
       }
     },
@@ -53,6 +71,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unterhaltung löschen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "会話を削除"
           }
         }
       }
@@ -79,6 +103,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle Unterhaltungen aus dieser Liste werden gelöscht. Es gibt danach keine Möglichkeit sie wiederherzustellen."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このリストのすべての会話が消去されます。Hotlineはプライベートメッセージをサーバ側に保存しないため、これはローカルのみの操作です。"
           }
         }
       }
@@ -197,6 +227,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sende mit ⌘+⏎"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メッセージを送信 ⌘+⏎"
           }
         }
       }
