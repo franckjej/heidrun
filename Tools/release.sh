@@ -23,7 +23,14 @@ if [[ -z "$VERSION" ]]; then
     exit 2
 fi
 
-SIGN_ID="Developer ID Application: Daubit & Francke GmbH (6QDCK94P7Y)"
+# Sign by cert SHA-1 hash, NOT the common name: the keychain holds two
+# "Developer ID Application: Daubit & Francke GmbH (6QDCK94P7Y)" certs (original
+# + 2026-06-10 re-issue), so `codesign --sign <name>` fails "ambiguous". Refresh
+# if the cert is replaced: security find-identity -v -p codesigning | grep Daubit
+SIGN_ID="9445B1D48BFF86F3644463D95D5FCDDB6854FA50"
+# Expected Authority in `codesign -dvv` output (the cert's common name — the
+# hash never appears there), used only to verify the archived app.
+SIGN_AUTHORITY="Developer ID Application: Daubit & Francke GmbH (6QDCK94P7Y)"
 NOTARY_PROFILE="AC_PASSWORD"
 REPO="franckjej/heidrun"
 DMGBUILD="../.venv/bin/dmgbuild"
@@ -68,9 +75,9 @@ BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP/Contents/Info
 # the exact signing identity with a bash substring test. On mismatch,
 # echo what codesign actually reported so the failure is self-diagnosing.
 SIG_INFO="$(codesign -dvv "$APP" 2>&1 || true)"
-if [[ "$SIG_INFO" != *"$SIGN_ID"* ]]; then
+if [[ "$SIG_INFO" != *"$SIGN_AUTHORITY"* ]]; then
     echo "✗ archived app is NOT signed by the GmbH Developer ID identity" >&2
-    echo "  expected identity: $SIGN_ID" >&2
+    echo "  expected identity: $SIGN_AUTHORITY" >&2
     echo "  codesign reported:" >&2
     printf '%s\n' "$SIG_INFO" | /usr/bin/grep -i "Authority=" >&2 || true
     exit 1

@@ -158,7 +158,12 @@ targets:
           # binary so Touch ID-protected saved passwords work in
           # shipping builds. Profile lives at
           # ~/Library/MobileDevice/Provisioning Profiles/<UUID>.provisionprofile.
-          CODE_SIGN_IDENTITY: "Developer ID Application: Daubit & Francke GmbH (6QDCK94P7Y)"
+          # Pinned to the cert SHA-1, NOT the common name: the keychain holds
+          # two "Developer ID Application: Daubit & Francke GmbH (6QDCK94P7Y)"
+          # certs (the original + a 2026-06-10 re-issue), so signing by name is
+          # ambiguous and codesign fails. Refresh if the cert is replaced:
+          #   security find-identity -v -p codesigning | grep "Daubit"
+          CODE_SIGN_IDENTITY: "9445B1D48BFF86F3644463D95D5FCDDB6854FA50"
           CODE_SIGN_STYLE: Manual
           DEVELOPMENT_TEAM: "6QDCK94P7Y"
           PROVISIONING_PROFILE_SPECIFIER: "heidrun developer id application"
