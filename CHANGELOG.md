@@ -3,6 +3,31 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.7] — 2026-06-16
+
+### Added
+- **Content size.** A new density control in Settings with four choices —
+  Compact, Standard, Comfortable, and **System Setting**, which follows the
+  macOS "Sidebar icon size" preference. Lists and message text scale to match.
+- **Complete German & Japanese localization.** The whole interface is now
+  fully localized in both languages — including the feature sidebar, error and
+  confirmation dialogs, the file and bookmark panels, and the Touch ID prompt
+  shown when unlocking a saved password.
+
+### Changed
+- Refreshed sidebar styling and feature icons, plus assorted UI polish across
+  Settings, the file list, and the task manager.
+
+### Fixed
+- Text in the Files, News, Chat, and Messages tabs that was already translated
+  could still appear in English; it now renders in German and Japanese as
+  intended.
+- A "New…" menu item could reappear after being dismissed.
+
+### Developer
+- Transcript styling tests track the resolved content-size body/caption sizes
+  rather than hardcoded system font sizes.
+
 ## [1.0.6] — 2026-06-07
 
 ### Fixed
