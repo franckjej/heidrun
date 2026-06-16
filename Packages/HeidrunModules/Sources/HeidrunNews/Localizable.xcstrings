@@ -1,38 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "“%@” and every thread inside it will be removed from the server. This can't be undone." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ und jeder darin enthaltene Thread werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」とその中のすべてのスレッドがサーバーから削除されます。この操作は取り消せません。"
-          }
-        }
-      }
-    },
-    "“%@” and everything inside it will be removed from the server. This can't be undone." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ und der gesamte Inhalt werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」とその中のすべてがサーバーから削除されます。この操作は取り消せません。"
-          }
-        }
-      }
-    },
     "(%u)" : {
       "localizations" : {
         "de" : {
@@ -72,7 +40,14 @@
       }
     },
     "(untitled)" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(Ohne Name)"
+          }
+        }
+      }
     },
     "A category holds news threads (posts)." : {
       "localizations" : {
@@ -756,29 +731,6 @@
         }
       }
     },
-    "Post a new thread to this category" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Einen neuen Thread in dieser Kategorie veröffentlichen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Post a new thread to this category"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このカテゴリに新しいスレッドを投稿"
-          }
-        }
-      }
-    },
     "Post draft (⌘↩)" : {
       "localizations" : {
         "de" : {
@@ -1037,6 +989,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "お使いのアカウントにはニュースを投稿する権限がありません"
+          }
+        }
+      }
+    },
+    "“%@” and every thread inside it will be removed from the server. This can't be undone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ und jeder darin enthaltene Thread werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」とその中のすべてのスレッドがサーバーから削除されます。この操作は取り消せません。"
+          }
+        }
+      }
+    },
+    "“%@” and everything inside it will be removed from the server. This can't be undone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ und der gesamte Inhalt werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」とその中のすべてがサーバーから削除されます。この操作は取り消せません。"
           }
         }
       }

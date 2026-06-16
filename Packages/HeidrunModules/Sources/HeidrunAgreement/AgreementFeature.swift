@@ -4,7 +4,7 @@ import HeidrunUI
 
 public enum AgreementFeature: HeidrunFeature {
     public static let identifier  = "com.heidrun.agreement"
-    public static let displayName = "Agreement"
+    public static var displayName: String { String(localized: "Agreement", bundle: .module) }
     public static let systemImage = "doc.text"
 
     @MainActor

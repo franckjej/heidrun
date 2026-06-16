@@ -4,7 +4,7 @@ import HeidrunUI
 
 public enum NewsFeature: HeidrunFeature {
     public static let identifier  = "com.heidrun.news"
-    public static let displayName = "News"
+    public static var displayName: String { String(localized: "News", bundle: .module) }
     public static let systemImage = "text.pad.header"
 
     @MainActor

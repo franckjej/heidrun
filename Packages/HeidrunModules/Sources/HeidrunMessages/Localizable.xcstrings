@@ -1,7 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Cancel" : {},
+    "Cancel" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbrechen"
+          }
+        }
+      }
+    },
     "Conversations" : {
       "localizations" : {
         "de" : {
@@ -18,9 +27,36 @@
         }
       }
     },
-    "Delete" : {},
-    "Delete All" : {},
-    "Delete Conversation" : {},
+    "Delete" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
+          }
+        }
+      }
+    },
+    "Delete All" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles Löschen"
+          }
+        }
+      }
+    },
+    "Delete Conversation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterhaltung löschen"
+          }
+        }
+      }
+    },
     "Delete all conversations?" : {
       "localizations" : {
         "de" : {
@@ -37,7 +73,16 @@
         }
       }
     },
-    "Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only." : {},
+    "Every conversation in this list will be cleared. Hotline doesn't persist private messages server-side, so this is local only." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Unterhaltungen aus dieser Liste werden gelöscht. Es gibt danach keine Möglichkeit sie wiederherzustellen."
+          }
+        }
+      }
+    },
     "Messages" : {
       "localizations" : {
         "de" : {
@@ -108,29 +153,6 @@
         }
       }
     },
-    "Reply…" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Antworten…"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reply…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "返信…"
-          }
-        }
-      }
-    },
     "Select a thread on the left to read and reply." : {
       "localizations" : {
         "de" : {
@@ -169,7 +191,16 @@
         }
       }
     },
-    "Send message ⌘+⏎" : {},
+    "Send message ⌘+⏎" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sende mit ⌘+⏎"
+          }
+        }
+      }
+    },
     "offline" : {
       "localizations" : {
         "de" : {

@@ -1,9 +1,7 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
+    "" : {},
     "Admin" : {
       "localizations" : {
         "de" : {
@@ -74,23 +72,6 @@
         }
       }
     },
-    "Couldn't complete the operation" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Vorgang konnte nicht abgeschlossen werden"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "操作を完了できませんでした"
-          }
-        }
-      }
-    },
     "Custom" : {
       "localizations" : {
         "de" : {
@@ -141,23 +122,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ を削除しますか？"
-          }
-        }
-      }
-    },
-    "Duplicate" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Duplizieren"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "複製"
           }
         }
       }
@@ -274,29 +238,6 @@
         }
       }
     },
-    "New" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neu"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新規"
-          }
-        }
-      }
-    },
     "New account" : {
       "localizations" : {
         "de" : {
@@ -347,23 +288,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ニックネーム"
-          }
-        }
-      }
-    },
-    "OK" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OK"
           }
         }
       }

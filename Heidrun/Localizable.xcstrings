@@ -15,7 +15,8 @@
             "value" : ""
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "%@ (%@) — %@" : {
       "localizations" : {
@@ -83,31 +84,14 @@
         }
       }
     },
-    "%@ users · %lld transfers" : {
-      "extractionState" : "stale",
+    "%lld / %llu" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ Benutzer · %lld Übertragungen"
+            "value" : "%1$lld / %2$llu"
           }
         },
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ users · %2$lld transfers"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ユーザー · %lld 転送"
-          }
-        }
-      }
-    },
-    "%lld / %llu" : {
-      "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
@@ -258,7 +242,6 @@
         }
       }
     },
-    "12:34" : {},
     "A Mac client for the Hotline protocol." : {
       "localizations" : {
         "de" : {
@@ -275,7 +258,6 @@
         }
       }
     },
-    "Aa" : {},
     "About Heidrun…" : {
       "localizations" : {
         "de" : {
@@ -542,7 +524,16 @@
         }
       }
     },
-    "Auto-scroll" : {},
+    "Auto-scroll" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch Scrollen"
+          }
+        }
+      }
+    },
     "Automatically reconnect after an unexpected disconnect" : {
       "localizations" : {
         "de" : {
@@ -721,23 +712,6 @@
         }
       }
     },
-    "Can't edit account" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Konto kann nicht bearbeitet werden"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アカウントを編集できません"
-          }
-        }
-      }
-    },
     "Cancel" : {
       "localizations" : {
         "de" : {
@@ -880,23 +854,6 @@
         }
       }
     },
-    "Choose emoji…" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Emoji auswählen…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "絵文字を選択…"
-          }
-        }
-      }
-    },
     "Clear" : {
       "localizations" : {
         "de" : {
@@ -973,7 +930,16 @@
         }
       }
     },
-    "Clear the trusted certificate; the next connection re-prompts. Save the bookmark to persist." : {},
+    "Clear the trusted certificate; the next connection re-prompts. Save the bookmark to persist." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lösche den vertrauten Zertifikate; Beim nächsten Verbindungsaufbau kann das Zertifikat angenommen und das Lesezeichen gespeichert werden."
+          }
+        }
+      }
+    },
     "Click Add tracker to start." : {
       "localizations" : {
         "de" : {
@@ -1218,30 +1184,16 @@
         }
       }
     },
-    "Content size" : {
-      "extractionState" : "stale",
+    "Copy" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inhaltsgröße"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Content size"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "コンテンツサイズ"
+            "value" : "Kopieren"
           }
         }
       }
     },
-    "Copy" : {},
     "Copy Folder/Category Contents" : {
       "localizations" : {
         "de" : {
@@ -1492,7 +1444,16 @@
         }
       }
     },
-    "Delete…" : {},
+    "Delete…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
+          }
+        }
+      }
+    },
     "Description" : {
       "localizations" : {
         "de" : {
@@ -1761,7 +1722,6 @@
         }
       }
     },
-    "Erika: Welcome to Heidrun." : {},
     "Export as CSV…" : {
       "localizations" : {
         "de" : {
@@ -1836,7 +1796,7 @@
       "localizations" : {
         "de" : {
           "stringUnit" : {
-            "state" : "needs_review",
+            "state" : "translated",
             "value" : "Datei"
           }
         },
@@ -1996,23 +1956,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ から"
-          }
-        }
-      }
-    },
-    "Heidrun" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heidrun"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heidrun"
           }
         }
       }
@@ -2335,29 +2278,6 @@
         }
       }
     },
-    "New Heidrun Window" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neues Heidrun-Fenster"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New Heidrun Window"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新しいHeidrunウィンドウ"
-          }
-        }
-      }
-    },
     "New bookmark" : {
       "localizations" : {
         "de" : {
@@ -2370,23 +2290,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新規ブックマーク"
-          }
-        }
-      }
-    },
-    "News" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nachrichten"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ニュース"
           }
         }
       }
@@ -3412,29 +3315,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "保存済みパスワードに Touch ID を要求"
-          }
-        }
-      }
-    },
-    "Reset" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zurücksetzen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リセット"
           }
         }
       }

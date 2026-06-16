@@ -2,7 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "%@" : {
-
+      "shouldTranslate" : false
     },
     "%u" : {
       "localizations" : {
@@ -38,6 +38,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "同意する"
+          }
+        }
+      }
+    },
+    "Agreement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vereinbarung"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "利用規約"
           }
         }
       }

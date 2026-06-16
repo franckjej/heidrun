@@ -5,7 +5,7 @@ import HeidrunUI
 
 public enum FilesFeature: HeidrunFeature {
     public static let identifier  = "com.heidrun.files"
-    public static let displayName = "Files"
+    public static var displayName: String { String(localized: "Files", bundle: .module) }
     public static let systemImage = "folder"
 
     /// UserDefaults key for the security-scoped bookmark of the user's

@@ -221,7 +221,16 @@
         }
       }
     },
-    "Copy File Info" : {},
+    "Copy File Info" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Info kopieren"
+          }
+        }
+      }
+    },
     "Couldn't replace the file" : {
       "localizations" : {
         "de" : {
@@ -390,6 +399,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Datei"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイル"
+          }
+        }
+      }
+    },
+    "Files" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateien"
           }
         },
         "ja" : {

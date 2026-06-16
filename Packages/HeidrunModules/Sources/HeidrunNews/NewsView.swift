@@ -81,11 +81,9 @@ public struct NewsView: View {
     }
 
     /// Detect capability, then autofetch only the flavour the server runs.
-    /// Plain-news servers stream `.newsPosted` events; the observation
-    /// loop is owned at connection scope (`ConnectionHandle`/`start()`)
-    /// so live posts survive module switches — `start()` here is an
-    /// idempotent no-op for the hoisted VM and only does work for the
-    /// standalone `NewsView(client:)` path. Threaded servers don't push.
+    /// Plain-news `.newsPosted` observation is owned at connection scope, so
+    /// `start()` here is an idempotent no-op for the hoisted VM (only the
+    /// standalone `NewsView(client:)` path does work). Threaded servers don't push.
     private func bootstrap() async {
         if capability == nil {
             capability = await resolveCapability()
@@ -377,11 +375,9 @@ private struct ThreadedNewsScreen: View {
         } message: { _ in
             Text("Any replies will remain visible as orphan posts.", bundle: .module)
         }
-        // Publish the selection + actions so the macOS "News" menu can
-        // drive the same handlers as the toolbar. Only present while the
-        // threaded-news view is on screen (this struct is the .threaded
-        // branch of NewsView), so the menu disables when focus moves to
-        // another feature/window.
+        // Publish selection + actions so the macOS "News" menu drives the
+        // same handlers as the toolbar. Present only while this threaded
+        // view is on screen, so the menu disables when focus leaves.
         .focusedValue(\.newsActionContext, NewsActionContext(
             hasSelection: selectedThread != nil,
             canEdit: canEditSelected,
@@ -447,7 +443,9 @@ private struct ThreadedNewsScreen: View {
                 title: "Copy Post",
                 systemImage: "doc.on.doc",
                 isEnabled: selectedThread != nil,
-                size: .small, fontWeight: .light, bundle: .module
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
             ) {
                 copySelectedPost()
             }
@@ -456,7 +454,9 @@ private struct ThreadedNewsScreen: View {
                 title: "Copy Thread",
                 systemImage: "doc.on.doc.fill",
                 isEnabled: selectedThread != nil,
-                size: .small, fontWeight: .light, bundle: .module
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
             ) {
                 copySelectedThread()
             }
@@ -465,7 +465,9 @@ private struct ThreadedNewsScreen: View {
                 title: "Edit Post…",
                 systemImage: "pencil",
                 isEnabled: canEditSelected && viewModel.permits(.postNews),
-                size: .small, fontWeight: .light, bundle: .module
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
             ) {
                 editSelected()
             }
@@ -475,7 +477,9 @@ private struct ThreadedNewsScreen: View {
                 systemImage: "trash",
                 isEnabled: selectedThread != nil && viewModel.permits(.deleteArticles),
                 role: .destructive,
-                size: .small, fontWeight: .light, bundle: .module
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
             ) {
                 deleteSelected()
             }
@@ -486,7 +490,9 @@ private struct ThreadedNewsScreen: View {
                 title: "Copy Contents",
                 systemImage: "doc.on.clipboard",
                 isEnabled: viewModel.selectedBundle != nil && !viewModel.isGatheringCopy,
-                size: .small, fontWeight: .light, bundle: .module
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
             ) {
                 copySelectedBundleContents()
             }
@@ -495,7 +501,9 @@ private struct ThreadedNewsScreen: View {
                 title: "New Bundle or Category…",
                 systemImage: "plus",
                 isEnabled: viewModel.permits(.createNewsBundles) || viewModel.permits(.createCategories),
-                size: .small, fontWeight: .light, bundle: .module
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
             ) {
                 creatingBundle = true
             }
@@ -505,7 +513,9 @@ private struct ThreadedNewsScreen: View {
                     title: "New Thread…",
                     systemImage: "square.and.pencil",
                     isEnabled: viewModel.permits(.postNews),
-                    size: .small, fontWeight: .light, bundle: .module
+                    size: .small,
+                    fontWeight: .light,
+                    bundle: .module
                 ) {
                     composing = true
                 }
@@ -515,7 +525,9 @@ private struct ThreadedNewsScreen: View {
                 title: "Reload",
                 systemImage: "arrow.clockwise",
                 isEnabled: !viewModel.isLoading,
-                size: .small, fontWeight: .light, bundle: .module
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
             ) {
                 Task { await viewModel.refresh() }
             }
@@ -600,11 +612,9 @@ private struct ThreadedNewsScreen: View {
         ) {
             threadListPane
         } bottom: {
-            // Own view so body-load mutations (isLoadingBody, loadedThread)
-            // invalidate only this subtree — not `ThreadedNewsScreen.body`,
-            // which would recreate `ThreadOutlineView` and fire a redundant
-            // `updateNSView` on every body fetch. Selection still flows
-            // through the parent via `selectedThreadID`.
+            // Own view so body-load mutations invalidate only this subtree,
+            // not `ThreadedNewsScreen.body` (which would recreate
+            // `ThreadOutlineView` + fire a redundant `updateNSView` per fetch).
             ThreadBodyPane(viewModel: viewModel, replyTarget: $replyTarget)
         }
     }
@@ -750,11 +760,9 @@ private struct ThreadBodyPane: View {
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .environment(\.openURL, OpenURLAction { url in
-                                // hotline/heidrun → in-app dispatch via
-                                // NotificationCenter so macOS doesn't auto-
-                                // spawn an extra empty window for the URL
-                                // receipt. Everything else (http(s)) falls
-                                // to the system default.
+                                // hotline/heidrun → in-app dispatch (no extra
+                                // empty window); everything else (http(s))
+                                // falls to the system default.
                                 HotlineLinkClick.post(url) ? .handled : .systemAction
                             })
                     } else {
@@ -776,11 +784,9 @@ private struct ThreadBodyPane: View {
         }
     }
 
-    /// Build an `AttributedString` from a raw post body with `.link`
-    /// runs on hotline/heidrun/http(s) URLs so SwiftUI `Text` dispatches
-    /// clicks through `NSWorkspace.open` → our `.onOpenURL` → connection.
-    /// SelectableTranscript handles the same job for chat / plain news /
-    /// PM surfaces; this is the threaded-news-body counterpart.
+    /// Build an `AttributedString` with `.link` runs on hotline/heidrun/http(s)
+    /// URLs so `Text` clicks dispatch through `.onOpenURL` → connection. The
+    /// threaded-news-body counterpart to SelectableTranscript.
     private func linkifyAttributed(_ body: String) -> AttributedString {
         var attributed = AttributedString(body)
         for link in HotlineLinkDetector.scan(body) {

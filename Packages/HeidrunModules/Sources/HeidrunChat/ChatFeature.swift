@@ -10,7 +10,7 @@ import HeidrunUI
 /// detail view.
 public enum ChatFeature: HeidrunFeature {
     public static let identifier  = "com.heidrun.chat"
-    public static let displayName = "Chat"
+    public static var displayName: String { String(localized: "Chat", bundle: .module) }
     public static let systemImage = "text.bubble"
 
     /// Chat is the only feature that needs the connected-users list visible

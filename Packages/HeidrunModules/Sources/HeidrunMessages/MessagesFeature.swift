@@ -4,7 +4,7 @@ import HeidrunUI
 
 public enum MessagesFeature: HeidrunFeature {
     public static let identifier  = "com.heidrun.messages"
-    public static let displayName = "Messages"
+    public static var displayName: String { String(localized: "Messages", bundle: .module) }
     public static let systemImage = "envelope.front"
 
     @MainActor

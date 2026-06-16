@@ -2,7 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "" : {
-
+      "shouldTranslate" : false
     },
     "Cancel" : {
       "localizations" : {
@@ -27,7 +27,14 @@
       }
     },
     "Certificate changed" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zertifikat wurde verändert"
+          }
+        }
+      }
     },
     "Send" : {
       "localizations" : {
@@ -84,13 +91,34 @@
       }
     },
     "Trust & Connect" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vertrauen und Verbind aufbauen"
+          }
+        }
+      }
     },
     "Trust New Certificate" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dem neuen Zertifikat vertrauen"
+          }
+        }
+      }
     },
     "Untrusted certificate" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zertifikat nicht vertrauen"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
