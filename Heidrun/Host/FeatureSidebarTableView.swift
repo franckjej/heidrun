@@ -29,7 +29,7 @@ struct FeatureSidebarTableView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let tableView = NSTableView()
+        let tableView = FirstMouseTableView()
         tableView.style = .plain
         tableView.usesAlternatingRowBackgroundColors = false
         tableView.allowsMultipleSelection = false
@@ -164,6 +164,29 @@ struct FeatureSidebarTableView: NSViewRepresentable {
                 }
             }
         }
+    }
+}
+
+/// Sidebar table that acts on the first click even when focus currently
+/// lives in another view (e.g. the chat composer's text view). Without
+/// this, SwiftUI's `NavigationSplitView` treats the first click as merely
+/// moving the focus section into the sidebar, so selecting a feature took
+/// two clicks while a transcript composer held first responder.
+private final class FirstMouseTableView: NSTableView {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        let clickedRow = row(at: convert(event.locationInWindow, from: nil))
+        super.mouseDown(with: event)
+        // When another responder (notably an editing NSTextView, or the
+        // state right after a modal sheet like the server agreement is
+        // dismissed) held first responder, AppKit spends the first click
+        // transferring first responder to the table and skips the row
+        // selection — so the sidebar needed two clicks. Apply the dropped
+        // selection ourselves when that happened.
+        guard clickedRow >= 0, selectedRow != clickedRow,
+              delegate?.tableView?(self, shouldSelectRow: clickedRow) ?? true else { return }
+        selectRowIndexes(IndexSet(integer: clickedRow), byExtendingSelection: false)
     }
 }
 

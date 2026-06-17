@@ -167,7 +167,8 @@ private struct PlainNewsScreen: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             SelectableTranscript(
-                lines: NewsPostsTranscriptProjection.lines(from: posts)
+                lines: NewsPostsTranscriptProjection.lines(from: posts),
+                scrollAnchor: viewModel.transcriptScroll
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(.background)

@@ -138,7 +138,8 @@ public struct ChatView: View {
                 from: visibleLines,
                 showTimestamps: showTimestamps,
                 timestampFormatter: Self.timestampFormatter
-            )
+            ),
+            scrollAnchor: viewModel.transcriptScroll
         )
         .frame(maxWidth: CGFloat.infinity, maxHeight: CGFloat.infinity)
         .draggable(TextFileExport(

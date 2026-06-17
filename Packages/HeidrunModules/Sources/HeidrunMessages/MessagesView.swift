@@ -150,6 +150,7 @@ public struct MessagesView: View {
            let thread = viewModel.threads.first(where: { $0.id == id }) {
             ThreadDetail(
                 thread: thread,
+                scrollAnchor: viewModel.transcriptScroll(for: id),
                 nickname: viewModel.nickname(for: id) ?? "Unknown user",
                 iconID: viewModel.icon(for: id),
                 emoji: viewModel.emoji(for: id),
@@ -165,6 +166,10 @@ public struct MessagesView: View {
                     }
                 }
             )
+            // Distinct identity per thread so the transcript (and its
+            // scroll coordinator) is rebuilt against the right anchor
+            // when the user switches conversations.
+            .id(id)
         } else {
             ContentUnavailableView(
                 String(localized: "Pick a conversation", bundle: .module),
@@ -180,6 +185,7 @@ public struct MessagesView: View {
 
 private struct ThreadDetail: View {
     let thread: MessagesViewModel.Thread
+    let scrollAnchor: TranscriptScrollAnchor
     let nickname: String
     let iconID: UInt16?
     let emoji: String?
@@ -232,7 +238,8 @@ private struct ThreadDetail: View {
                 ownNickname: "Me",
                 peerNickname: nickname,
                 timestampFormatter: Self.timestampFormatter
-            )
+            ),
+            scrollAnchor: scrollAnchor
         )
         .frame(maxWidth: CGFloat.infinity, maxHeight: CGFloat.infinity)
     }

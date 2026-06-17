@@ -3,14 +3,26 @@ import SwiftUI
 import CommonTools
 
 /// SwiftUI view that renders `[TranscriptLine]` in a read-only NSTextView
-/// with native drag-select + ⌘C. Auto-scrolls to the bottom on update
-/// when the user was already at the bottom before the change.
+/// with native drag-select + ⌘C.
+///
+/// Scroll behaviour follows a `TranscriptScrollAnchor` when one is
+/// supplied: the auto-follow-bottom intent and last scroll offset live in
+/// the anchor (owned by a long-lived view-model), so they survive the
+/// `NSScrollView` teardown/rebuild that a feature switch triggers. Without
+/// an anchor it falls back to the best-effort "stay at bottom if you were
+/// at the bottom" heuristic sampled from the live view.
 public struct SelectableTranscript: NSViewRepresentable {
     private let lines: [TranscriptLine]
+    private let scrollAnchor: TranscriptScrollAnchor?
     @Environment(\.heidrunContentSize) private var contentSize
 
-    public init(lines: [TranscriptLine]) {
+    public init(lines: [TranscriptLine], scrollAnchor: TranscriptScrollAnchor? = nil) {
         self.lines = lines
+        self.scrollAnchor = scrollAnchor
+    }
+
+    public func makeCoordinator() -> Coordinator {
+        Coordinator(anchor: scrollAnchor)
     }
 
     public func makeNSView(context: Context) -> NSScrollView {
@@ -50,6 +62,22 @@ public struct SelectableTranscript: NSViewRepresentable {
         )
 
         scrollView.documentView = textView
+
+        // Record scroll intent only from user-driven live scrolls (trackpad,
+        // wheel, scroller drag). Layout- and programmatic-scroll changes don't
+        // post these, so they can't clobber the anchor on rebuild.
+        context.coordinator.scrollView = scrollView
+        for name: NSNotification.Name in [
+            NSScrollView.didLiveScrollNotification,
+            NSScrollView.didEndLiveScrollNotification
+        ] {
+            NotificationCenter.default.addObserver(
+                context.coordinator,
+                selector: #selector(Coordinator.userDidScroll(_:)),
+                name: name,
+                object: scrollView
+            )
+        }
         return scrollView
     }
 
@@ -57,7 +85,13 @@ public struct SelectableTranscript: NSViewRepresentable {
         guard let textView = scrollView.documentView as? SelectableTextView,
               let storage = textView.textStorage else { return }
 
-        let wasAtBottom = Self.isAtBottom(scrollView: scrollView, tolerance: 4)
+        // Capture intent BEFORE mutating the text. With an anchor it's the
+        // persisted user intent (survives teardown); without one, fall back
+        // to sampling the live geometry as before.
+        let followsBottom = scrollAnchor?.followsBottom
+            ?? Self.isAtBottom(scrollView: scrollView, tolerance: 4)
+        let restoreOffsetY = scrollAnchor.map { followsBottom ? nil : $0.offsetY } ?? nil
+
         let built = TranscriptAttributedStringBuilder.build(
             lines: lines, contentSize: contentSize
         )
@@ -66,16 +100,18 @@ public struct SelectableTranscript: NSViewRepresentable {
         storage.setAttributedString(built)
         storage.endEditing()
 
-        if wasAtBottom {
-            // Defer past this view-update cycle; `scrollToBottom` forces
-            // layout so it targets the NEW bottom, not the stale one.
-            DispatchQueue.main.async {
+        // Defer past this view-update cycle; the scroll helpers force layout
+        // so they target the NEW geometry, not the stale one.
+        DispatchQueue.main.async {
+            if followsBottom {
                 Self.scrollToBottom(scrollView: scrollView)
+            } else if let restoreOffsetY {
+                Self.scroll(scrollView: scrollView, toOffsetY: restoreOffsetY)
             }
         }
     }
 
-    private static func isAtBottom(scrollView: NSScrollView, tolerance: CGFloat) -> Bool {
+    fileprivate static func isAtBottom(scrollView: NSScrollView, tolerance: CGFloat) -> Bool {
         guard let documentView = scrollView.documentView else { return true }
         let visible = scrollView.contentView.bounds
         let maxY = documentView.bounds.maxY
@@ -83,18 +119,52 @@ public struct SelectableTranscript: NSViewRepresentable {
     }
 
     private static func scrollToBottom(scrollView: NSScrollView) {
-        guard let textView = scrollView.documentView as? SelectableTextView,
-              let layoutManager = textView.layoutManager,
-              let container = textView.textContainer else { return }
-        // Force glyph layout so the height reflects the just-set text. Without
-        // this, sending via ⌘-Return (which keeps focus in the input, so no
-        // incidental layout fires) scrolls to the stale, pre-message bottom.
-        layoutManager.ensureLayout(for: container)
-        let contentHeight = layoutManager.usedRect(for: container).height
-            + 2 * textView.textContainerInset.height
+        guard let contentHeight = laidOutContentHeight(scrollView: scrollView) else { return }
         let visibleHeight = scrollView.contentView.bounds.height
-        let targetY = max(0, contentHeight - visibleHeight)
+        scroll(scrollView: scrollView, toOffsetY: contentHeight - visibleHeight)
+    }
+
+    /// Scroll to an absolute offset, clamped to the valid range for the
+    /// freshly-laid-out content.
+    private static func scroll(scrollView: NSScrollView, toOffsetY offsetY: CGFloat) {
+        guard let contentHeight = laidOutContentHeight(scrollView: scrollView) else { return }
+        let visibleHeight = scrollView.contentView.bounds.height
+        let maxOffsetY = max(0, contentHeight - visibleHeight)
+        let targetY = min(max(0, offsetY), maxOffsetY)
         scrollView.contentView.scroll(to: NSPoint(x: 0, y: targetY))
         scrollView.reflectScrolledClipView(scrollView.contentView)
+    }
+
+    /// Force glyph layout and return the document's pixel height. Without the
+    /// `ensureLayout`, sending via ⌘-Return (which keeps focus in the input,
+    /// so no incidental layout fires) measures the stale, pre-message height.
+    private static func laidOutContentHeight(scrollView: NSScrollView) -> CGFloat? {
+        guard let textView = scrollView.documentView as? SelectableTextView,
+              let layoutManager = textView.layoutManager,
+              let container = textView.textContainer else { return nil }
+        layoutManager.ensureLayout(for: container)
+        return layoutManager.usedRect(for: container).height
+            + 2 * textView.textContainerInset.height
+    }
+
+    /// Bridges AppKit user-scroll notifications into the persisted anchor.
+    @MainActor
+    public final class Coordinator: NSObject {
+        private let anchor: TranscriptScrollAnchor?
+        weak var scrollView: NSScrollView?
+
+        init(anchor: TranscriptScrollAnchor?) {
+            self.anchor = anchor
+        }
+
+        @objc func userDidScroll(_ notification: Notification) {
+            guard let anchor, let scrollView else { return }
+            anchor.followsBottom = SelectableTranscript.isAtBottom(scrollView: scrollView, tolerance: 4)
+            anchor.offsetY = scrollView.contentView.bounds.origin.y
+        }
+
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
     }
 }

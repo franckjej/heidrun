@@ -82,6 +82,10 @@ public final class ChatViewModel {
     /// `nil` for public chat, otherwise a private room.
     public let chatScope: ChatID?
 
+    /// Persisted transcript scroll intent. Lives on the (hoisted) VM so it
+    /// survives the `SelectableTranscript` teardown a feature switch causes.
+    public let transcriptScroll = TranscriptScrollAnchor()
+
     private let events: AsyncStream<HotlineEvent>
     private let sendChat: @Sendable (String, ChatID?, Bool) async throws -> Void
     private let changeSubject: @Sendable (ChatID, String) async throws -> Void
@@ -271,6 +275,10 @@ public final class ChatViewModel {
             return
         }
         guard !text.isEmpty else { return }
+        // Sending your own line re-pins to the bottom even if you'd
+        // scrolled up reading history — the echo arrives via the event
+        // stream and this intent makes that update scroll into view.
+        transcriptScroll.followsBottom = true
         try await sendChat(text, chatScope, false)
         if Self.inputHistoryEnabled {
             inputHistory.record(text)

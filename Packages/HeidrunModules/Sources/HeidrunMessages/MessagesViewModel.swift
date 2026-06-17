@@ -78,6 +78,18 @@ public final class MessagesViewModel {
     /// Two-way bound input field for the active thread.
     public var draft: String = ""
 
+    /// Per-thread persisted transcript scroll intent. Lives on the
+    /// (hoisted) view-model so each conversation's position survives the
+    /// `SelectableTranscript` teardown a feature switch causes.
+    @ObservationIgnored private var transcriptScrollAnchors: [UInt16: TranscriptScrollAnchor] = [:]
+
+    public func transcriptScroll(for threadID: UInt16) -> TranscriptScrollAnchor {
+        if let existing = transcriptScrollAnchors[threadID] { return existing }
+        let anchor = TranscriptScrollAnchor()
+        transcriptScrollAnchors[threadID] = anchor
+        return anchor
+    }
+
     /// Live user roster used to resolve a socket → nickname/icon and
     /// online/offline status. Held weakly so the connection handle can
     /// own both VMs without retaining cycles.
@@ -181,6 +193,9 @@ public final class MessagesViewModel {
     public func sendDraft() async throws {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, let socket = activeThreadID else { return }
+        // Sending re-pins this thread to the bottom even if you'd scrolled
+        // up reading history; the local echo below then scrolls into view.
+        transcriptScroll(for: socket).followsBottom = true
         try await sendMessage(text, socket)
         appendOutgoing(message: text, to: socket)
         draft = ""

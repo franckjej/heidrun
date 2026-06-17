@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import HeidrunCore
+import HeidrunUI
 
 /// View-model behind the legacy "plain news" feed.
 ///
@@ -18,6 +19,12 @@ public final class PlainNewsViewModel {
     public var draft: String = ""
 
     public private(set) var isLoading: Bool = false
+
+    /// Persisted transcript scroll position, so the user's spot survives a
+    /// feature switch. News is newest-at-top, so it never auto-follows the
+    /// bottom — `followsBottom` is forced off in `init`; the anchor exists
+    /// purely to restore the scroll offset.
+    public let transcriptScroll = TranscriptScrollAnchor()
 
     /// Connected account's privileges (fed by the host from the User Access
     /// push). Fail-open until set. UI hint only — the server still enforces.
@@ -55,6 +62,8 @@ public final class PlainNewsViewModel {
         self.fetchFeed = fetchFeed
         self.postNew = postNew
         self.present = present
+        // Newest-at-top board: never yank to the bottom on new content.
+        transcriptScroll.followsBottom = false
     }
 
     public convenience init(
