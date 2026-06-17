@@ -43,21 +43,24 @@ public struct HostedNewsView: View {
     private let plain: PlainNewsViewModel
     private let threaded: ThreadedNewsViewModel
     private let client: any HotlineClient
+    private let capability: NewsCapability?
     @State private var ownNickname: String = ""
     @State private var resolvedNickname = false
 
     public init(
         plain: PlainNewsViewModel,
         threaded: ThreadedNewsViewModel,
-        client: any HotlineClient
+        client: any HotlineClient,
+        capability: NewsCapability? = nil
     ) {
         self.plain = plain
         self.threaded = threaded
         self.client = client
+        self.capability = capability
     }
 
     public var body: some View {
-        NewsView(plain: plain, threaded: threaded, client: client, ownNickname: ownNickname)
+        NewsView(plain: plain, threaded: threaded, client: client, capability: capability, ownNickname: ownNickname)
             .task(id: resolvedNickname) {
                 guard !resolvedNickname else { return }
                 ownNickname = await client.connectionInfo.settings.nickname

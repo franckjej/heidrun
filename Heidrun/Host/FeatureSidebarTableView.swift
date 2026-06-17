@@ -158,7 +158,7 @@ struct FeatureSidebarTableView: NSViewRepresentable {
             Task {@MainActor [weak self] in
                 guard let self else { return }
                 if self.parent.selection != identifier {
-                    withAnimation(.smooth(duration: 0.67)) {
+                    withAnimation(.easeIn(duration: 0.375)) {
                         self.parent.selection = identifier
                     }
                 }

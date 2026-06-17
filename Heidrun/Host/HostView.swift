@@ -27,6 +27,7 @@ struct HostView: View {
     private var messagesVM: MessagesViewModel? { handle?.messagesVM }
     private var newsPlainVM: PlainNewsViewModel? { handle?.newsPlainVM }
     private var newsThreadedVM: ThreadedNewsViewModel? { handle?.newsThreadedVM }
+    private var newsCapability: NewsCapability? { handle?.newsCapability }
     private var adminVM: AdminViewModel? { handle?.adminVM }
     private var broadcastVM: BroadcastViewModel? { handle?.broadcastVM }
 
@@ -266,7 +267,7 @@ struct HostView: View {
             MessagesView(viewModel: vm)
         } else if selectedIdentifier == NewsFeature.identifier,
                   let plainVM = newsPlainVM, let threadedVM = newsThreadedVM {
-            HostedNewsView(plain: plainVM, threaded: threadedVM, client: client)
+            HostedNewsView(plain: plainVM, threaded: threadedVM, client: client, capability: newsCapability)
         } else if selectedIdentifier == AdminFeature.identifier, let vm = adminVM {
             // Use the hoisted Admin VM (not a fresh makeContentView one) so
             // "Edit Account" from the roster can load an account into it

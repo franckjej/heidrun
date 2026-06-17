@@ -46,16 +46,21 @@ public struct NewsView: View {
     }
 
     /// Hosted initialiser: inject view-models persisted on the connection
-    /// (so the composer draft + browse state survive feature switches)
-    /// while still resolving the capability from the live client.
+    /// (so the composer draft + browse state survive feature switches).
+    /// Pass a pre-resolved `capability` (hoisted on the connection) so the
+    /// first frame renders real content and the sidebar feature-switch
+    /// crossfade applies; when `nil` we resolve it from the live client in
+    /// `bootstrap()` as before (brief pre-`start()` window only).
     public init(
         plain: PlainNewsViewModel,
         threaded: ThreadedNewsViewModel,
         client: any HotlineClient,
+        capability: NewsCapability? = nil,
         ownNickname: String = ""
     ) {
-        self._plain    = State(initialValue: plain)
-        self._threaded = State(initialValue: threaded)
+        self._plain      = State(initialValue: plain)
+        self._threaded   = State(initialValue: threaded)
+        self._capability = State(initialValue: capability)
         self.ownNickname = ownNickname
         self.resolveCapability = {
             NewsCapability(serverVersion: await client.connectionInfo.serverVersion)

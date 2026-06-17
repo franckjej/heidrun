@@ -89,6 +89,14 @@ final class ConnectionHandle: Identifiable {
     /// while in flight or when the server has no banner.
     var serverBanner: ServerBanner?
 
+    /// News flavour the server advertises, resolved once in `start()` from
+    /// the login-reply version. Hoisted (like the news VMs) so the News view
+    /// renders real content on its first frame instead of an async-resolved
+    /// spinner — which otherwise breaks the sidebar feature-switch crossfade.
+    /// `nil` only in the brief window before `start()` resolves it; the view
+    /// falls back to resolving it itself then.
+    private(set) var newsCapability: NewsCapability?
+
     /// Captured by `WindowAccessor` on HostView mount. Used by the
     /// TaskManager to bring this window forward on row double-click.
     weak var window: NSWindow?
@@ -203,7 +211,9 @@ final class ConnectionHandle: Identifiable {
                 self?.newsThreadedVM.updatePrivileges(privileges)
             }
         }
-        let seededPrivileges = await client.connectionInfo.privileges
+        let connectionInfo = await client.connectionInfo
+        newsCapability = NewsCapability(serverVersion: connectionInfo.serverVersion)
+        let seededPrivileges = connectionInfo.privileges
         if !seededPrivileges.isEmpty {
             selfPrivileges = seededPrivileges
             hasPrivilegeInfo = true
