@@ -90,7 +90,7 @@ public struct SelectableTranscript: NSViewRepresentable {
         // to sampling the live geometry as before.
         let followsBottom = scrollAnchor?.followsBottom
             ?? Self.isAtBottom(scrollView: scrollView, tolerance: 4)
-        let restoreOffsetY = scrollAnchor.map { followsBottom ? nil : $0.offsetY } ?? nil
+        let restoreOffsetY = scrollAnchor.flatMap { followsBottom ? nil : $0.offsetY }
 
         let built = TranscriptAttributedStringBuilder.build(
             lines: lines, contentSize: contentSize
