@@ -46,13 +46,14 @@ public struct UserInfoSheet: View {
             }
 
             content
-
-            HStack {
+            HStack(alignment: .center, spacing: 0) {
+                Button(String(localized: "Retry", bundle: .module)) { Task { await load() } }
                 Spacer()
                 Button(String(localized: "Done", bundle: .module), action: onDismiss)
                     .keyboardShortcut(.return, modifiers: [])
                     .buttonStyle(.borderedProminent)
             }
+
         }
         .padding(.medium)
         .frame(minWidth: 460, idealWidth: 520, minHeight: 420, idealHeight: 480)
@@ -86,12 +87,24 @@ public struct UserInfoSheet: View {
             VStack { Spacer(); ProgressView(); Spacer() }
                 .frame(maxWidth: .infinity)
         } else if let error {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("Couldn't load info: \(error)", bundle: .module)
+                    .monospaced()
                     .foregroundStyle(.red)
                     .textSelection(.enabled)
-                Button(String(localized: "Retry", bundle: .module)) { Task { await load() } }
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(.small)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(.background)
+            .background(
+                RoundedRectangle(cornerRadius: .cornerLow)
+                    .fill(Color(nsColor: .textBackgroundColor))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: .cornerLow)
+                    .stroke(.separator)
+            )
         } else if let info {
             VStack(alignment: .leading, spacing: 6) {
                 row("Account", info.accountLogin.isEmpty ? "—" : info.accountLogin)
@@ -122,11 +135,11 @@ public struct UserInfoSheet: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 4)
+            RoundedRectangle(cornerRadius: .cornerLow)
                 .fill(Color(nsColor: .textBackgroundColor))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 4)
+            RoundedRectangle(cornerRadius: .cornerLow)
                 .stroke(.separator)
         )
     }
