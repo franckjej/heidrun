@@ -112,7 +112,8 @@ public final class FilesViewModel {
     ) async throws -> Void
     public typealias FolderDownloadStreamer = @Sendable (
         _ handle: TransferHandle,
-        _ resumeProvider: @escaping FolderDownloadResumeProvider
+        _ resumeProvider: @escaping FolderDownloadResumeProvider,
+        _ progress: @escaping @Sendable (Int) async -> Void
     ) -> AsyncThrowingStream<FolderDownloadItem, Error>
 
     let listFiles: @Sendable (RemotePath) async throws -> [RemoteFile]
@@ -168,7 +169,7 @@ public final class FilesViewModel {
         beginFolderDownload: @escaping @Sendable (RemotePath, String) async throws -> TransferHandle
             = { _, _ in throw HotlineError.notConnected },
         folderDownloadItems: @escaping FolderDownloadStreamer
-            = { _, _ in AsyncThrowingStream { $0.finish() } },
+            = { _, _, _ in AsyncThrowingStream { $0.finish() } },
         downloadFolderURL: @escaping @Sendable () -> URL = FilesViewModel.defaultDownloadFolder,
         onTransferFinished: (@MainActor @Sendable (TransferState) -> Void)? = nil,
         metadataSeed: @escaping @Sendable () -> PartialDownloadMetadata.SeedFields? = { nil },
@@ -269,8 +270,8 @@ public final class FilesViewModel {
             beginFolderDownload: { [client] path, name in
                 try await client.startFolderDownload(at: path, name: name)
             },
-            folderDownloadItems: { [client] handle, resumeProvider in
-                client.folderDownloadStream(for: handle, resumeProvider: resumeProvider)
+            folderDownloadItems: { [client] handle, resumeProvider, progress in
+                client.folderDownloadStream(for: handle, resumeProvider: resumeProvider, progress: progress)
             },
             downloadFolderURL: downloadFolderURL,
             onTransferFinished: onTransferFinished,

@@ -608,7 +608,7 @@ func makeViewModel(
     beginFolderDownload: @escaping @Sendable (RemotePath, String) async throws -> TransferHandle
         = { _, _ in TransferHandle(transferID: 0, totalSize: 0) },
     folderDownloadItems: @escaping FilesViewModel.FolderDownloadStreamer
-        = { _, _ in AsyncThrowingStream { $0.finish() } },
+        = { _, _, _ in AsyncThrowingStream { $0.finish() } },
     downloadFolder: @escaping @Sendable () -> URL = FilesViewModel.defaultDownloadFolder,
     onTransferFinished: (@MainActor @Sendable (FilesViewModel.TransferState) -> Void)? = nil,
     metadataSeed: @escaping @Sendable () -> PartialDownloadMetadata.SeedFields? = { nil }

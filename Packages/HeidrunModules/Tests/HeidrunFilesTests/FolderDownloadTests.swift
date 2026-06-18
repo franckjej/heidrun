@@ -17,7 +17,7 @@ struct FolderDownloadTests {
         let resourceFork = Data("RSRC".utf8)
         let viewModel = makeViewModel(
             beginFolderDownload: { _, _ in TransferHandle(transferID: 55, totalSize: UInt64(fileData.count)) },
-            folderDownloadItems: { _, _ in
+            folderDownloadItems: { _, _, _ in
                 AsyncThrowingStream { continuation in
                     continuation.yield(FolderDownloadItem(relativePath: ["Sub"], isDirectory: true))
                     continuation.yield(FolderDownloadItem(
@@ -64,7 +64,7 @@ struct FolderDownloadTests {
 
         let viewModel = makeViewModel(
             beginFolderDownload: { _, _ in TransferHandle(transferID: 56, totalSize: 0) },
-            folderDownloadItems: { _, resumeProvider in
+            folderDownloadItems: { _, resumeProvider, _ in
                 AsyncThrowingStream { continuation in
                     let resume = resumeProvider(["Sub", "inner.txt"])
                     continuation.yield(FolderDownloadItem(
@@ -104,7 +104,7 @@ struct FolderDownloadTests {
         let framedTotal: UInt64 = 200
         let viewModel = makeViewModel(
             beginFolderDownload: { _, _ in TransferHandle(transferID: 71, totalSize: framedTotal) },
-            folderDownloadItems: { _, _ in
+            folderDownloadItems: { _, _, _ in
                 AsyncThrowingStream { continuation in
                     continuation.yield(FolderDownloadItem(
                         relativePath: ["a.bin"],
@@ -126,5 +126,47 @@ struct FolderDownloadTests {
         let state = try #require(viewModel.transfers[71])
         #expect(state.totalSize == framedTotal)
         #expect(state.fraction == 1.0)
+    }
+
+    @Test("downloadFolder accumulates the decoder's live progress deltas")
+    @MainActor
+    func reportsLiveProgress() async throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("heidrun-folder-live-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        // totalSize (1000) differs from the reported deltas (120+80=200) so
+        // observing bytesWritten == 200 can only come from the live deltas,
+        // not the final snap-to-total.
+        let viewModel = makeViewModel(
+            beginFolderDownload: { _, _ in TransferHandle(transferID: 80, totalSize: 1000) },
+            folderDownloadItems: { _, _, progress in
+                AsyncThrowingStream { continuation in
+                    Task {
+                        await progress(120)
+                        await progress(80)
+                        // Hold before completing so the live value is observable
+                        // before the snap-to-total overwrites it.
+                        try? await Task.sleep(for: .milliseconds(120))
+                        continuation.yield(FolderDownloadItem(
+                            relativePath: ["a.bin"],
+                            isDirectory: false,
+                            data: Data(count: 200)
+                        ))
+                        continuation.finish()
+                    }
+                }
+            },
+            downloadFolder: { tempDir }
+        )
+
+        await viewModel.downloadFolder(RemoteFile(name: "Docs", type: .folder))
+        try await waitFor { @MainActor in viewModel.transfers[80]?.bytesWritten == 200 }
+        try await waitFor { @MainActor in
+            if case .completed = viewModel.transfers[80]?.status { return true }
+            return false
+        }
+        #expect(viewModel.transfers[80]?.bytesWritten == 1000)
     }
 }

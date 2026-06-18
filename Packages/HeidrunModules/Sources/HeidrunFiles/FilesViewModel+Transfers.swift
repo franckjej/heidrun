@@ -358,8 +358,15 @@ extension FilesViewModel {
             return
         }
 
+        // Live progress: the decoder reports each data-fork window's byte
+        // delta as it arrives, so the bar moves during a file instead of
+        // jumping when the whole file lands.
+        let onProgress: @Sendable (Int) async -> Void = { [weak self] delta in
+            await self?.addFolderDownloadProgress(id: handle.transferID, delta: delta)
+        }
+
         do {
-            for try await item in folderDownloadItems(handle, resumeProvider) {
+            for try await item in folderDownloadItems(handle, resumeProvider, onProgress) {
                 if Task.isCancelled { return }
                 let itemURL = item.relativePath.reduce(destinationRoot) { partial, component in
                     partial.appendingPathComponent(component)
@@ -373,10 +380,6 @@ extension FilesViewModel {
                     withIntermediateDirectories: true
                 )
                 try Self.writeFolderItem(item, to: itemURL)
-                updateTransfer(id: handle.transferID) { state in
-                    state.bytesWritten &+= UInt64(item.data.count)
-                    state.recordSample(bytes: state.bytesWritten)
-                }
             }
             // Snap to 100%: we tally data-fork bytes, but the server's
             // total is the framed envelope size (headers + forks), so
@@ -653,6 +656,14 @@ extension FilesViewModel {
             }
         }
         return (items, totalSize)
+    }
+
+    /// Accumulate a folder-download data-fork delta into the transfer.
+    func addFolderDownloadProgress(id: UInt32, delta: Int) {
+        updateTransfer(id: id) { state in
+            state.bytesWritten &+= UInt64(delta)
+            state.recordSample(bytes: state.bytesWritten)
+        }
     }
 
     private func applyUploadProgress(id: UInt32, sent: UInt64, totalSize: UInt64) {
