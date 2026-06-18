@@ -49,28 +49,34 @@ struct FolderDownloadTests {
         #expect(try Data(contentsOf: rsrcURL) == resourceFork)
     }
 
-    @Test("downloadFolder resumes a file already partly on disk")
+    @Test("downloadFolder overwrites an existing file instead of doubling it")
     @MainActor
-    func resumesPartial() async throws {
+    func overwritesWithoutDoubling() async throws {
+        // Regression: heidrun-server ignores the folder resume offset and
+        // re-sends the whole file, so requesting resume on a complete file
+        // wrote the full payload at its end — doubling it. The client must
+        // request a fresh download (offset 0) and overwrite.
         let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("heidrun-folder-resume-\(UUID().uuidString)")
-        let subURL = tempDir.appendingPathComponent("Docs/Sub", isDirectory: true)
-        try FileManager.default.createDirectory(at: subURL, withIntermediateDirectories: true)
+            .appendingPathComponent("heidrun-folder-nodouble-\(UUID().uuidString)")
+        let docs = tempDir.appendingPathComponent("Docs", isDirectory: true)
+        try FileManager.default.createDirectory(at: docs, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        // 7 bytes already on disk — the resume provider must report this
-        // offset so the server's tail appends instead of overwriting.
-        try Data("already".utf8).write(to: subURL.appendingPathComponent("inner.txt"))
+        // A complete copy already on disk (different content, same size).
+        try Data(repeating: 0xBB, count: 1000).write(to: docs.appendingPathComponent("dmg.bin"))
+        let serverData = Data(repeating: 0xAA, count: 1000)
 
         let viewModel = makeViewModel(
-            beginFolderDownload: { _, _ in TransferHandle(transferID: 56, totalSize: 0) },
+            beginFolderDownload: { _, _ in TransferHandle(transferID: 56, totalSize: 1000) },
             folderDownloadItems: { _, resumeProvider, _ in
                 AsyncThrowingStream { continuation in
-                    let resume = resumeProvider(["Sub", "inner.txt"])
+                    // Mirror the decoder: write at whatever offset the VM's
+                    // resume provider returns. A nil provider → offset 0.
+                    let resume = resumeProvider(["dmg.bin"])
                     continuation.yield(FolderDownloadItem(
-                        relativePath: ["Sub", "inner.txt"],
+                        relativePath: ["dmg.bin"],
                         isDirectory: false,
-                        data: Data(" more".utf8),
+                        data: serverData,
                         dataForkOffset: resume?.dataForkOffset ?? 0
                     ))
                     continuation.finish()
@@ -79,14 +85,15 @@ struct FolderDownloadTests {
             downloadFolder: { tempDir }
         )
 
-        await viewModel.downloadFolder(RemoteFile(name: "Docs", type: .folder))
+        await viewModel.downloadFolder(RemoteFile(name: "Docs", type: .folder), mode: .merge)
         try await waitFor { @MainActor in
             if case .completed = viewModel.transfers[56]?.status { return true }
             return false
         }
 
-        let final = try Data(contentsOf: tempDir.appendingPathComponent("Docs/Sub/inner.txt"))
-        #expect(final == Data("already more".utf8))
+        let result = try Data(contentsOf: docs.appendingPathComponent("dmg.bin"))
+        #expect(result.count == 1000)
+        #expect(result == serverData)
     }
 
     @Test("downloadFolder finishes at 100% using the server's folder transfer size")

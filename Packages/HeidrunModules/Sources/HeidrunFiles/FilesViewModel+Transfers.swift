@@ -369,18 +369,14 @@ extension FilesViewModel {
             try? fileManager.removeItem(at: destinationRoot)
         }
 
-        // Per-file resume: if a copy is already on disk, ask the server to
-        // resume from its size; the decoder ships only the missing tail
-        // and tells us the `dataForkOffset` to write it at.
-        let resumeProvider: FolderDownloadResumeProvider = { relativePath in
-            let fileURL = relativePath.reduce(destinationRoot) { partial, component in
-                partial.appendingPathComponent(component)
-            }
-            let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
-            let onDiskSize = (attributes?[.size] as? NSNumber)?.uint64Value ?? 0
-            guard onDiskSize > 0 else { return nil }
-            return ResumeInfo(dataForkOffset: UInt32(clamping: onDiskSize))
-        }
+        // No per-file resume: heidrun-server ignores the folder resume
+        // offset and re-sends the whole file (ServerFolderDownload "resume
+        // offset is ignored"). Requesting resume therefore wrote the full
+        // payload at the existing file's end — doubling/corrupting it. So
+        // always download fresh; `writeFolderItem` overwrites at offset 0.
+        // Stale files not on the server are still kept (merge) unless the
+        // user chose Replace, which wiped the folder above.
+        let resumeProvider: FolderDownloadResumeProvider = { _ in nil }
 
         do {
             try fileManager.createDirectory(at: destinationRoot, withIntermediateDirectories: true)
@@ -434,19 +430,12 @@ extension FilesViewModel {
         }
     }
 
-    /// Write one folder-download file item to disk: fresh files overwrite,
-    /// resumed files append at `dataForkOffset`. Resource forks go to the
-    /// destination's named fork.
+    /// Write one folder-download file item to disk. Folder downloads don't
+    /// resume — each file arrives whole — so always overwrite; never seek
+    /// and append (that doubled files when the server re-sent a complete
+    /// one). Resource forks go to the destination's named fork.
     private static func writeFolderItem(_ item: FolderDownloadItem, to url: URL) throws {
-        let fileManager = FileManager.default
-        if item.dataForkOffset == 0 || !fileManager.fileExists(atPath: url.path) {
-            try item.data.write(to: url)
-        } else {
-            let writer = try FileHandle(forWritingTo: url)
-            defer { try? writer.close() }
-            try writer.seek(toOffset: UInt64(item.dataForkOffset))
-            try writer.write(contentsOf: item.data)
-        }
+        try item.data.write(to: url)
         if !item.resourceFork.isEmpty {
             let rsrcURL = url.appendingPathComponent("..namedfork/rsrc")
             try? item.resourceFork.write(to: rsrcURL)
