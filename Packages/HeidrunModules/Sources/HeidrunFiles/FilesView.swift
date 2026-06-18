@@ -79,10 +79,7 @@ public struct FilesView: View {
             }
             Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: { entry in
-            Text(
-                "“\(entry.name)” already exists locally. " +
-                "Replace it with a fresh copy, resume the partial download, or cancel?"
-            )
+            Text("“\(entry.name)” already exists locally. Replace it with a fresh copy, resume the partial download, or cancel?", bundle: .module)
         }
         .alert(deleteAlertTitle, isPresented: deleteBinding) {
             Button(String(localized: "Delete", bundle: .module), role: .destructive) {
@@ -108,10 +105,7 @@ public struct FilesView: View {
             }
             Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: { folder in
-            Text(
-                "“\(folder.name)” already exists in your download folder. " +
-                "Replace it with a fresh copy, merge new and updated files into it, or cancel?"
-            )
+            Text("“\(folder.name)” already exists in your download folder. Replace it with a fresh copy, merge new and updated files into it, or cancel?", bundle: .module)
         }
         .alert(
             String(localized: "Some files already exist", bundle: .module),
@@ -133,11 +127,7 @@ public struct FilesView: View {
             }
             Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: { request in
-            Text(
-                "\(request.conflicts.count) of \(request.files.count) selected files " +
-                "already exist in your download folder. Replace them with fresh copies, " +
-                "resume the partial downloads, or cancel?"
-            )
+            Text("\(request.conflicts.count) of \(request.files.count) selected files already exist in your download folder. Replace them with fresh copies, resume the partial downloads, or cancel?", bundle: .module)
         }
         .alert(
             uploadConflictTitle,
@@ -160,19 +150,9 @@ public struct FilesView: View {
             }
         } message: { pending in
             if pending.replaceAttemptFailed {
-                Text(
-                    "We removed “\(pending.targetName)” but the server " +
-                    "still reports it. The server may not have applied " +
-                    "the delete yet, or it may have rejected it silently. " +
-                    "Try Replace again, Resume to append, or Cancel."
-                )
+                Text("We removed “\(pending.targetName)” but the server still reports it. The server may not have applied the delete yet, or it may have rejected it silently. Try Replace again, Resume to append, or Cancel.", bundle: .module)
             } else {
-                Text(
-                    "“\(pending.targetName)” already exists on the server. " +
-                    "Replace deletes the server copy and uploads a fresh one; " +
-                    "Resume appends to the existing file (useful after an " +
-                    "interrupted upload)."
-                )
+                Text("“\(pending.targetName)” already exists on the server. Replace deletes the server copy and uploads a fresh one; Resume appends to the existing file (useful after an interrupted upload).", bundle: .module)
             }
         }
     }

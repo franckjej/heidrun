@@ -1,6 +1,116 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "“%@” already exists in your download folder. Replace it with a fresh copy, merge new and updated files into it, or cancel?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ ist bereits im Download-Ordner vorhanden. Mit einer neuen Kopie ersetzen, neue und aktualisierte Dateien zusammenführen oder abbrechen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” already exists in your download folder. Replace it with a fresh copy, merge new and updated files into it, or cancel?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」はダウンロードフォルダにすでに存在します。新しいコピーで置き換える、新規・更新されたファイルを統合する、またはキャンセルしますか？"
+          }
+        }
+      }
+    },
+    "“%@” already exists locally. Replace it with a fresh copy, resume the partial download, or cancel?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ ist lokal bereits vorhanden. Mit einer neuen Kopie ersetzen, den Teil-Download fortsetzen oder abbrechen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” already exists locally. Replace it with a fresh copy, resume the partial download, or cancel?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」はローカルにすでに存在します。新しいコピーで置き換える、部分ダウンロードを再開する、またはキャンセルしますか？"
+          }
+        }
+      }
+    },
+    "“%@” already exists on the server. Replace deletes the server copy and uploads a fresh one; Resume appends to the existing file (useful after an interrupted upload)." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ ist auf dem Server bereits vorhanden. „Ersetzen“ löscht die Serverkopie und lädt eine neue hoch; „Fortsetzen“ hängt an die vorhandene Datei an (nützlich nach einem abgebrochenen Upload)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@” already exists on the server. Replace deletes the server copy and uploads a fresh one; Resume appends to the existing file (useful after an interrupted upload)."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」はサーバーにすでに存在します。「置き換え」はサーバー上のコピーを削除して新しくアップロードします。「再開」は既存のファイルに追記します（中断したアップロードの後に便利です）。"
+          }
+        }
+      }
+    },
+    "%lld of %lld selected files already exist in your download folder. Replace them with fresh copies, resume the partial downloads, or cancel?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld von %lld ausgewählten Dateien sind bereits im Download-Ordner vorhanden. Mit neuen Kopien ersetzen, die Teil-Downloads fortsetzen oder abbrechen?"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld of %lld selected files already exist in your download folder. Replace them with fresh copies, resume the partial downloads, or cancel?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選択したファイルのうち %lld / %lld 個がダウンロードフォルダにすでに存在します。新しいコピーで置き換える、部分ダウンロードを再開する、またはキャンセルしますか？"
+          }
+        }
+      }
+    },
+    "We removed “%@” but the server still reports it. The server may not have applied the delete yet, or it may have rejected it silently. Try Replace again, Resume to append, or Cancel." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ wurde entfernt, aber der Server meldet die Datei weiterhin. Möglicherweise hat der Server die Löschung noch nicht angewendet oder sie stillschweigend abgelehnt. Erneut „Ersetzen“ versuchen, mit „Fortsetzen“ anhängen oder „Abbrechen“."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We removed “%@” but the server still reports it. The server may not have applied the delete yet, or it may have rejected it silently. Try Replace again, Resume to append, or Cancel."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」を削除しましたが、サーバーはまだ存在を報告しています。サーバーが削除をまだ適用していないか、通知なく拒否した可能性があります。もう一度「置き換え」を試す、「再開」で追記する、または「キャンセル」してください。"
+          }
+        }
+      }
+    },
     "“%@” and everything inside it will be removed from the server. This can't be undone." : {
       "localizations" : {
         "de" : {
