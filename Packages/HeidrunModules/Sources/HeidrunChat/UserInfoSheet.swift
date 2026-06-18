@@ -53,7 +53,6 @@ public struct UserInfoSheet: View {
                     .keyboardShortcut(.return, modifiers: [])
                     .buttonStyle(.borderedProminent)
             }
-
         }
         .padding(.medium)
         .frame(minWidth: 460, idealWidth: 520, minHeight: 420, idealHeight: 480)
