@@ -1,6 +1,38 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "“%@” and everything inside it will be removed from the server. This can't be undone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ und der gesamte Inhalt werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」とその中のすべてがサーバーから削除されます。この操作は取り消せません。"
+          }
+        }
+      }
+    },
+    "“%@” will be removed from the server. This can't be undone." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„%@“ wird vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」がサーバーから削除されます。この操作は取り消せません。"
+          }
+        }
+      }
+    },
     "%lld items" : {
       "localizations" : {
         "de" : {
@@ -63,6 +95,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 項目がサーバーから削除されます。この操作は取り消せません。"
+          }
+        }
+      }
+    },
+    "•" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "•"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "•"
           }
         }
       }
@@ -279,22 +327,6 @@
         }
       }
     },
-    "Delete %lld Items…" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld Objekte löschen…"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld 項目を削除…"
-          }
-        }
-      }
-    },
     "Delete %lld items?" : {
       "localizations" : {
         "de" : {
@@ -307,6 +339,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 項目を削除しますか？"
+          }
+        }
+      }
+    },
+    "Delete %lld Items…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Objekte löschen…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 項目を削除…"
           }
         }
       }
@@ -413,6 +461,28 @@
         }
       }
     },
+    "Folder already exists" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordner existiert bereits"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder already exists"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダはすでに存在します"
+          }
+        }
+      }
+    },
     "Folder name" : {
       "localizations" : {
         "de" : {
@@ -497,6 +567,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "読み込み中…"
+          }
+        }
+      }
+    },
+    "Merge" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusammenführen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merge"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "統合"
           }
         }
       }
@@ -967,22 +1059,6 @@
         }
       }
     },
-    "Uploads and downloads will appear here while they're running and after they finish." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uploads und Downloads erscheinen hier, während sie laufen und nachdem sie abgeschlossen sind."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アップロードとダウンロードは、実行中および完了後にここに表示されます。"
-          }
-        }
-      }
-    },
     "Upload…" : {
       "localizations" : {
         "de" : {
@@ -1005,50 +1081,18 @@
         }
       }
     },
-    "“%@” and everything inside it will be removed from the server. This can't be undone." : {
+    "Uploads and downloads will appear here while they're running and after they finish." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„%@“ und der gesamte Inhalt werden vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
+            "value" : "Uploads und Downloads erscheinen hier, während sie laufen und nachdem sie abgeschlossen sind."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "「%@」とその中のすべてがサーバーから削除されます。この操作は取り消せません。"
-          }
-        }
-      }
-    },
-    "“%@” will be removed from the server. This can't be undone." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "„%@“ wird vom Server entfernt. Dies kann nicht rückgängig gemacht werden."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「%@」がサーバーから削除されます。この操作は取り消せません。"
-          }
-        }
-      }
-    },
-    "•" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "•"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "•"
+            "value" : "アップロードとダウンロードは、実行中および完了後にここに表示されます。"
           }
         }
       }
