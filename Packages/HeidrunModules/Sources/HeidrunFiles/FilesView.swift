@@ -224,6 +224,16 @@ public struct FilesView: View {
         let conflicts: [RemoteFile]
     }
 
+    /// Mixed selection: folders stream through the recursive folder
+    /// download (per-file resume, subtree recreated on disk); files keep
+    /// the conflict-prompt path.
+    private func requestDownloadSelection(_ entries: [RemoteFile]) {
+        for folder in entries where folder.isFolder {
+            Task { await viewModel.downloadFolder(folder) }
+        }
+        requestDownloadMany(entries.filter { !$0.isFolder })
+    }
+
     /// Multiple-file path: one combined Replace-all / Resume-all prompt
     /// when anything conflicts.
     private func requestDownloadMany(_ files: [RemoteFile]) {
@@ -252,6 +262,18 @@ public struct FilesView: View {
             && (!hasFolder || viewModel.permits(.deleteFolders))
     }
 
+    /// Whether the current selection can be downloaded — files need
+    /// `downloadFiles`, folders need `downloadFolders`. Same fail-open
+    /// `permits` rule as `canDeleteSelection`; the server still enforces.
+    private var canDownloadSelection: Bool {
+        let entries = selectedEntries
+        guard !entries.isEmpty else { return false }
+        let hasFile = entries.contains { !$0.isFolder }
+        let hasFolder = entries.contains { $0.isFolder }
+        return (!hasFile || viewModel.permits(.downloadFiles))
+            && (!hasFolder || viewModel.permits(.downloadFolders))
+    }
+
     // MARK: - Header
 
     /// Same vertical metrics as the chat / user-list headers so they
@@ -274,12 +296,12 @@ public struct FilesView: View {
             ActionButton(
                 title: "Download",
                 systemImage: "arrow.down.circle",
-                isEnabled: !selectedFiles.isEmpty && viewModel.permits(.downloadFiles),
+                isEnabled: canDownloadSelection,
                 size: .small,
                 fontWeight: .light,
                 bundle: .module
             ) {
-                requestDownloadMany(selectedFiles)
+                requestDownloadSelection(selectedEntries)
             }
 
             ActionButton(
@@ -383,12 +405,6 @@ public struct FilesView: View {
         viewModel.files.filter { selection.contains($0.id) }
     }
 
-    /// Selected non-folder entries — the download targets. Folders are
-    /// skipped (parity with drag-out and the original single download).
-    private var selectedFiles: [RemoteFile] {
-        selectedEntries.filter { !$0.isFolder }
-    }
-
     /// The one selected entry when the selection is a single item, else
     /// `nil`. Drives the single-item-only actions (Get Info / Quick Look).
     private var singleSelection: RemoteFile? {
@@ -449,7 +465,13 @@ public struct FilesView: View {
     private var fileRowActions: FileRowActions {
         FileRowActions(
             activate: { activate($0) },
-            download: { requestDownload($0) },
+            download: { entry in
+                if entry.isFolder {
+                    Task { await viewModel.downloadFolder(entry) }
+                } else {
+                    requestDownload(entry)
+                }
+            },
             quickLook: { presentPreview(for: $0) },
             isPreviewable: { FilesViewModel.isPreviewable($0) },
             navigateInto: { entry in Task { await viewModel.navigateInto(entry) } },
@@ -459,7 +481,7 @@ public struct FilesView: View {
                 renameTarget = entry
             },
             delete: { entry in deleteTargets = [entry] },
-            downloadMany: { entries in requestDownloadMany(entries.filter { !$0.isFolder }) },
+            downloadMany: { entries in requestDownloadSelection(entries) },
             deleteMany: { entries in deleteTargets = entries },
             uploadHere: { pickAndUpload() },
             newFolder: {

@@ -277,6 +277,131 @@ extension FilesViewModel {
         }
     }
 
+    /// Recursively download a folder `entry`, recreating the server's
+    /// subtree under the download folder. Drives the legacy folder-
+    /// download framing (TX 210) over the side channel and resumes any
+    /// file already partly on disk. Defaults to `currentPath`; the
+    /// TaskManager Resume button hands an explicit `at:`.
+    public func downloadFolder(_ entry: RemoteFile, at explicitPath: RemotePath? = nil) async {
+        let folderName = entry.name
+        guard !folderName.isEmpty else { return }
+
+        let sourcePath = explicitPath ?? currentPath
+        let downloadRoot = downloadFolderURL()
+        let destinationRoot = downloadRoot.appendingPathComponent(folderName, isDirectory: true)
+
+        let handle: TransferHandle
+        do {
+            handle = try await beginFolderDownload(sourcePath, folderName)
+        } catch {
+            present(error)
+            return
+        }
+
+        transfers[handle.transferID] = TransferState(
+            handle: handle,
+            displayName: folderName + "/",
+            destination: destinationRoot,
+            direction: .download,
+            sourcePath: sourcePath,
+            sourceFile: entry,
+            bytesWritten: 0,
+            status: .running
+        )
+        drainTasks[handle.transferID] = Task { [weak self, downloadRoot, destinationRoot] in
+            await self?.drainFolderDownload(
+                handle: handle,
+                downloadRoot: downloadRoot,
+                destinationRoot: destinationRoot
+            )
+        }
+    }
+
+    private func drainFolderDownload(
+        handle: TransferHandle,
+        downloadRoot: URL,
+        destinationRoot: URL
+    ) async {
+        let started = downloadRoot.startAccessingSecurityScopedResource()
+        defer { if started { downloadRoot.stopAccessingSecurityScopedResource() } }
+
+        let fileManager = FileManager.default
+
+        // Per-file resume: if a copy is already on disk, ask the server to
+        // resume from its size; the decoder ships only the missing tail
+        // and tells us the `dataForkOffset` to write it at.
+        let resumeProvider: FolderDownloadResumeProvider = { relativePath in
+            let fileURL = relativePath.reduce(destinationRoot) { partial, component in
+                partial.appendingPathComponent(component)
+            }
+            let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path)
+            let onDiskSize = (attributes?[.size] as? NSNumber)?.uint64Value ?? 0
+            guard onDiskSize > 0 else { return nil }
+            return ResumeInfo(dataForkOffset: UInt32(clamping: onDiskSize))
+        }
+
+        do {
+            try fileManager.createDirectory(at: destinationRoot, withIntermediateDirectories: true)
+        } catch {
+            updateTransfer(id: handle.transferID) { state in
+                state.status = .failed(
+                    "couldn't create \(destinationRoot.lastPathComponent): \(error.localizedDescription)"
+                )
+            }
+            return
+        }
+
+        do {
+            for try await item in folderDownloadItems(handle, resumeProvider) {
+                if Task.isCancelled { return }
+                let itemURL = item.relativePath.reduce(destinationRoot) { partial, component in
+                    partial.appendingPathComponent(component)
+                }
+                if item.isDirectory {
+                    try fileManager.createDirectory(at: itemURL, withIntermediateDirectories: true)
+                    continue
+                }
+                try fileManager.createDirectory(
+                    at: itemURL.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                try Self.writeFolderItem(item, to: itemURL)
+                updateTransfer(id: handle.transferID) { state in
+                    state.bytesWritten &+= UInt64(item.data.count)
+                    state.recordSample(bytes: state.bytesWritten)
+                }
+            }
+            updateTransfer(id: handle.transferID) { $0.status = .completed }
+            if let final = transfers[handle.transferID] {
+                onTransferFinished?(final)
+            }
+        } catch {
+            if Task.isCancelled { return }
+            updateTransfer(id: handle.transferID) { state in
+                state.status = .failed(String(describing: error))
+            }
+        }
+    }
+
+    /// Write one folder-download file item to disk: fresh files overwrite,
+    /// resumed files append at `dataForkOffset`. Resource forks go to the
+    /// destination's named fork.
+    private static func writeFolderItem(_ item: FolderDownloadItem, to url: URL) throws {
+        let fileManager = FileManager.default
+        if item.dataForkOffset == 0 || !fileManager.fileExists(atPath: url.path) {
+            try item.data.write(to: url)
+        } else {
+            let writer = try FileHandle(forWritingTo: url)
+            defer { try? writer.close() }
+            try writer.seek(toOffset: UInt64(item.dataForkOffset))
+            try writer.write(contentsOf: item.data)
+        }
+        if !item.resourceFork.isEmpty {
+            let rsrcURL = url.appendingPathComponent("..namedfork/rsrc")
+            try? item.resourceFork.write(to: rsrcURL)
+        }
+    }
+
     // MARK: - Uploads
 
     /// Push a local file. Defaults to `currentPath`; Replace / Resume

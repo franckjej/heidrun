@@ -110,6 +110,10 @@ public final class FilesViewModel {
         _ handle: TransferHandle,
         _ progress: @escaping UploadProgress
     ) async throws -> Void
+    public typealias FolderDownloadStreamer = @Sendable (
+        _ handle: TransferHandle,
+        _ resumeProvider: @escaping FolderDownloadResumeProvider
+    ) -> AsyncThrowingStream<FolderDownloadItem, Error>
 
     let listFiles: @Sendable (RemotePath) async throws -> [RemoteFile]
     let createFolderAt: @Sendable (RemotePath, String) async throws -> Void
@@ -127,6 +131,8 @@ public final class FilesViewModel {
     let consumeResourceFork: @Sendable (UInt32) async -> Data
     let sendUploadBytes: UploadSender
     let sendFolderUploadBytes: FolderUploadSender
+    let beginFolderDownload: @Sendable (RemotePath, String) async throws -> TransferHandle
+    let folderDownloadItems: FolderDownloadStreamer
     let downloadFolderURL: @Sendable () -> URL
     let onTransferFinished: (@MainActor @Sendable (TransferState) -> Void)?
     let metadataSeed: @Sendable () -> PartialDownloadMetadata.SeedFields?
@@ -159,6 +165,10 @@ public final class FilesViewModel {
             = { _ in Data() },
         sendUploadBytes: @escaping UploadSender = { _, _, _, _, _, _, _, _, _ in },
         sendFolderUploadBytes: @escaping FolderUploadSender = { _, _, _ in },
+        beginFolderDownload: @escaping @Sendable (RemotePath, String) async throws -> TransferHandle
+            = { _, _ in throw HotlineError.notConnected },
+        folderDownloadItems: @escaping FolderDownloadStreamer
+            = { _, _ in AsyncThrowingStream { $0.finish() } },
         downloadFolderURL: @escaping @Sendable () -> URL = FilesViewModel.defaultDownloadFolder,
         onTransferFinished: (@MainActor @Sendable (TransferState) -> Void)? = nil,
         metadataSeed: @escaping @Sendable () -> PartialDownloadMetadata.SeedFields? = { nil },
@@ -179,6 +189,8 @@ public final class FilesViewModel {
         self.consumeResourceFork  = consumeResourceFork
         self.sendUploadBytes      = sendUploadBytes
         self.sendFolderUploadBytes = sendFolderUploadBytes
+        self.beginFolderDownload  = beginFolderDownload
+        self.folderDownloadItems  = folderDownloadItems
         self.downloadFolderURL    = downloadFolderURL
         self.onTransferFinished   = onTransferFinished
         self.metadataSeed         = metadataSeed
@@ -253,6 +265,12 @@ public final class FilesViewModel {
             },
             sendFolderUploadBytes: { [client] items, handle, progress in
                 try await client.sendFolderUpload(items, for: handle, progress: progress)
+            },
+            beginFolderDownload: { [client] path, name in
+                try await client.startFolderDownload(at: path, name: name)
+            },
+            folderDownloadItems: { [client] handle, resumeProvider in
+                client.folderDownloadStream(for: handle, resumeProvider: resumeProvider)
             },
             downloadFolderURL: downloadFolderURL,
             onTransferFinished: onTransferFinished,
