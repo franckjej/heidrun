@@ -169,4 +169,84 @@ struct FolderDownloadTests {
         }
         #expect(viewModel.transfers[80]?.bytesWritten == 1000)
     }
+
+    @Test("localFolderExists reflects whether a same-named folder is on disk")
+    @MainActor
+    func localFolderExistsReflectsDisk() async throws {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("heidrun-folder-exists-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(
+            at: tempDir.appendingPathComponent("Docs", isDirectory: true),
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let viewModel = makeViewModel(downloadFolder: { tempDir })
+        #expect(viewModel.localFolderExists(for: RemoteFile(name: "Docs", type: .folder)))
+        #expect(!viewModel.localFolderExists(for: RemoteFile(name: "Nope", type: .folder)))
+    }
+
+    @Test("downloadFolder .replace wipes the existing folder before downloading")
+    @MainActor
+    func replaceWipesExisting() async throws {
+        let tempDir = try seedExistingFolder()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let viewModel = makeReplaceMergeViewModel(tempDir: tempDir, transferID: 90)
+        await viewModel.downloadFolder(RemoteFile(name: "Docs", type: .folder), mode: .replace)
+        try await waitFor { @MainActor in
+            if case .completed = viewModel.transfers[90]?.status { return true }
+            return false
+        }
+
+        let docs = tempDir.appendingPathComponent("Docs", isDirectory: true)
+        #expect(!FileManager.default.fileExists(atPath: docs.appendingPathComponent("old.txt").path))
+        #expect(try Data(contentsOf: docs.appendingPathComponent("new.txt")) == Data("new!".utf8))
+    }
+
+    @Test("downloadFolder .merge keeps existing files")
+    @MainActor
+    func mergeKeepsExisting() async throws {
+        let tempDir = try seedExistingFolder()
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let viewModel = makeReplaceMergeViewModel(tempDir: tempDir, transferID: 91)
+        await viewModel.downloadFolder(RemoteFile(name: "Docs", type: .folder), mode: .merge)
+        try await waitFor { @MainActor in
+            if case .completed = viewModel.transfers[91]?.status { return true }
+            return false
+        }
+
+        let docs = tempDir.appendingPathComponent("Docs", isDirectory: true)
+        #expect(FileManager.default.fileExists(atPath: docs.appendingPathComponent("old.txt").path))
+        #expect(try Data(contentsOf: docs.appendingPathComponent("new.txt")) == Data("new!".utf8))
+    }
+
+    /// A temp download root holding a pre-existing `Docs/old.txt`.
+    private func seedExistingFolder() throws -> URL {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("heidrun-folder-conflict-\(UUID().uuidString)")
+        let docs = tempDir.appendingPathComponent("Docs", isDirectory: true)
+        try FileManager.default.createDirectory(at: docs, withIntermediateDirectories: true)
+        try Data("stale".utf8).write(to: docs.appendingPathComponent("old.txt"))
+        return tempDir
+    }
+
+    @MainActor
+    private func makeReplaceMergeViewModel(tempDir: URL, transferID: UInt32) -> FilesViewModel {
+        makeViewModel(
+            beginFolderDownload: { _, _ in TransferHandle(transferID: transferID, totalSize: 4) },
+            folderDownloadItems: { _, _, _ in
+                AsyncThrowingStream { continuation in
+                    continuation.yield(FolderDownloadItem(
+                        relativePath: ["new.txt"],
+                        isDirectory: false,
+                        data: Data("new!".utf8)
+                    ))
+                    continuation.finish()
+                }
+            },
+            downloadFolder: { tempDir }
+        )
+    }
 }

@@ -17,6 +17,9 @@ public struct FilesView: View {
     @State private var conflictEntry: RemoteFile?
     @State private var deleteTargets: [RemoteFile] = []
     @State private var downloadRequest: DownloadRequest?
+    /// Folders whose local copy already exists — each prompts Replace /
+    /// Merge / Cancel, one at a time.
+    @State private var folderConflicts: [RemoteFile] = []
     @State private var showingTaskManager: Bool = false
     @State private var previewWindowController = FilePreviewWindowController()
     @State private var sortKey: FileSortKey = .name
@@ -91,6 +94,24 @@ public struct FilesView: View {
             Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
         } message: {
             Text(deleteAlertMessage)
+        }
+        .alert(
+            String(localized: "Folder already exists", bundle: .module),
+            isPresented: folderConflictBinding,
+            presenting: folderConflicts.first
+        ) { folder in
+            Button(String(localized: "Replace", bundle: .module)) {
+                Task { await viewModel.downloadFolder(folder, mode: .replace) }
+            }
+            Button(String(localized: "Merge", bundle: .module)) {
+                Task { await viewModel.downloadFolder(folder, mode: .merge) }
+            }
+            Button(String(localized: "Cancel", bundle: .module), role: .cancel) {}
+        } message: { folder in
+            Text(
+                "“\(folder.name)” already exists in your download folder. " +
+                "Replace it with a fresh copy, merge new and updated files into it, or cancel?"
+            )
         }
         .alert(
             String(localized: "Some files already exist", bundle: .module),
@@ -177,6 +198,15 @@ public struct FilesView: View {
         )
     }
 
+    /// Dismissing (any button, including Cancel) pops the head folder; if
+    /// more conflicts remain the alert re-presents for the next one.
+    private var folderConflictBinding: Binding<Bool> {
+        Binding(
+            get: { !folderConflicts.isEmpty },
+            set: { if !$0, !folderConflicts.isEmpty { folderConflicts.removeFirst() } }
+        )
+    }
+
     private var uploadConflictTitle: String {
         viewModel.pendingUploadConflict?.replaceAttemptFailed == true
             ? String(localized: "Couldn't replace the file", bundle: .module)
@@ -225,13 +255,23 @@ public struct FilesView: View {
     }
 
     /// Mixed selection: folders stream through the recursive folder
-    /// download (per-file resume, subtree recreated on disk); files keep
+    /// download (subtree recreated on disk, conflict-prompted); files keep
     /// the conflict-prompt path.
     private func requestDownloadSelection(_ entries: [RemoteFile]) {
         for folder in entries where folder.isFolder {
-            Task { await viewModel.downloadFolder(folder) }
+            requestFolderDownload(folder)
         }
         requestDownloadMany(entries.filter { !$0.isFolder })
+    }
+
+    /// Confirm when a local folder of the same name already exists;
+    /// otherwise download straight away.
+    private func requestFolderDownload(_ folder: RemoteFile) {
+        if viewModel.localFolderExists(for: folder) {
+            folderConflicts.append(folder)
+        } else {
+            Task { await viewModel.downloadFolder(folder) }
+        }
     }
 
     /// Multiple-file path: one combined Replace-all / Resume-all prompt
@@ -467,7 +507,7 @@ public struct FilesView: View {
             activate: { activate($0) },
             download: { entry in
                 if entry.isFolder {
-                    Task { await viewModel.downloadFolder(entry) }
+                    requestFolderDownload(entry)
                 } else {
                     requestDownload(entry)
                 }

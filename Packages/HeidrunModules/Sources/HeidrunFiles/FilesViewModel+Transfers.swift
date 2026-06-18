@@ -13,6 +13,15 @@ extension FilesViewModel {
         case resume
     }
 
+    /// How to handle a folder download when a local folder of the same
+    /// name already exists.
+    public enum FolderDownloadMode: Sendable {
+        /// Delete the existing local folder first, then download fresh.
+        case replace
+        /// Keep existing files, resume partials, add the rest.
+        case merge
+    }
+
     // MARK: - Downloads
 
     /// True when a file with `entry.name` already exists at the download
@@ -277,12 +286,29 @@ extension FilesViewModel {
         }
     }
 
+    /// True when a folder with `entry.name` already exists in the download
+    /// folder — drives the Replace / Merge / Cancel prompt.
+    public func localFolderExists(for entry: RemoteFile) -> Bool {
+        let folder = downloadFolderURL()
+        let started = folder.startAccessingSecurityScopedResource()
+        defer { if started { folder.stopAccessingSecurityScopedResource() } }
+        let destination = folder.appendingPathComponent(entry.name, isDirectory: true)
+        var isDirectory: ObjCBool = false
+        return FileManager.default.fileExists(atPath: destination.path, isDirectory: &isDirectory)
+            && isDirectory.boolValue
+    }
+
     /// Recursively download a folder `entry`, recreating the server's
     /// subtree under the download folder. Drives the legacy folder-
-    /// download framing (TX 210) over the side channel and resumes any
-    /// file already partly on disk. Defaults to `currentPath`; the
+    /// download framing (TX 210) over the side channel. `.merge` (default)
+    /// keeps existing files and resumes partials; `.replace` deletes the
+    /// existing local folder first. Defaults to `currentPath`; the
     /// TaskManager Resume button hands an explicit `at:`.
-    public func downloadFolder(_ entry: RemoteFile, at explicitPath: RemotePath? = nil) async {
+    public func downloadFolder(
+        _ entry: RemoteFile,
+        at explicitPath: RemotePath? = nil,
+        mode: FolderDownloadMode = .merge
+    ) async {
         let folderName = entry.name
         guard !folderName.isEmpty else { return }
 
@@ -319,7 +345,8 @@ extension FilesViewModel {
             await self?.drainFolderDownload(
                 handle: handle,
                 downloadRoot: downloadRoot,
-                destinationRoot: destinationRoot
+                destinationRoot: destinationRoot,
+                mode: mode
             )
         }
     }
@@ -327,12 +354,20 @@ extension FilesViewModel {
     private func drainFolderDownload(
         handle: TransferHandle,
         downloadRoot: URL,
-        destinationRoot: URL
+        destinationRoot: URL,
+        mode: FolderDownloadMode
     ) async {
         let started = downloadRoot.startAccessingSecurityScopedResource()
         defer { if started { downloadRoot.stopAccessingSecurityScopedResource() } }
 
         let fileManager = FileManager.default
+
+        // Replace: wipe the existing local folder so stale files that are
+        // no longer on the server don't linger. Merge leaves it in place
+        // and the resume provider keeps/extends existing files.
+        if mode == .replace {
+            try? fileManager.removeItem(at: destinationRoot)
+        }
 
         // Per-file resume: if a copy is already on disk, ask the server to
         // resume from its size; the decoder ships only the missing tail
