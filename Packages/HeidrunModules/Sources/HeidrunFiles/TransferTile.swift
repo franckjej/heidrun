@@ -98,7 +98,11 @@ struct TransferTile: View {
                 }
             }
 
-            if state.status == .running || state.fraction < 1.0 {
+            // A completed transfer is 100% by definition — never show a
+            // bar (a folder download with no server-reported size would
+            // otherwise render a stuck empty bar). Running shows live
+            // progress; failed shows how far it got.
+            if state.status != .completed {
                 ProgressView(value: state.fraction)
                     .progressViewStyle(.linear)
                     .tint(tint)

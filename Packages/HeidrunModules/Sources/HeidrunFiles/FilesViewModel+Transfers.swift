@@ -304,7 +304,14 @@ extension FilesViewModel {
             destination: destinationRoot,
             direction: .download,
             sourcePath: sourcePath,
-            sourceFile: entry,
+            // `sourceFile: nil` on purpose: TransferState.totalSize uses a
+            // download's sourceFile.size, but a folder's size is 0 (it
+            // carries itemCount, not bytes) — that zeroes the progress
+            // bar. The handle's totalSize (the server's framed folder
+            // total) is the right denominator. nil also keeps the
+            // single-file TaskManager Resume button from mis-firing on a
+            // folder.
+            sourceFile: nil,
             bytesWritten: 0,
             status: .running
         )
@@ -371,7 +378,13 @@ extension FilesViewModel {
                     state.recordSample(bytes: state.bytesWritten)
                 }
             }
-            updateTransfer(id: handle.transferID) { $0.status = .completed }
+            // Snap to 100%: we tally data-fork bytes, but the server's
+            // total is the framed envelope size (headers + forks), so
+            // force the bar full on success — same as drainUpload.
+            updateTransfer(id: handle.transferID) { state in
+                state.bytesWritten = state.totalSize
+                state.status = .completed
+            }
             if let final = transfers[handle.transferID] {
                 onTransferFinished?(final)
             }

@@ -347,90 +347,6 @@ struct FilesViewModelTests {
         #expect(captured.count == 1)
         #expect(captured.first?.id == 42)
     }
-
-    @Test("downloadFolder recreates the server subtree on disk with resource forks")
-    @MainActor
-    func downloadFolderRecreatesTree() async throws {
-        let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("heidrun-folder-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: tempDir) }
-
-        let fileData = Data("inner file".utf8)
-        let resourceFork = Data("RSRC".utf8)
-        let viewModel = makeViewModel(
-            beginFolderDownload: { _, _ in TransferHandle(transferID: 55, totalSize: UInt64(fileData.count)) },
-            folderDownloadItems: { _, _ in
-                AsyncThrowingStream { continuation in
-                    continuation.yield(FolderDownloadItem(relativePath: ["Sub"], isDirectory: true))
-                    continuation.yield(FolderDownloadItem(
-                        relativePath: ["Sub", "inner.txt"],
-                        isDirectory: false,
-                        data: fileData,
-                        resourceFork: resourceFork
-                    ))
-                    continuation.finish()
-                }
-            },
-            downloadFolder: { tempDir }
-        )
-
-        await viewModel.downloadFolder(RemoteFile(name: "Docs", type: .folder, itemCount: 2))
-        try await waitFor { @MainActor in
-            if case .completed = viewModel.transfers[55]?.status { return true }
-            return false
-        }
-
-        let subURL = tempDir.appendingPathComponent("Docs/Sub", isDirectory: true)
-        var isDirectory: ObjCBool = false
-        #expect(FileManager.default.fileExists(atPath: subURL.path, isDirectory: &isDirectory))
-        #expect(isDirectory.boolValue)
-
-        let innerURL = tempDir.appendingPathComponent("Docs/Sub/inner.txt")
-        #expect(try Data(contentsOf: innerURL) == fileData)
-        let rsrcURL = innerURL.appendingPathComponent("..namedfork/rsrc")
-        #expect(try Data(contentsOf: rsrcURL) == resourceFork)
-    }
-
-    @Test("downloadFolder resumes a file already partly on disk")
-    @MainActor
-    func downloadFolderResumesPartial() async throws {
-        let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("heidrun-folder-resume-\(UUID().uuidString)")
-        let subURL = tempDir.appendingPathComponent("Docs/Sub", isDirectory: true)
-        try FileManager.default.createDirectory(at: subURL, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: tempDir) }
-
-        // 7 bytes already on disk — the resume provider must report this
-        // offset so the server's tail appends instead of overwriting.
-        try Data("already".utf8).write(to: subURL.appendingPathComponent("inner.txt"))
-
-        let viewModel = makeViewModel(
-            beginFolderDownload: { _, _ in TransferHandle(transferID: 56, totalSize: 0) },
-            folderDownloadItems: { _, resumeProvider in
-                AsyncThrowingStream { continuation in
-                    let resume = resumeProvider(["Sub", "inner.txt"])
-                    continuation.yield(FolderDownloadItem(
-                        relativePath: ["Sub", "inner.txt"],
-                        isDirectory: false,
-                        data: Data(" more".utf8),
-                        dataForkOffset: resume?.dataForkOffset ?? 0
-                    ))
-                    continuation.finish()
-                }
-            },
-            downloadFolder: { tempDir }
-        )
-
-        await viewModel.downloadFolder(RemoteFile(name: "Docs", type: .folder))
-        try await waitFor { @MainActor in
-            if case .completed = viewModel.transfers[56]?.status { return true }
-            return false
-        }
-
-        let final = try Data(contentsOf: tempDir.appendingPathComponent("Docs/Sub/inner.txt"))
-        #expect(final == Data("already more".utf8))
-    }
 }
 
 private actor FinishProbe {
@@ -438,7 +354,7 @@ private actor FinishProbe {
     func record(_ state: FilesViewModel.TransferState) { captured.append(state) }
 }
 
-private func waitFor(
+func waitFor(
     timeout: Duration = .seconds(2),
     _ predicate: @escaping @MainActor () async -> Bool
 ) async throws {
@@ -672,7 +588,7 @@ struct FilesViewModelPartialDownloadTests {
 }
 
 @MainActor
-private func makeViewModel(
+func makeViewModel(
     list: @escaping @Sendable (RemotePath) async throws -> [RemoteFile] = { _ in [] },
     create: @escaping @Sendable (RemotePath, String) async throws -> Void = { _, _ in },
     deleteEntry: @escaping @Sendable (RemotePath, String) async throws -> Void = { _, _ in },
