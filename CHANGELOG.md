@@ -3,6 +3,39 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-06-19
+
+### Added
+- **Folder downloads.** Download an entire folder in one go — the whole
+  subtree is recreated locally with a live progress bar, and partially
+  downloaded files resume where they left off. If the target folder already
+  exists you're asked whether to **Replace**, **Merge**, or **Cancel**.
+- **Drag and drop to move.** Drag files or folders onto a folder row to move
+  them on the server. Every subfolder now shows a **`..`** row at the top:
+  double-click it to go up a level, drop items on it to move them to the
+  enclosing folder, or hover a drag over it to spring the view up while you
+  keep dragging.
+
+### Fixed
+- The post count next to a news category now updates immediately after you
+  post, delete, or edit a thread (it could previously stay stale — for
+  example, showing one post over an empty category).
+- Merging a downloaded folder into an existing local folder no longer
+  duplicates or corrupts files that were already there.
+- A folder download's progress tile no longer sticks at "Zero KB".
+- The News view animates correctly when switched from the sidebar, the
+  transcript keeps its scroll position, and a one-click sidebar selection
+  glitch is fixed.
+
+### Changed
+- The folder-conflict and download/upload conflict prompts are now fully
+  localized in German and Japanese.
+
+### Developer
+- Updated to heidrun-protocol 1.0.0-rc26 (folder download + live progress).
+- Split `ThreadBodyPane` out of `NewsView` to keep files within the length
+  limit.
+
 ## [1.0.7] — 2026-06-16
 
 ### Added
