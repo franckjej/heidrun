@@ -5,6 +5,13 @@ import HeidrunCore
 import HeidrunUI
 import CommonTools
 
+private extension NSPasteboard.PasteboardType {
+    /// Internal-only marker identifying a server-row drag. Lets folder rows
+    /// — which vend no file promise — still register as a local move drag;
+    /// Finder ignores this type so a folder dragged out does nothing.
+    static let heidrunFileRow = NSPasteboard.PasteboardType("org.tastybytes.heidrun.file-row")
+}
+
 /// Per-row actions the AppKit file list invokes (context menu + double
 /// click). Closures so `FilesView` keeps owning the sheets/alerts/state.
 struct FileRowActions {
@@ -80,7 +87,8 @@ struct FileTableView: NSViewRepresentable {
         // promise types the table is never a valid destination for its own
         // drag and `validateDrop`/`acceptDrop` never fire.
         tableView.registerForDraggedTypes(
-            [.fileURL] + NSFilePromiseReceiver.readableDraggedTypes.map(NSPasteboard.PasteboardType.init(rawValue:))
+            [.fileURL, .heidrunFileRow]
+                + NSFilePromiseReceiver.readableDraggedTypes.map(NSPasteboard.PasteboardType.init(rawValue:))
         )
         // Drag rows OUT to Finder as file promises (downloads on drop).
         tableView.setDraggingSourceOperationMask(.copy, forLocal: false)
@@ -171,12 +179,20 @@ struct FileTableView: NSViewRepresentable {
 
         func numberOfRows(in tableView: NSTableView) -> Int { files.count }
 
-        /// Drag a row OUT to Finder. Files vend an `NSFilePromiseProvider`
-        /// that downloads on drop; folders/aliases aren't draggable out.
+        /// Make a row draggable. Files vend an `NSFilePromiseProvider` that
+        /// downloads on drop to Finder AND can be moved internally. Folders
+        /// can't drag OUT (no promise) but ARE draggable internally to move
+        /// into another folder — they carry a marker-only pasteboard item
+        /// Finder ignores. Unresolved aliases stay non-draggable.
         func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
             guard row < files.count else { return nil }
             let entry = files[row]
-            guard !entry.isFolder, !entry.isUnresolvedAlias else { return nil }
+            guard !entry.isUnresolvedAlias else { return nil }
+            if entry.isFolder {
+                let item = NSPasteboardItem()
+                item.setString(entry.name, forType: .heidrunFileRow)
+                return item
+            }
             let typeID = UTType(filenameExtension: (entry.name as NSString).pathExtension)?.identifier
                 ?? UTType.data.identifier
             let write = parent.writeFile
