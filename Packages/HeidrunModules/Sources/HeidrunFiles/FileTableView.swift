@@ -12,6 +12,15 @@ private extension NSPasteboard.PasteboardType {
     static let heidrunFileRow = NSPasteboard.PasteboardType("org.tastybytes.heidrun.file-row")
 }
 
+extension RemoteFile {
+    /// Synthetic "enclosing folder" row shown at the top of a non-root
+    /// listing. Presentation-only — never part of `viewModel.files`, so it
+    /// doesn't affect selection, the item count, or multi-select actions.
+    /// Double-click navigates up; a drop on it moves items to the parent.
+    static let parentPlaceholder = RemoteFile(name: "..", type: .folder)
+    var isParentPlaceholder: Bool { type == .folder && name == ".." }
+}
+
 /// Per-row actions the AppKit file list invokes (context menu + double
 /// click). Closures so `FilesView` keeps owning the sheets/alerts/state.
 struct FileRowActions {
@@ -34,8 +43,14 @@ struct FileRowActions {
     var secondaryLabel: (RemoteFile) -> String
     /// Upload local URLs dropped from Finder into the current folder.
     var dropURLs: ([URL]) -> Void
-    /// Move dragged server rows into a folder row (internal drag-and-drop).
-    var move: ([RemoteFile], RemoteFile) -> Void
+    /// Move dragged server rows (from their drag-start `source` path) into a
+    /// folder row (internal drag-and-drop).
+    var move: ([RemoteFile], RemotePath, RemoteFile) -> Void
+    /// Move dragged server rows (from their `source` path) up into the
+    /// enclosing folder — the `..` row's drop target.
+    var moveToParent: ([RemoteFile], RemotePath) -> Void
+    /// Open the enclosing folder (the `..` row's double-click + spring-load).
+    var navigateUp: () -> Void
 }
 
 /// AppKit `NSTableView` file list, wrapped for SwiftUI. Replaces the
@@ -45,6 +60,9 @@ struct FileRowActions {
 /// drag-IN parity; the row file-promise drag-OUT is layered on next.
 struct FileTableView: NSViewRepresentable {
     let files: [RemoteFile]
+    /// The folder currently displayed. Captured at drag start as the move
+    /// source so spring-load navigation can't corrupt a pending move.
+    let currentPath: RemotePath
     @Binding var selection: Set<RemoteFile.ID>
     @Binding var sortAscending: Bool
     @Binding var sortKey: FileSortKey
@@ -159,10 +177,17 @@ struct FileTableView: NSViewRepresentable {
         /// `NSFilePromiseProvider.delegate` is weak — retain in-flight
         /// promise delegates until the drag session ends.
         private var promiseDelegates: [FilePromiseDelegate] = []
-        /// Rows in the active drag — set at drag start so an internal drop
-        /// onto a folder row knows what to move (the file-promise pasteboard
-        /// carries no row identity).
-        private var draggedRowIndexes = IndexSet()
+        /// The entries in the active internal drag, captured by VALUE at drag
+        /// start — robust to spring-load navigation changing the row layout
+        /// mid-drag (the file-promise pasteboard carries no row identity).
+        private var draggedEntries: [RemoteFile] = []
+        /// The folder the drag started in — the move source, captured so a
+        /// spring-load navigation can't change it.
+        private var draggedSourcePath = RemotePath()
+        /// Spring-load: the `..` row the drag is dwelling over, and the task
+        /// that navigates up when the dwell elapses.
+        private var springRow: Int?
+        private var springTask: Task<Void, Never>?
 
         init(_ parent: FileTableView) { self.parent = parent }
 
@@ -187,7 +212,7 @@ struct FileTableView: NSViewRepresentable {
         func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
             guard row < files.count else { return nil }
             let entry = files[row]
-            guard !entry.isUnresolvedAlias else { return nil }
+            guard !entry.isUnresolvedAlias, !entry.isParentPlaceholder else { return nil }
             if entry.isFolder {
                 let item = NSPasteboardItem()
                 item.setString(entry.name, forType: .heidrunFileRow)
@@ -209,7 +234,11 @@ struct FileTableView: NSViewRepresentable {
             willBeginAt screenPoint: NSPoint,
             forRowIndexes rowIndexes: IndexSet
         ) {
-            draggedRowIndexes = rowIndexes
+            draggedEntries = rowIndexes
+                .filter { $0 < files.count }
+                .map { files[$0] }
+                .filter { !$0.isParentPlaceholder }
+            draggedSourcePath = parent.currentPath
         }
 
         func tableView(
@@ -219,7 +248,8 @@ struct FileTableView: NSViewRepresentable {
             operation: NSDragOperation
         ) {
             promiseDelegates.removeAll()
-            draggedRowIndexes = IndexSet()
+            draggedEntries = []
+            cancelSpring()
         }
 
         func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
@@ -250,7 +280,9 @@ struct FileTableView: NSViewRepresentable {
             cell.imageHeightConstraint?.constant = size.fileIconSize
 
             if key == .size {
-                cell.textField?.stringValue = parent.actions.secondaryLabel(entry)
+                // The `..` row carries no size / item count.
+                cell.textField?.stringValue = entry.isParentPlaceholder
+                    ? "" : parent.actions.secondaryLabel(entry)
                 cell.textField?.alignment = .right
                 cell.textField?.textColor = .secondaryLabelColor
                 cell.imageView?.image = nil
@@ -270,6 +302,13 @@ struct FileTableView: NSViewRepresentable {
             return cell
         }
 
+        /// The synthetic `..` row is a shortcut/target, not a real entry —
+        /// keep it unselectable so selection, count, and multi-actions stay
+        /// over real files only.
+        func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
+            !(row >= 0 && row < files.count && files[row].isParentPlaceholder)
+        }
+
         func tableViewSelectionDidChange(_ notification: Notification) {
             guard let tableView, !applyingSelection else { return }
             parent.selection = FileSelectionMapping.selection(
@@ -281,7 +320,12 @@ struct FileTableView: NSViewRepresentable {
         @objc func doubleClicked(_ sender: NSTableView) {
             let row = sender.clickedRow
             guard row >= 0, row < files.count else { return }
-            parent.actions.activate(files[row])
+            let entry = files[row]
+            if entry.isParentPlaceholder {
+                parent.actions.navigateUp()
+            } else {
+                parent.actions.activate(entry)
+            }
         }
 
         /// Pull the focused row out of the live selection and feed it to
@@ -309,13 +353,21 @@ struct FileTableView: NSViewRepresentable {
             proposedRow row: Int,
             proposedDropOperation dropOperation: NSTableView.DropOperation
         ) -> NSDragOperation {
-            // Internal row drag: only a drop ONTO a folder row (that isn't
-            // itself being dragged) is a move.
+            // Internal row drag: a drop ONTO a folder row, or onto the `..`
+            // row (move up / spring-load), is a move.
             if isInternalDrag(info) {
-                guard row >= 0, row < files.count else { return [] }
+                guard row >= 0, row < files.count else { cancelSpring(); return [] }
                 let target = files[row]
+                if target.isParentPlaceholder {
+                    // Dwelling here springs the view up; an explicit drop
+                    // moves the items into the enclosing folder.
+                    tableView.setDropRow(row, dropOperation: .on)
+                    startSpring(row: row)
+                    return .move
+                }
+                cancelSpring()
                 guard target.isFolder, !target.isUnresolvedAlias,
-                      !draggedRowIndexes.contains(row) else { return [] }
+                      !draggedEntries.contains(where: { $0.id == target.id }) else { return [] }
                 // Retarget a "between rows" proposal onto the folder row.
                 if dropOperation == .above {
                     tableView.setDropRow(row, dropOperation: .on)
@@ -323,6 +375,7 @@ struct FileTableView: NSViewRepresentable {
                 return .move
             }
             // External Finder drag-in (upload).
+            cancelSpring()
             return info.draggingPasteboard.canReadObject(forClasses: [NSURL.self]) ? .copy : []
         }
 
@@ -333,21 +386,46 @@ struct FileTableView: NSViewRepresentable {
             dropOperation: NSTableView.DropOperation
         ) -> Bool {
             if isInternalDrag(info) {
+                cancelSpring()
                 guard row >= 0, row < files.count else { return false }
                 let target = files[row]
+                let source = draggedSourcePath
+                if target.isParentPlaceholder {
+                    guard !draggedEntries.isEmpty else { return false }
+                    parent.actions.moveToParent(draggedEntries, source)
+                    return true
+                }
                 guard target.isFolder else { return false }
-                let entries = draggedRowIndexes
-                    .filter { $0 < files.count }
-                    .map { files[$0] }
-                    .filter { $0.id != target.id }
+                let entries = draggedEntries.filter { $0.id != target.id }
                 guard !entries.isEmpty else { return false }
-                parent.actions.move(entries, target)
+                parent.actions.move(entries, source, target)
                 return true
             }
             guard let urls = info.draggingPasteboard.readObjects(forClasses: [NSURL.self]) as? [URL],
                   !urls.isEmpty else { return false }
             parent.actions.dropURLs(urls)
             return true
+        }
+
+        /// Start (or keep) the spring-load dwell on the `..` row: after a
+        /// short hold, navigate up so the drag can continue in the parent.
+        private func startSpring(row: Int) {
+            guard springRow != row else { return }
+            cancelSpring()
+            springRow = row
+            springTask = Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(500))
+                guard let self, !Task.isCancelled, self.springRow == row else { return }
+                self.springRow = nil
+                self.springTask = nil
+                self.parent.actions.navigateUp()
+            }
+        }
+
+        private func cancelSpring() {
+            springTask?.cancel()
+            springTask = nil
+            springRow = nil
         }
 
         // Table Column Sizing
@@ -398,6 +476,8 @@ struct FileTableView: NSViewRepresentable {
             let clicked = tableView.clickedRow >= 0 ? tableView.clickedRow : tableView.selectedRow
             guard clicked >= 0, clicked < files.count else { return }
             let clickedEntry = files[clicked]
+            // The `..` row has no per-entry actions.
+            guard !clickedEntry.isParentPlaceholder else { return }
 
             // Finder semantics: a right-click on a row that's part of the
             // current multi-selection acts on the whole selection; a click

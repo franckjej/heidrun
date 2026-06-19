@@ -101,6 +101,37 @@ struct FilesViewModelTests {
         #expect(moves.first?.to == RemotePath(components: ["Docs"]))
     }
 
+    @Test("moveToParent moves each entry from the current path up to its parent")
+    @MainActor
+    func moveToParentForwards() async {
+        let recorder = MoveRecorder()
+        let viewModel = makeViewModel(
+            moveEntry: { from, name, to in await recorder.record(from: from, name: name, to: to) }
+        )
+        await viewModel.navigateInto(RemoteFile(name: "Sub", type: .folder, itemCount: 0))
+
+        await viewModel.moveToParent([RemoteFile(name: "a.txt", type: "TEXT")])
+
+        let moves = await recorder.moves
+        #expect(moves.count == 1)
+        #expect(moves.first?.from == RemotePath(components: ["Sub"]))
+        #expect(moves.first?.name == "a.txt")
+        #expect(moves.first?.to == RemotePath(components: []))
+    }
+
+    @Test("moveToParent at the root is a no-op")
+    @MainActor
+    func moveToParentAtRootSkipped() async {
+        let recorder = MoveRecorder()
+        let viewModel = makeViewModel(
+            moveEntry: { from, name, to in await recorder.record(from: from, name: name, to: to) }
+        )
+
+        await viewModel.moveToParent([RemoteFile(name: "a.txt", type: "TEXT")])
+
+        #expect(await recorder.moves.isEmpty)
+    }
+
     @Test("move(_:into:) refuses to move a folder into itself")
     @MainActor
     func moveFolderIntoItselfSkipped() async {

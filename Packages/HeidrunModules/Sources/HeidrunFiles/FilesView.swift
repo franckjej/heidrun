@@ -466,9 +466,17 @@ public struct FilesView: View {
         return sortAscending ? sorted : sorted.reversed()
     }
 
+    /// `sortedFiles` with a synthetic `..` row pinned at the top whenever
+    /// we're below the server root, so the user can move items up / spring
+    /// the view to the enclosing folder.
+    private var displayFiles: [RemoteFile] {
+        viewModel.currentPath.isRoot ? sortedFiles : [.parentPlaceholder] + sortedFiles
+    }
+
     private var fileList: some View {
         FileTableView(
-            files: sortedFiles,
+            files: displayFiles,
+            currentPath: viewModel.currentPath,
             selection: $selection,
             sortAscending: $sortAscending,
             sortKey: $sortKey,
@@ -521,8 +529,17 @@ public struct FilesView: View {
                     }
                 }
             },
-            move: { entries, folder in
-                Task { await viewModel.move(entries, into: folder) }
+            move: { entries, source, folder in
+                Task { await viewModel.move(entries, from: source, to: viewModel.currentPath.appending(folder.name)) }
+            },
+            moveToParent: { entries, source in
+                Task {
+                    guard !viewModel.currentPath.isRoot else { return }
+                    await viewModel.move(entries, from: source, to: viewModel.currentPath.parent)
+                }
+            },
+            navigateUp: {
+                Task { await viewModel.navigateUp() }
             }
         )
     }

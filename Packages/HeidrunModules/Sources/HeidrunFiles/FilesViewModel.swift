@@ -364,18 +364,36 @@ public final class FilesViewModel {
         } catch { present(error) }
     }
 
+    /// Move `entries` from `source` to `destination` (both full paths),
+    /// then refresh. The drag-and-drop handlers pass an explicit `source`
+    /// captured at drag start, so a move stays correct even if hovering the
+    /// `..` row spring-navigated the view to a different folder mid-drag.
+    public func move(_ entries: [RemoteFile], from source: RemotePath, to destination: RemotePath) async {
+        do {
+            for entry in entries {
+                try await moveEntryAt(source, entry.name, destination)
+            }
+            await refresh()
+        } catch { present(error) }
+    }
+
     /// Move `entries` into `folder`, a child of the current directory.
     /// Drag-and-drop entry point (drop rows onto a folder row). Skips the
     /// folder itself, moves the rest, then refreshes once.
     public func move(_ entries: [RemoteFile], into folder: RemoteFile) async {
         guard folder.isFolder else { return }
-        let destination = currentPath.appending(folder.name)
-        do {
-            for entry in entries where entry.id != folder.id {
-                try await moveEntryAt(currentPath, entry.name, destination)
-            }
-            await refresh()
-        } catch { present(error) }
+        await move(
+            entries.filter { $0.id != folder.id },
+            from: currentPath,
+            to: currentPath.appending(folder.name)
+        )
+    }
+
+    /// Move `entries` up into the enclosing (parent) folder. Drives the
+    /// `..` row's drop target. No-op at the root.
+    public func moveToParent(_ entries: [RemoteFile]) async {
+        guard !currentPath.isRoot else { return }
+        await move(entries, from: currentPath, to: currentPath.parent)
     }
 
     public func fetchFileInfo(_ entry: RemoteFile) async throws -> RemoteFileInfo {
