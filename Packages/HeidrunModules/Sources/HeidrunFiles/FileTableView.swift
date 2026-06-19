@@ -27,6 +27,8 @@ struct FileRowActions {
     var secondaryLabel: (RemoteFile) -> String
     /// Upload local URLs dropped from Finder into the current folder.
     var dropURLs: ([URL]) -> Void
+    /// Move dragged server rows into a folder row (internal drag-and-drop).
+    var move: ([RemoteFile], RemoteFile) -> Void
 }
 
 /// AppKit `NSTableView` file list, wrapped for SwiftUI. Replaces the
@@ -75,6 +77,8 @@ struct FileTableView: NSViewRepresentable {
         tableView.registerForDraggedTypes([.fileURL])
         // Drag rows OUT to Finder as file promises (downloads on drop).
         tableView.setDraggingSourceOperationMask(.copy, forLocal: false)
+        // Drag rows onto a folder row to MOVE them (internal drag).
+        tableView.setDraggingSourceOperationMask(.move, forLocal: true)
 
         let nameColumn = NSTableColumn(identifier: .init(FileSortKey.name.rawValue))
         nameColumn.title = String(localized: "Name", bundle: .module)
@@ -140,6 +144,10 @@ struct FileTableView: NSViewRepresentable {
         /// `NSFilePromiseProvider.delegate` is weak — retain in-flight
         /// promise delegates until the drag session ends.
         private var promiseDelegates: [FilePromiseDelegate] = []
+        /// Rows in the active drag — set at drag start so an internal drop
+        /// onto a folder row knows what to move (the file-promise pasteboard
+        /// carries no row identity).
+        private var draggedRowIndexes = IndexSet()
 
         init(_ parent: FileTableView) { self.parent = parent }
 
@@ -175,10 +183,20 @@ struct FileTableView: NSViewRepresentable {
         func tableView(
             _ tableView: NSTableView,
             draggingSession session: NSDraggingSession,
+            willBeginAt screenPoint: NSPoint,
+            forRowIndexes rowIndexes: IndexSet
+        ) {
+            draggedRowIndexes = rowIndexes
+        }
+
+        func tableView(
+            _ tableView: NSTableView,
+            draggingSession session: NSDraggingSession,
             endedAt screenPoint: NSPoint,
             operation: NSDragOperation
         ) {
             promiseDelegates.removeAll()
+            draggedRowIndexes = IndexSet()
         }
 
         func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
@@ -254,7 +272,13 @@ struct FileTableView: NSViewRepresentable {
             pick(parent.actions)(files[row])
         }
 
-        // MARK: Drag IN (upload)
+        // MARK: Drag IN (upload) + internal move
+
+        /// True when the active drag originated in this same table (a row
+        /// drag), as opposed to an external Finder drag-in.
+        private func isInternalDrag(_ info: NSDraggingInfo) -> Bool {
+            (info.draggingSource as? NSTableView) === tableView
+        }
 
         func tableView(
             _ tableView: NSTableView,
@@ -262,7 +286,21 @@ struct FileTableView: NSViewRepresentable {
             proposedRow row: Int,
             proposedDropOperation dropOperation: NSTableView.DropOperation
         ) -> NSDragOperation {
-            info.draggingPasteboard.canReadObject(forClasses: [NSURL.self]) ? .copy : []
+            // Internal row drag: only a drop ONTO a folder row (that isn't
+            // itself being dragged) is a move.
+            if isInternalDrag(info) {
+                guard row >= 0, row < files.count else { return [] }
+                let target = files[row]
+                guard target.isFolder, !target.isUnresolvedAlias,
+                      !draggedRowIndexes.contains(row) else { return [] }
+                // Retarget a "between rows" proposal onto the folder row.
+                if dropOperation == .above {
+                    tableView.setDropRow(row, dropOperation: .on)
+                }
+                return .move
+            }
+            // External Finder drag-in (upload).
+            return info.draggingPasteboard.canReadObject(forClasses: [NSURL.self]) ? .copy : []
         }
 
         func tableView(
@@ -271,6 +309,18 @@ struct FileTableView: NSViewRepresentable {
             row: Int,
             dropOperation: NSTableView.DropOperation
         ) -> Bool {
+            if isInternalDrag(info) {
+                guard row >= 0, row < files.count else { return false }
+                let target = files[row]
+                guard target.isFolder else { return false }
+                let entries = draggedRowIndexes
+                    .filter { $0 < files.count }
+                    .map { files[$0] }
+                    .filter { $0.id != target.id }
+                guard !entries.isEmpty else { return false }
+                parent.actions.move(entries, target)
+                return true
+            }
             guard let urls = info.draggingPasteboard.readObjects(forClasses: [NSURL.self]) as? [URL],
                   !urls.isEmpty else { return false }
             parent.actions.dropURLs(urls)

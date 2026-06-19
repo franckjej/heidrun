@@ -520,6 +520,9 @@ public struct FilesView: View {
                         }
                     }
                 }
+            },
+            move: { entries, folder in
+                Task { await viewModel.move(entries, into: folder) }
             }
         )
     }

@@ -82,6 +82,39 @@ struct FilesViewModelTests {
         #expect(creates.first?.name == "Public")
     }
 
+    @Test("move(_:into:) sends each entry from the current path to the folder's path")
+    @MainActor
+    func moveIntoFolderForwards() async {
+        let recorder = MoveRecorder()
+        let viewModel = makeViewModel(
+            moveEntry: { from, name, to in await recorder.record(from: from, name: name, to: to) }
+        )
+        let folder = RemoteFile(name: "Docs", type: .folder, itemCount: 0)
+        let file = RemoteFile(name: "a.txt", type: "TEXT")
+
+        await viewModel.move([file], into: folder)
+
+        let moves = await recorder.moves
+        #expect(moves.count == 1)
+        #expect(moves.first?.from == RemotePath(components: []))
+        #expect(moves.first?.name == "a.txt")
+        #expect(moves.first?.to == RemotePath(components: ["Docs"]))
+    }
+
+    @Test("move(_:into:) refuses to move a folder into itself")
+    @MainActor
+    func moveFolderIntoItselfSkipped() async {
+        let recorder = MoveRecorder()
+        let viewModel = makeViewModel(
+            moveEntry: { from, name, to in await recorder.record(from: from, name: name, to: to) }
+        )
+        let folder = RemoteFile(name: "Docs", type: .folder, itemCount: 0)
+
+        await viewModel.move([folder], into: folder)
+
+        #expect(await recorder.moves.isEmpty)
+    }
+
     @Test("deleteAll removes every entry then refreshes exactly once")
     @MainActor
     func deleteAllDeletesEachAndRefreshesOnce() async {
@@ -685,6 +718,18 @@ private actor MutationRecorder {
 private actor DeleteRecorder {
     private(set) var names: [String] = []
     func record(name: String) { names.append(name) }
+}
+
+private actor MoveRecorder {
+    struct Move: Sendable, Hashable {
+        let from: RemotePath
+        let name: String
+        let to: RemotePath
+    }
+    private(set) var moves: [Move] = []
+    func record(from: RemotePath, name: String, to: RemotePath) {
+        moves.append(Move(from: from, name: name, to: to))
+    }
 }
 
 private actor CallCounter {

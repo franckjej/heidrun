@@ -364,6 +364,20 @@ public final class FilesViewModel {
         } catch { present(error) }
     }
 
+    /// Move `entries` into `folder`, a child of the current directory.
+    /// Drag-and-drop entry point (drop rows onto a folder row). Skips the
+    /// folder itself, moves the rest, then refreshes once.
+    public func move(_ entries: [RemoteFile], into folder: RemoteFile) async {
+        guard folder.isFolder else { return }
+        let destination = currentPath.appending(folder.name)
+        do {
+            for entry in entries where entry.id != folder.id {
+                try await moveEntryAt(currentPath, entry.name, destination)
+            }
+            await refresh()
+        } catch { present(error) }
+    }
+
     public func fetchFileInfo(_ entry: RemoteFile) async throws -> RemoteFileInfo {
         try await fetchFileInfoAt(currentPath, entry.name)
     }
