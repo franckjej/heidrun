@@ -195,10 +195,18 @@ public final class ThreadedNewsViewModel {
 
     public func refresh() async {
         if let path = selectedCategoryPath {
-            await loadThreads(at: path)
+            await reloadThreadsAndBundles(at: path)
         } else {
             await refreshBundles()
         }
+    }
+
+    /// Reload the open category's threads AND the bundle list together, so
+    /// the left-pane post-count badge stays in step with post/delete/edit
+    /// (the server recomputes the category count on each TX 370).
+    private func reloadThreadsAndBundles(at path: RemotePath) async {
+        await loadThreads(at: path)
+        await refreshBundles()
     }
 
     private func refreshBundles() async {
@@ -268,7 +276,7 @@ public final class ThreadedNewsViewModel {
         guard let path = selectedCategoryPath else { return }
         do {
             try await postThread(path, parentThreadID, title, type, body)
-            await loadThreads(at: path)
+            await reloadThreadsAndBundles(at: path)
         } catch {
             present(error)
         }
@@ -304,7 +312,7 @@ public final class ThreadedNewsViewModel {
         do {
             try await deleteThreadAt(path, threadID, cascade)
             if selectedThreadID == threadID { dismissLoadedThread() }
-            await loadThreads(at: path)
+            await reloadThreadsAndBundles(at: path)
         } catch {
             present(error)
         }
@@ -328,12 +336,12 @@ public final class ThreadedNewsViewModel {
         do {
             try await deleteThreadAt(path, threadID, false)
             try await postThread(path, parentID, newTitle, type, newBody)
-            await loadThreads(at: path)
+            await reloadThreadsAndBundles(at: path)
         } catch {
             // Refresh FIRST so the tree reflects true server state
             // (delete may have succeeded even though the repost threw),
             // THEN present so this is the error left on screen.
-            await loadThreads(at: path)
+            await reloadThreadsAndBundles(at: path)
             present(error)
         }
     }
