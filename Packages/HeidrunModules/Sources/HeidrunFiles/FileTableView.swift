@@ -74,7 +74,14 @@ struct FileTableView: NSViewRepresentable {
         tableView.dataSource = context.coordinator
         tableView.delegate = context.coordinator
         tableView.menu = context.coordinator.makeMenu()
-        tableView.registerForDraggedTypes([.fileURL])
+        // Accept Finder file URLs (upload) AND our own file-promise row
+        // drags (internal move). The internal drag's pasteboard carries
+        // file-PROMISE types, not `.fileURL`, so without registering the
+        // promise types the table is never a valid destination for its own
+        // drag and `validateDrop`/`acceptDrop` never fire.
+        tableView.registerForDraggedTypes(
+            [.fileURL] + NSFilePromiseReceiver.readableDraggedTypes.map(NSPasteboard.PasteboardType.init(rawValue:))
+        )
         // Drag rows OUT to Finder as file promises (downloads on drop).
         tableView.setDraggingSourceOperationMask(.copy, forLocal: false)
         // Drag rows onto a folder row to MOVE them (internal drag).
