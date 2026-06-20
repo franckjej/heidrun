@@ -17,6 +17,9 @@ struct BookmarkRowActions {
     /// Drag-reorder: move the listed bookmark ids so their head lands
     /// at `targetIndex` (in pre-move coordinates).
     var move: (_ ids: [Bookmark.ID], _ targetIndex: Int) -> Void
+    /// Export the given bookmark(s) to a `.heidrunbookmarks` file
+    /// (password-free, like dragging the rows out).
+    var export: ([Bookmark]) -> Void
 }
 
 /// AppKit `NSTableView` bookmark roster wrapped for SwiftUI. Replaces a
@@ -256,7 +259,19 @@ struct BookmarkTableView: NSViewRepresentable {
                 menu.addItem(item)
             }
 
+            // Export the whole selection when the clicked row is part of a
+            // multi-selection; otherwise just the clicked row (mirrors the
+            // double-click connect behaviour).
+            let selectedRows = tableView.selectedRowIndexes
+            let exportMarks: [Bookmark]
+            if selectedRows.contains(row), selectedRows.count > 1 {
+                exportMarks = selectedRows.compactMap { $0 < bookmarks.count ? bookmarks[$0] : nil }
+            } else {
+                exportMarks = [mark]
+            }
+
             add(String(localized: "Connect")) { [actions = parent.actions] in actions.connect(mark) }
+            add(String(localized: "Export Selected…")) { [actions = parent.actions] in actions.export(exportMarks) }
             menu.addItem(.separator())
             add(String(localized: "Delete…")) { [actions = parent.actions] in actions.delete(mark) }
         }

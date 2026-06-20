@@ -30,6 +30,21 @@ struct BookmarksMenuContent: View {
         } label: {
             Label("Import from Heidrun…", systemImage: "square.and.arrow.down")
         }
+        // No sidebar selection exists in this global menu, so offer a
+        // per-bookmark export instead — each item writes a password-free
+        // single-bookmark `.heidrunbookmarks` file.
+        Menu {
+            ForEach(store.bookmarks) { mark in
+                Button(menuLabel(for: mark)) {
+                    BookmarkFileActions.exportSelected([mark]) { title, message in
+                        BookmarkFileActions.presentAlert(title: title, message: message)
+                    }
+                }
+            }
+        } label: {
+            Label("Export Bookmark", systemImage: "square.and.arrow.up")
+        }
+        .disabled(store.bookmarks.isEmpty)
         Button {
             BookmarkFileActions.exportLegacy(from: store) { title, message in
                 BookmarkFileActions.presentAlert(title: title, message: message)

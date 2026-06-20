@@ -110,6 +110,7 @@ struct ConnectionForm: View {
                 onConnect: handleConnectFromBookmark,
                 onConnectMany: handleConnectFromBookmarks,
                 onImportLegacy: handleImportLegacy,
+                onExportSelected: handleExportSelected,
                 onExportLegacy: handleExportLegacy,
                 onExportCSV: handleExportCSV,
                 onDropFile: handleDropFile
@@ -717,6 +718,12 @@ struct ConnectionForm: View {
         // Replaced roster invalidates the current selection.
         if imported != nil {
             handleNewBookmark()
+        }
+    }
+
+    private func handleExportSelected(_ selected: [Bookmark]) {
+        BookmarkFileActions.exportSelected(selected) { title, message in
+            errorPresenter.present(title: title, message: message)
         }
     }
 

@@ -95,6 +95,33 @@ enum BookmarkFileActions {
         }
     }
 
+    /// Show the save panel, archive just `bookmarks` as `.heidrunbookmarks`
+    /// **without passwords** — the same payload as dragging those rows to
+    /// Finder. `exportLegacy` stays the with-password, whole-roster backup.
+    /// Returns `true` on success, `false` on cancel / empty / failure.
+    @discardableResult
+    static func exportSelected(
+        _ bookmarks: [Bookmark],
+        onError: (String, String) -> Void
+    ) -> Bool {
+        guard !bookmarks.isEmpty else { return false }
+        let panel = NSSavePanel()
+        panel.title = String(localized: "Export selected bookmarks")
+        panel.nameFieldStringValue = BookmarkExport(bookmarks: bookmarks).suggestedFileName
+        if let contentType = UTType(filenameExtension: "heidrunbookmarks") {
+            panel.allowedContentTypes = [contentType]
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return false }
+        do {
+            let data = try BookmarkExport.archiveData(for: bookmarks)
+            try data.write(to: url)
+            return true
+        } catch {
+            onError(String(localized: "Couldn't export bookmarks"), error.localizedDescription)
+            return false
+        }
+    }
+
     /// Show the save panel, write the roster as RFC-4180 CSV.
     @discardableResult
     static func exportCSV(

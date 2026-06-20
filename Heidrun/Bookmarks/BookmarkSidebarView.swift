@@ -16,6 +16,7 @@ struct BookmarkSidebarView: View {
     let onConnect: (Bookmark) -> Void
     let onConnectMany: ([Bookmark]) -> Void
     let onImportLegacy: () -> Void
+    let onExportSelected: ([Bookmark]) -> Void
     let onExportLegacy: () -> Void
     let onExportCSV: () -> Void
     let onDropFile: (URL) -> Void
@@ -39,7 +40,8 @@ struct BookmarkSidebarView: View {
                         connect: { onConnect($0) },
                         connectMany: { onConnectMany($0) },
                         delete: { mark in pendingDelete = [mark.id] },
-                        move: { ids, target in store.move(ids: ids, to: target) }
+                        move: { ids, target in store.move(ids: ids, to: target) },
+                        export: { onExportSelected($0) }
                     )
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -71,6 +73,11 @@ struct BookmarkSidebarView: View {
 
                 Menu {
                     Button("Import from Heidrun…", action: onImportLegacy)
+                    Divider()
+                    Button("Export Selected…") {
+                        onExportSelected(store.bookmarks.filter { selection.contains($0.id) })
+                    }
+                    .disabled(selection.isEmpty)
                     Button("Export as Heidrun…", action: onExportLegacy)
                         .disabled(store.bookmarks.isEmpty)
                     Button("Export as CSV…", action: onExportCSV)
