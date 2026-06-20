@@ -56,6 +56,10 @@ struct HeidrunMainApp: App {
             if AppDataEnvironment.isIsolated {
                 KeychainPasswordStore.mockBackend = InMemoryCredentialStore()
                 SampleBookmarks.seedIfNeeded(into: BookmarkRegistry.shared, isIsolated: true)
+            } else if !TestEnvironment.isRunningUnderTests {
+                // Fresh production installs get the built-in Heidrun's Inn
+                // bookmark so the sidebar isn't empty on first launch.
+                DefaultBookmarks.seedIfNeeded(into: BookmarkRegistry.shared, defaults: defaults)
             }
 
             // Skip session restoration under the test bundle. The XCTest
