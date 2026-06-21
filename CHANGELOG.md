@@ -3,6 +3,16 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] — 2026-06-21
+
+### Added
+- **Large files — over 4 GiB.** Download and upload individual files, and whole
+  folders, larger than 4 GiB when the server supports it. Transfers were
+  previously capped at 4 GiB.
+- **Unicode text (UTF-8).** Chat, nicknames, file and folder names, news, and the
+  chat topic now handle emoji and non-Latin scripts when the server supports it.
+  Connections to older servers keep using the classic Mac encoding.
+
 ## [1.1.0] — 2026-06-19
 
 ### Added
