@@ -125,6 +125,8 @@ public final class FilesViewModel {
     let fetchFileInfoAt: @Sendable (RemotePath, String) async throws -> RemoteFileInfo
     let beginDownload: @Sendable (RemotePath, String, UInt32) async throws -> TransferHandle
     let beginUpload: @Sendable (RemotePath, String, UInt64, Bool) async throws -> TransferHandle
+    /// Whether the connected server negotiated large-file (>4 GiB) support.
+    let largeFilesSupported: @Sendable () async -> Bool
     let beginFolderUpload: @Sendable (RemotePath, String, UInt32, UInt16, Bool) async throws -> TransferHandle
     let cancelTransferAt: @Sendable (TransferHandle) async throws -> Void
     let downloadBytes: @Sendable (TransferHandle) -> AsyncThrowingStream<Data, Error>
@@ -157,6 +159,7 @@ public final class FilesViewModel {
         fetchFileInfoAt: @escaping @Sendable (RemotePath, String) async throws -> RemoteFileInfo,
         beginDownload: @escaping @Sendable (RemotePath, String, UInt32) async throws -> TransferHandle,
         beginUpload: @escaping @Sendable (RemotePath, String, UInt64, Bool) async throws -> TransferHandle,
+        largeFilesSupported: @escaping @Sendable () async -> Bool = { false },
         beginFolderUpload: @escaping @Sendable (RemotePath, String, UInt32, UInt16, Bool) async throws -> TransferHandle
             = { _, _, _, _, _ in throw HotlineError.notConnected },
         cancelTransferAt: @escaping @Sendable (TransferHandle) async throws -> Void,
@@ -184,6 +187,7 @@ public final class FilesViewModel {
         self.fetchFileInfoAt      = fetchFileInfoAt
         self.beginDownload        = beginDownload
         self.beginUpload          = beginUpload
+        self.largeFilesSupported  = largeFilesSupported
         self.beginFolderUpload    = beginFolderUpload
         self.cancelTransferAt     = cancelTransferAt
         self.downloadBytes        = downloadBytes
@@ -233,6 +237,7 @@ public final class FilesViewModel {
             beginUpload: { [client] path, name, size, resume in
                 try await client.startUpload(at: path, name: name, size: size, resume: resume)
             },
+            largeFilesSupported: { [client] in await client.largeFilesEnabled },
             beginFolderUpload: { [client] path, name, size, itemCount, resume in
                 try await client.startFolderUpload(
                     at: path,

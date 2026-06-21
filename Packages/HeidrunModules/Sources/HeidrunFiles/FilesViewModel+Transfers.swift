@@ -464,8 +464,11 @@ extension FilesViewModel {
             return
         }
         let size = sizeNumber.uint64Value
-        guard size <= UInt64(UInt32.max) else {
-            present(PresentableError("\(name) is larger than 4 GB and can't be uploaded yet"))
+        // Files over 4 GiB need the negotiated large-file capability; the
+        // legacy 32-bit size fields can't represent them. Allow them only
+        // when the server advertised support.
+        if size > UInt64(UInt32.max), !(await largeFilesSupported()) {
+            present(PresentableError("\(name) is larger than 4 GB and this server doesn't support large-file transfers"))
             return
         }
 

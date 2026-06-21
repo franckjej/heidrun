@@ -12,7 +12,7 @@ let package = Package(
         .package(path: "../CommonTools"),
         // Keep in lock-step with the HeidrunModules pin — see that
         // file's comment for the `exact:` rationale.
-        .package(url: "https://github.com/franckjej/heidrun-protocol.git", exact: "1.0.0-rc28")
+        .package(url: "https://github.com/franckjej/heidrun-protocol.git", exact: "1.0.0-rc29")
     ],
     targets: [
         .target(
