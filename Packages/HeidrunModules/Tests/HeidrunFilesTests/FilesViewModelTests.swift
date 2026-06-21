@@ -266,7 +266,7 @@ struct FilesViewModelTests {
             },
             downloadFolder: { tempDir }
         )
-        await viewModel.download(RemoteFile(name: "split.bin", size: UInt32(payload.count)))
+        await viewModel.download(RemoteFile(name: "split.bin", size: UInt64(payload.count)))
 
         try await waitFor { @MainActor in
             if case .completed = viewModel.transfers[11]?.status { return true }
@@ -393,7 +393,7 @@ struct FilesViewModelTests {
             }
         )
 
-        await viewModel.download(RemoteFile(name: "sample.bin", type: "BINA", size: UInt32(payload.count)))
+        await viewModel.download(RemoteFile(name: "sample.bin", type: "BINA", size: UInt64(payload.count)))
 
         // Allow the drain Task to run to completion.
         try await waitFor { @MainActor in
@@ -567,7 +567,7 @@ struct FilesViewModelPartialDownloadTests {
         let viewModel = makeViewModel()
         let huge = RemoteFile(
             name: "huge.log",
-            size: UInt32(FilesViewModel.maxPreviewBytes) + 1
+            size: UInt64(FilesViewModel.maxPreviewBytes) + 1
         )
         await viewModel.previewFile(huge)
         guard case .failed(let message) = viewModel.previewState else {
@@ -592,7 +592,7 @@ struct FilesViewModelPartialDownloadTests {
                 }
             }
         )
-        let entry = RemoteFile(name: "greeting.txt", size: UInt32(payload.count))
+        let entry = RemoteFile(name: "greeting.txt", size: UInt64(payload.count))
         await viewModel.previewFile(entry)
         try? await Task.sleep(for: .milliseconds(50))
         guard case .ready(let preview) = viewModel.previewState else {
@@ -663,7 +663,7 @@ func makeViewModel(
         RemoteFileInfo(file: RemoteFile(name: name))
     },
     beginDownload: @escaping @Sendable (RemotePath, String, UInt32) async throws -> TransferHandle = { _, _, _ in TransferHandle(transferID: 0, totalSize: 0) },
-    beginUpload: @escaping @Sendable (RemotePath, String, UInt32, Bool) async throws -> TransferHandle = { _, _, _, _ in TransferHandle(transferID: 0, totalSize: 0) },
+    beginUpload: @escaping @Sendable (RemotePath, String, UInt64, Bool) async throws -> TransferHandle = { _, _, _, _ in TransferHandle(transferID: 0, totalSize: 0) },
     cancelTransfer: @escaping @Sendable (TransferHandle) async throws -> Void = { _ in },
     downloadBytes: @escaping @Sendable (TransferHandle) -> AsyncThrowingStream<Data, Error> = { _ in
         AsyncThrowingStream { $0.finish() }

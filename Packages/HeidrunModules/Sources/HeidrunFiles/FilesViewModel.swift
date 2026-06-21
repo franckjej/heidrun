@@ -124,7 +124,7 @@ public final class FilesViewModel {
     let moveEntryAt: @Sendable (RemotePath, String, RemotePath) async throws -> Void
     let fetchFileInfoAt: @Sendable (RemotePath, String) async throws -> RemoteFileInfo
     let beginDownload: @Sendable (RemotePath, String, UInt32) async throws -> TransferHandle
-    let beginUpload: @Sendable (RemotePath, String, UInt32, Bool) async throws -> TransferHandle
+    let beginUpload: @Sendable (RemotePath, String, UInt64, Bool) async throws -> TransferHandle
     let beginFolderUpload: @Sendable (RemotePath, String, UInt32, UInt16, Bool) async throws -> TransferHandle
     let cancelTransferAt: @Sendable (TransferHandle) async throws -> Void
     let downloadBytes: @Sendable (TransferHandle) -> AsyncThrowingStream<Data, Error>
@@ -156,7 +156,7 @@ public final class FilesViewModel {
         moveEntryAt: @escaping @Sendable (RemotePath, String, RemotePath) async throws -> Void,
         fetchFileInfoAt: @escaping @Sendable (RemotePath, String) async throws -> RemoteFileInfo,
         beginDownload: @escaping @Sendable (RemotePath, String, UInt32) async throws -> TransferHandle,
-        beginUpload: @escaping @Sendable (RemotePath, String, UInt32, Bool) async throws -> TransferHandle,
+        beginUpload: @escaping @Sendable (RemotePath, String, UInt64, Bool) async throws -> TransferHandle,
         beginFolderUpload: @escaping @Sendable (RemotePath, String, UInt32, UInt16, Bool) async throws -> TransferHandle
             = { _, _, _, _, _ in throw HotlineError.notConnected },
         cancelTransferAt: @escaping @Sendable (TransferHandle) async throws -> Void,

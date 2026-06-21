@@ -107,7 +107,7 @@ final class FakeHotlineClient: HotlineClient, @unchecked Sendable {
     func startFolderDownload(at path: RemotePath, name: String) async throws -> TransferHandle {
         TransferHandle(transferID: 0, totalSize: 0)
     }
-    func startUpload(at path: RemotePath, name: String, size: UInt32, resume: Bool) async throws -> TransferHandle {
+    func startUpload(at path: RemotePath, name: String, size: UInt64, resume: Bool) async throws -> TransferHandle {
         TransferHandle(transferID: 0, totalSize: 0)
     }
     func startFolderUpload(at path: RemotePath, name: String, size: UInt32, itemCount: UInt16, resume: Bool) async throws -> TransferHandle {

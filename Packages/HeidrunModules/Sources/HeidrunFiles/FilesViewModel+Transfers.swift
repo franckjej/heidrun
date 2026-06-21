@@ -482,7 +482,7 @@ extension FilesViewModel {
         let handle: TransferHandle
         let targetPath = explicitPath ?? currentPath
         do {
-            handle = try await beginUpload(targetPath, name, UInt32(size), resume)
+            handle = try await beginUpload(targetPath, name, size, resume)
         } catch let hotlineError as HotlineError {
             // Park the conflict so the view can present Replace / Resume
             // / Cancel. Snapshot `targetPath` for the same reason as

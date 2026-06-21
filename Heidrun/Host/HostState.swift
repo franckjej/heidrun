@@ -453,7 +453,7 @@ final class HostState {
             name: remote.remoteFileName,
             type: .file,
             creator: .unknown,
-            size: UInt32(clamping: remote.totalSize)
+            size: UInt64(remote.totalSize)
         )
         await filesViewModel.download(entry, mode: .resume)
     }
