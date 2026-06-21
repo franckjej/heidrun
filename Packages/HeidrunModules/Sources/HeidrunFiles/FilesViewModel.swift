@@ -127,7 +127,7 @@ public final class FilesViewModel {
     let beginUpload: @Sendable (RemotePath, String, UInt64, Bool) async throws -> TransferHandle
     /// Whether the connected server negotiated large-file (>4 GiB) support.
     let largeFilesSupported: @Sendable () async -> Bool
-    let beginFolderUpload: @Sendable (RemotePath, String, UInt32, UInt16, Bool) async throws -> TransferHandle
+    let beginFolderUpload: @Sendable (RemotePath, String, UInt64, UInt16, Bool) async throws -> TransferHandle
     let cancelTransferAt: @Sendable (TransferHandle) async throws -> Void
     let downloadBytes: @Sendable (TransferHandle) -> AsyncThrowingStream<Data, Error>
     /// Returns empty `Data` for non-framed transfers or no-rsrc files.
@@ -160,7 +160,7 @@ public final class FilesViewModel {
         beginDownload: @escaping @Sendable (RemotePath, String, UInt32) async throws -> TransferHandle,
         beginUpload: @escaping @Sendable (RemotePath, String, UInt64, Bool) async throws -> TransferHandle,
         largeFilesSupported: @escaping @Sendable () async -> Bool = { false },
-        beginFolderUpload: @escaping @Sendable (RemotePath, String, UInt32, UInt16, Bool) async throws -> TransferHandle
+        beginFolderUpload: @escaping @Sendable (RemotePath, String, UInt64, UInt16, Bool) async throws -> TransferHandle
             = { _, _, _, _, _ in throw HotlineError.notConnected },
         cancelTransferAt: @escaping @Sendable (TransferHandle) async throws -> Void,
         downloadBytes: @escaping @Sendable (TransferHandle) -> AsyncThrowingStream<Data, Error>

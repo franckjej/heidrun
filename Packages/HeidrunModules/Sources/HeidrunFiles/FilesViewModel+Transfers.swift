@@ -561,15 +561,15 @@ extension FilesViewModel {
             present(PresentableError("\(folderName) is empty — nothing to upload"))
             return
         }
-        guard totalSize <= UInt64(UInt32.max) else {
-            present(PresentableError("\(folderName) is larger than 4 GB and can't be uploaded yet"))
+        if totalSize > UInt64(UInt32.max), !(await largeFilesSupported()) {
+            present(PresentableError("\(folderName) is larger than 4 GB and this server doesn't support large-file transfers"))
             return
         }
         let itemCount = UInt16(clamping: items.count)
 
         let handle: TransferHandle
         do {
-            handle = try await beginFolderUpload(currentPath, folderName, UInt32(totalSize), itemCount, false)
+            handle = try await beginFolderUpload(currentPath, folderName, totalSize, itemCount, false)
         } catch {
             present(error)
             return
