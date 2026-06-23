@@ -384,7 +384,7 @@ public struct FilesView: View {
 
             ActionButton(
                 title: "Delete",
-                systemImage: "xmark.circle",
+                systemImage: "trash",
                 isEnabled: !selectedEntries.isEmpty && canDeleteSelection,
                 role: .destructive,
                 size: .small,
