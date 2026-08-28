@@ -121,10 +121,6 @@ final class NotificationCenterService: NSObject {
         guard isEnabled(for: event.kind) else { return }
         guard await ensureAuthorized() else { return }
 
-        // Tally first so the badge matches the count in Notification
-        // Center.
-        BadgeCounter.shared.increment(for: event.kind)
-
         let content = NotificationContent.makeContent(for: event, host: host)
         let request = UNNotificationRequest(
             identifier: NotificationContent.identifierPrefix + UUID().uuidString,

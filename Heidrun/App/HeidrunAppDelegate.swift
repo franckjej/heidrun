@@ -40,6 +40,7 @@ final class HeidrunAppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.activate()
         MainActor.assumeIsolated {
             NotificationCenterService.shared.install()
+            DockBadgeAggregator.shared.start()
         }
     }
 
@@ -104,12 +105,6 @@ final class HeidrunAppDelegate: NSObject, NSApplicationDelegate {
         guard confirmed else { return .terminateCancel }
         Self.isTerminating = true
         return .terminateNow
-    }
-
-    func applicationDidBecomeActive(_ notification: Notification) {
-        MainActor.assumeIsolated {
-            BadgeCounter.shared.reset()
-        }
     }
 
     /// Snapshot live connections for next-launch restoration. Only
