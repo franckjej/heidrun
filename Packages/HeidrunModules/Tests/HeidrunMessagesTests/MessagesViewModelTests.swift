@@ -88,6 +88,44 @@ struct MessagesViewModelTests {
         let calls = await recorder.calls
         #expect(calls.isEmpty)
     }
+
+    @Test("onUnreadChanged reports the number of unread threads on receive, open, delete")
+    @MainActor
+    func unreadCountEmission() async {
+        let (events, continuation) = AsyncStream<HotlineEvent>.makeStream()
+        let viewModel = MessagesViewModel(events: events, sendMessage: { _, _ in })
+        let recorder = UnreadRecorder()
+        viewModel.onUnreadChanged = { recorder.reported.append($0) }
+
+        let observation = Task { await viewModel.observe() }
+        continuation.yield(.messageReceived(from: 7, message: "a"))
+        continuation.yield(.messageReceived(from: 9, message: "b"))
+        continuation.finish()
+        await observation.value
+        #expect(recorder.reported == [1, 2])
+
+        viewModel.openThread(with: 7)
+        #expect(recorder.reported.last == 1)
+
+        viewModel.deleteConversation(socket: 9)
+        #expect(recorder.reported.last == 0)
+    }
+
+    @Test("deleteAll reports zero")
+    @MainActor
+    func deleteAllReportsZero() async {
+        let (events, continuation) = AsyncStream<HotlineEvent>.makeStream()
+        let viewModel = MessagesViewModel(events: events, sendMessage: { _, _ in })
+        let recorder = UnreadRecorder()
+        viewModel.onUnreadChanged = { recorder.reported.append($0) }
+        let observation = Task { await viewModel.observe() }
+        continuation.yield(.messageReceived(from: 7, message: "a"))
+        continuation.finish()
+        await observation.value
+        viewModel.deleteAll()
+        #expect(recorder.reported == [1, 0])
+    }
+
 }
 
 @Suite("MessagesFeature")
@@ -109,4 +147,9 @@ private actor MessageRecorder {
     func record(message: String, socket: UInt16) {
         calls.append(Call(message: message, socket: socket))
     }
+}
+
+@MainActor
+private final class UnreadRecorder {
+    var reported: [Int] = []
 }

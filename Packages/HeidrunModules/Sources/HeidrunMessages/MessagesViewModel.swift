@@ -1,6 +1,5 @@
 import Foundation
 import Observation
-import AppKit
 import HeidrunCore
 import HeidrunChat
 import HeidrunUI
@@ -100,6 +99,14 @@ public final class MessagesViewModel {
     /// thread; tests just leave it nil.
     public var onIncomingMessage: (@MainActor (UInt16) -> Void)?
 
+    /// Fired whenever the number of unread threads may have changed. The
+    /// host mirrors it into the connection's `AttentionState`.
+    public var onUnreadChanged: (@MainActor (Int) -> Void)?
+
+    public var unreadThreadCount: Int {
+        threads.lazy.filter(\.hasUnread).count
+    }
+
     private let events: AsyncStream<HotlineEvent>
     private let sendMessage: @Sendable (String, UInt16) async throws -> Void
     private var observationTask: Task<Void, Never>?
@@ -186,7 +193,7 @@ public final class MessagesViewModel {
     public func markActiveThreadRead() {
         guard let id = activeThreadID, let i = threads.firstIndex(where: { $0.id == id }) else { return }
         threads[i].hasUnread = false
-        refreshDockBadge()
+        notifyUnreadChanged()
     }
 
     /// Send the current draft to the active thread, then clear it.
@@ -221,7 +228,7 @@ public final class MessagesViewModel {
             activeThreadID = nil
             draft = ""
         }
-        refreshDockBadge()
+        notifyUnreadChanged()
     }
 
     /// Clear every conversation. Same caveat as `deleteConversation`:
@@ -230,7 +237,7 @@ public final class MessagesViewModel {
         threads.removeAll()
         activeThreadID = nil
         draft = ""
-        refreshDockBadge()
+        notifyUnreadChanged()
     }
 
     /// Plain-text rendering of a single conversation, suitable for the
@@ -257,51 +264,12 @@ public final class MessagesViewModel {
             thread.messages.append(line)
             thread.hasUnread = (socket != activeThreadID)
         }
-        // Dock attention: bounce only when the user can't see the new
-        // message — either the app isn't active or the active thread
-        // is a different conversation. The system stops the bounce
-        // automatically when the app gains focus. `NSApp` is nil in
-        // headless unit tests, so skip the dock side-effects there.
-        if let application = NSApp {
-            let isVisible = application.isActive && activeThreadID == socket
-            if !isVisible, Self.dockBounceEnabled() {
-                application.requestUserAttention(.criticalRequest)
-            }
-        }
-        refreshDockBadge()
+        notifyUnreadChanged()
         onIncomingMessage?(socket)
     }
 
-    /// Mirror the unread-thread count onto `NSApp.dockTile.badgeLabel`.
-    /// Empty string clears the badge — `nil` would leave the previous
-    /// label in place. When the user has disabled the badge in Settings,
-    /// we clear the label so a previously-set value doesn't linger.
-    private func refreshDockBadge() {
-        // `NSApp` is nil in headless unit tests — no dock tile to update.
-        guard let application = NSApp else { return }
-        guard Self.dockBadgeEnabled() else {
-            application.dockTile.badgeLabel = ""
-            return
-        }
-        let unread = threads.lazy.filter(\.hasUnread).count
-        application.dockTile.badgeLabel = unread > 0 ? String(unread) : ""
-    }
-
-    // MARK: - Settings keys
-    //
-    // These string literals are mirrored from
-    // `Heidrun/App/AppStorageKeys.swift` — kept here so HeidrunMessages
-    // doesn't have to depend on the app target. If you rename either
-    // key, change BOTH places.
-    private static let dockBounceKey = "Heidrun.dockBounceOnPrivateMessage"
-    private static let dockBadgeKey = "Heidrun.dockBadgeForUnreadMessages"
-
-    private static func dockBounceEnabled() -> Bool {
-        UserDefaults.standard.object(forKey: dockBounceKey) as? Bool ?? true
-    }
-
-    private static func dockBadgeEnabled() -> Bool {
-        UserDefaults.standard.object(forKey: dockBadgeKey) as? Bool ?? true
+    private func notifyUnreadChanged() {
+        onUnreadChanged?(unreadThreadCount)
     }
 
     private func appendOutgoing(message: String, to socket: UInt16) {
