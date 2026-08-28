@@ -55,6 +55,9 @@ final class ConnectionHandle: Identifiable {
     /// the environment and shows one alert bound to `current`.
     let errorPresenter: ErrorPresenter
 
+    /// Per-feature unread counts for this window's sidebar and title.
+    let attention = AttentionState()
+
     var phase: Phase = .connected
 
     /// The connected account's own privileges, from the server's "User
@@ -172,6 +175,23 @@ final class ConnectionHandle: Identifiable {
             client: client,
             present: { [presenter] error in presenter.present(error) }
         )
+        wireAttention()
+    }
+
+    private func wireAttention() {
+        let attention = self.attention
+        messagesVM.onUnreadChanged = { count in
+            attention.set(MessagesFeature.identifier, to: count)
+        }
+        chatVM.onAttention = { _ in
+            attention.raise(ChatFeature.identifier)
+        }
+        broadcastVM.onAttention = {
+            attention.raise(ChatFeature.identifier)
+        }
+        newsPlainVM.onAttention = {
+            attention.raise(NewsFeature.identifier)
+        }
     }
 
     /// Stamp each `.heidrunpart` with the server identity that produced
@@ -227,6 +247,7 @@ final class ConnectionHandle: Identifiable {
         // other on every connect.
         let initialRoster: [User] = (try? await client.fetchUserList()) ?? []
         chatVM.seed(initialRoster: initialRoster)
+        chatVM.localNickname = settings.nickname.isEmpty ? NSFullUserName() : settings.nickname
         chatVM.start()
         messagesVM.start()
         newsPlainVM.start()
@@ -244,6 +265,7 @@ final class ConnectionHandle: Identifiable {
     }
 
     func cancel() {
+        attention.clearAll()
         chatVM.cancel()
         messagesVM.cancel()
         newsPlainVM.cancel()

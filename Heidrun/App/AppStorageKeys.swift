@@ -46,15 +46,17 @@ enum AppStorageKeys {
     static let notifyNewsPosted = "Heidrun.notifyNewsPosted"
     static let notifyBroadcast = "Heidrun.notifyBroadcast"
 
-    /// Bounce the dock when a private message arrives and the user
-    /// can't already see it. Default on. Mirrored as a literal in
-    /// `MessagesViewModel.dockBounceKey` so HeidrunMessages doesn't have
-    /// to import the app target.
+    /// Bounce the Dock on new activity the user can't see. Default on.
     static let dockBounceOnPrivateMessage = "Heidrun.dockBounceOnPrivateMessage"
 
-    /// Show the unread-thread count on the dock icon. Default on.
-    /// Mirrored as a literal in `MessagesViewModel.dockBadgeKey`.
+    /// Cross-server unread total on the Dock icon. Default on.
     static let dockBadgeForUnreadMessages = "Heidrun.dockBadgeForUnreadMessages"
+
+    /// Unread count capsules on host-sidebar rows. Default on.
+    static let sidebarBadges = "Heidrun.sidebarBadges"
+
+    /// Brief window-title pulse on new activity. Default on.
+    static let flashWindowTitle = "Heidrun.flashWindowTitle"
 
     /// JSON `[TrackerHost]`. Default-seeded with `hltracker.com:5498`.
     static let trackerHosts = "Heidrun.trackerHosts"

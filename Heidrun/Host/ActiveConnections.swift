@@ -75,6 +75,7 @@ final class ActiveConnections {
                     // carries the current identity, not the connect-time
                     // values — else relaunch reopens with stale identity.
                     handle.settings.nickname = nickname
+                    handle.chatVM.localNickname = nickname
                     handle.settings.icon = iconID
                     handle.settings.emoji = emoji
                     self.persistLiveSnapshot()
