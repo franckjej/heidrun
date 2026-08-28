@@ -3,6 +3,19 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Per-server attention.** Each server window shows unread badges on its
+  sidebar items (private messages, chat mentions and invites, broadcasts,
+  news), a `(N)` marker in the window title that flashes briefly on new
+  activity, and the Dock badge now totals unread items across all servers.
+  New Settings → Notifications → Attention toggles.
+
+### Fixed
+- The Dock badge no longer flip-flops between servers when connected to
+  more than one.
+
 ## [1.2.0] — 2026-06-21
 
 ### Added
