@@ -48,7 +48,7 @@ struct DockBadgeAggregatorTests {
     func zeroClears() {
         let (aggregator, sink) = makeAggregator(states: [AttentionState()], defaults: makeDefaults(), isAppActive: true)
         aggregator.refresh()
-        #expect(sink.badges.last == "")
+        #expect(sink.badges.last?.isEmpty == true)
     }
 
     @Test("badge setting off always writes empty")
@@ -57,7 +57,7 @@ struct DockBadgeAggregatorTests {
         state.raise("chat")
         let (aggregator, sink) = makeAggregator(states: [state], defaults: makeDefaults(badge: false), isAppActive: true)
         aggregator.refresh()
-        #expect(sink.badges.last == "")
+        #expect(sink.badges.last?.isEmpty == true)
     }
 
     @Test("bounces once per new pulse, only while the app is inactive")

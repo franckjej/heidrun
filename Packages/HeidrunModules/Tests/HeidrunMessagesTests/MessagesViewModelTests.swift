@@ -125,7 +125,6 @@ struct MessagesViewModelTests {
         viewModel.deleteAll()
         #expect(recorder.reported == [1, 0])
     }
-
 }
 
 @Suite("MessagesFeature")

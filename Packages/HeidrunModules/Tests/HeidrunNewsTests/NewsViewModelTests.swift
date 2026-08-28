@@ -135,7 +135,6 @@ struct PlainNewsViewModelTests {
         await observation.value
         #expect(recorder.raised == 2)
     }
-
 }
 
 @Suite("ThreadedNewsViewModel")

@@ -314,21 +314,27 @@ struct ChatViewModelTests {
     }
 
     @MainActor
-    private func attentionHarness(
-        nickname: String
-    ) -> (ChatViewModel, AsyncStream<HotlineEvent>.Continuation, AttentionRecorder) {
+    private struct AttentionHarness {
+        let viewModel: ChatViewModel
+        let continuation: AsyncStream<HotlineEvent>.Continuation
+        let recorder: AttentionRecorder
+    }
+
+    @MainActor
+    private func attentionHarness(nickname: String) -> AttentionHarness {
         let (events, continuation) = AsyncStream<HotlineEvent>.makeStream()
         let viewModel = ChatViewModel(events: events, sendChat: { _, _, _ in }, chatScope: nil)
         viewModel.localNickname = nickname
         let recorder = AttentionRecorder()
         viewModel.onAttention = { recorder.raised.append($0) }
-        return (viewModel, continuation, recorder)
+        return AttentionHarness(viewModel: viewModel, continuation: continuation, recorder: recorder)
     }
 
     @Test("a line mentioning the local nickname raises .mention; own lines and substrings don't")
     @MainActor
     func mentionDetection() async {
-        let (viewModel, continuation, recorder) = attentionHarness(nickname: "Jens")
+        let harness = attentionHarness(nickname: "Jens")
+        let (viewModel, continuation, recorder) = (harness.viewModel, harness.continuation, harness.recorder)
         let observation = Task { await viewModel.observe() }
         continuation.yield(.chatReceived(chat: nil, message: "Erika: hey JENS, around?", isAction: false))
         continuation.yield(.chatReceived(chat: nil, message: "Erika: jensen is not you", isAction: false))
@@ -344,7 +350,8 @@ struct ChatViewModelTests {
     @Test("empty local nickname never raises")
     @MainActor
     func emptyNicknameNeverMentions() async {
-        let (viewModel, continuation, recorder) = attentionHarness(nickname: "")
+        let harness = attentionHarness(nickname: "")
+        let (viewModel, continuation, recorder) = (harness.viewModel, harness.continuation, harness.recorder)
         let observation = Task { await viewModel.observe() }
         continuation.yield(.chatReceived(chat: nil, message: "Erika: hi", isAction: false))
         continuation.finish()
@@ -355,7 +362,8 @@ struct ChatViewModelTests {
     @Test("a private chat invite raises .invite in the public scope only")
     @MainActor
     func inviteRaises() async {
-        let (viewModel, continuation, recorder) = attentionHarness(nickname: "Jens")
+        let harness = attentionHarness(nickname: "Jens")
+        let (viewModel, continuation, recorder) = (harness.viewModel, harness.continuation, harness.recorder)
         let observation = Task { await viewModel.observe() }
         continuation.yield(.privateChatInvited(chat: ChatID(rawValue: 5), fromUser: 3, message: nil))
         continuation.finish()
@@ -372,7 +380,6 @@ struct ChatViewModelTests {
         await roomObservation.value
         #expect(roomRecorder.raised.isEmpty)
     }
-
 }
 
 @Suite("ChatFeature")
