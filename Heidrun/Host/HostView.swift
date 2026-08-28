@@ -101,6 +101,7 @@ struct HostView: View {
                 }
             }
         }
+        .onAppear { clearVisibleAttention() }
         .onChange(of: selectedIdentifier) { clearVisibleAttention() }
         .onChange(of: controlActiveState) { clearVisibleAttention() }
         .onChange(of: attention?.pulseToken) { _, token in
@@ -228,6 +229,7 @@ struct HostView: View {
     /// Viewing a feature in the key window clears its badge. Messages is
     /// authoritative from its own unread threads, so it's left alone.
     private func clearVisibleAttention() {
+        messagesVM?.isVisible = isKeyWindow && selectedIdentifier == MessagesFeature.identifier
         guard isKeyWindow, let selected = selectedIdentifier, selected != MessagesFeature.identifier else { return }
         attention?.clear(selected)
         lastCounts = attention?.counts ?? [:]

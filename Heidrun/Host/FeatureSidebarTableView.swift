@@ -234,6 +234,8 @@ final class FeatureSidebarCellView: NSTableCellView {
     private let iconView = NSImageView()
     private let nameLabel = NSTextField(labelWithString: "")
     private let badgeLabel = NSTextField(labelWithString: "")
+    private var badgeHeightConstraint: NSLayoutConstraint?
+    private var badgeWidthConstraint: NSLayoutConstraint?
     private var flashTask: Task<Void, Never>?
     private var iconWidthConstraint: NSLayoutConstraint?
     private var iconHeightConstraint: NSLayoutConstraint?
@@ -266,11 +268,15 @@ final class FeatureSidebarCellView: NSTableCellView {
         addSubview(nameLabel)
 
         badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        badgeLabel.cell = VerticallyCenteredTextFieldCell(textCell: "")
+        badgeLabel.isEditable = false
+        badgeLabel.isBordered = false
+        badgeLabel.drawsBackground = false
         badgeLabel.alignment = .center
+        badgeLabel.lineBreakMode = .byClipping
         badgeLabel.font = .monospacedDigitSystemFont(ofSize: currentSize.captionPointSize, weight: .semibold)
         badgeLabel.textColor = .white
         badgeLabel.wantsLayer = true
-        badgeLabel.layer?.cornerRadius = (currentSize.captionPointSize + Spacing.xxsmall.rawValue) / 2
         badgeLabel.isHidden = true
         addSubview(badgeLabel)
 
@@ -278,6 +284,11 @@ final class FeatureSidebarCellView: NSTableCellView {
         let iconHeight = iconView.heightAnchor.constraint(equalToConstant: currentSize.iconSize)
         iconWidthConstraint = iconWidth
         iconHeightConstraint = iconHeight
+        let badgeHeight = badgeLabel.heightAnchor.constraint(equalToConstant: Self.badgeHeight(for: currentSize))
+        let badgeWidth = badgeLabel.widthAnchor.constraint(equalToConstant: Self.badgeHeight(for: currentSize))
+        badgeHeightConstraint = badgeHeight
+        badgeWidthConstraint = badgeWidth
+        badgeLabel.layer?.cornerRadius = Self.badgeHeight(for: currentSize) / 2
 
         NSLayoutConstraint.activate([
             selectionView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Spacing.xsmall.rawValue),
@@ -296,7 +307,8 @@ final class FeatureSidebarCellView: NSTableCellView {
 
             badgeLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Spacing.medium.rawValue),
             badgeLabel.centerYAnchor.constraint(equalTo: iconView.centerYAnchor),
-            badgeLabel.widthAnchor.constraint(greaterThanOrEqualTo: badgeLabel.heightAnchor)
+            badgeHeight,
+            badgeWidth
         ])
         updateAppearance()
     }
@@ -327,13 +339,29 @@ final class FeatureSidebarCellView: NSTableCellView {
         iconWidthConstraint?.constant = contentSize.iconSize
         iconHeightConstraint?.constant = contentSize.iconSize
         badgeLabel.font = .monospacedDigitSystemFont(ofSize: contentSize.captionPointSize, weight: .semibold)
-        badgeLabel.layer?.cornerRadius = (contentSize.captionPointSize + Spacing.xxsmall.rawValue) / 2
+        badgeHeightConstraint?.constant = Self.badgeHeight(for: contentSize)
+        badgeLabel.layer?.cornerRadius = Self.badgeHeight(for: contentSize) / 2
+        resizeBadge()
+    }
+
+    /// Capsule height: caption text plus breathing room above and below.
+    private static func badgeHeight(for size: ContentSize) -> CGFloat {
+        size.captionPointSize + Spacing.xsmall.rawValue
     }
 
     /// Raw count, no grouping separator. 0 hides the capsule.
     func setBadge(_ count: Int) {
         badgeLabel.isHidden = count <= 0
-        badgeLabel.stringValue = count > 0 ? "\u{2009}\(count)\u{2009}" : ""
+        badgeLabel.stringValue = count > 0 ? String(count) : ""
+        resizeBadge()
+    }
+
+    /// Round for one digit, pill for more: width = text + side padding,
+    /// never narrower than the height.
+    private func resizeBadge() {
+        let height = Self.badgeHeight(for: currentSize)
+        let textWidth = badgeLabel.attributedStringValue.size().width
+        badgeWidthConstraint?.constant = max(height, ceil(textWidth) + Spacing.xsmall.rawValue)
     }
 
     /// Three accent ↔ base tint swaps over ~1.2 s. Reduce Motion → one

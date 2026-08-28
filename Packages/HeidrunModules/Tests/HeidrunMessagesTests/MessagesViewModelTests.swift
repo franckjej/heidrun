@@ -33,6 +33,7 @@ struct MessagesViewModelTests {
         let (events, continuation) = AsyncStream<HotlineEvent>.makeStream()
         let viewModel = MessagesViewModel(events: events, sendMessage: { _, _ in })
 
+        viewModel.isVisible = true
         viewModel.openThread(with: 7)
 
         let observation = Task { await viewModel.observe() }
@@ -42,6 +43,31 @@ struct MessagesViewModelTests {
 
         let thread = viewModel.threads.first { $0.id == 7 }!
         #expect(!thread.hasUnread)
+    }
+
+    @Test("active thread is unread when Messages isn't visible; becoming visible reads it")
+    @MainActor
+    func activeThreadUnreadWhileHidden() async {
+        let (events, continuation) = AsyncStream<HotlineEvent>.makeStream()
+        let viewModel = MessagesViewModel(events: events, sendMessage: { _, _ in })
+        let recorder = UnreadRecorder()
+        viewModel.onUnreadChanged = { recorder.reported.append($0) }
+
+        viewModel.isVisible = true
+        viewModel.openThread(with: 7)
+        viewModel.isVisible = false
+
+        let observation = Task { await viewModel.observe() }
+        continuation.yield(.messageReceived(from: 7, message: "while away"))
+        continuation.finish()
+        await observation.value
+
+        #expect(viewModel.threads.first { $0.id == 7 }!.hasUnread)
+        #expect(recorder.reported.last == 1)
+
+        viewModel.isVisible = true
+        #expect(!viewModel.threads.first { $0.id == 7 }!.hasUnread)
+        #expect(recorder.reported.last == 0)
     }
 
     @Test("sendDraft sends to the active thread, appends locally, clears draft")

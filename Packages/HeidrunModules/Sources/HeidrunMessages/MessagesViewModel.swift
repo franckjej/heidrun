@@ -74,6 +74,15 @@ public final class MessagesViewModel {
     /// `id` of the thread currently shown in the detail pane.
     public var activeThreadID: UInt16?
 
+    /// Whether the Messages surface is actually on screen in a key window.
+    /// Only a visible active thread counts as read; the host keeps this in
+    /// sync. Becoming visible marks the active thread read.
+    public var isVisible = false {
+        didSet {
+            if isVisible, !oldValue { markActiveThreadRead() }
+        }
+    }
+
     /// Two-way bound input field for the active thread.
     public var draft: String = ""
 
@@ -262,7 +271,7 @@ public final class MessagesViewModel {
         let line = Message(text: message, direction: .incoming)
         upsert(socket: socket) { thread in
             thread.messages.append(line)
-            thread.hasUnread = (socket != activeThreadID)
+            thread.hasUnread = !(isVisible && socket == activeThreadID)
         }
         notifyUnreadChanged()
         onIncomingMessage?(socket)
