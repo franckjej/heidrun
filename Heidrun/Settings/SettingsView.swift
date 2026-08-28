@@ -36,6 +36,8 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.notifyNewsPosted) private var notifyNewsPosted: Bool = true
     @AppStorage(AppStorageKeys.dockBounceOnPrivateMessage) private var dockBounceOnPrivateMessage: Bool = true
     @AppStorage(AppStorageKeys.dockBadgeForUnreadMessages) private var dockBadgeForUnreadMessages: Bool = true
+    @AppStorage(AppStorageKeys.sidebarBadges) private var sidebarBadges: Bool = true
+    @AppStorage(AppStorageKeys.flashWindowTitle) private var flashWindowTitle: Bool = true
     @AppStorage(AppStorageKeys.reopenConnectionsOnLaunch) private var reopenConnectionsOnLaunch: Bool = true
     @AppStorage(AppStorageKeys.confirmBeforeDisconnect) private var confirmBeforeDisconnect: Bool = true
     @AppStorage(AppStorageKeys.useBiometricPasswordProtection) private var useBiometricPasswordProtection: Bool = false
@@ -431,13 +433,15 @@ struct SettingsView: View {
 
             GroupBox {
                 VStack(alignment: .leading, spacing: rowSpacing.rawValue) {
-                    Toggle("Bounce the dock on a new private message", isOn: $dockBounceOnPrivateMessage)
-                    Toggle("Show unread message count on the dock icon", isOn: $dockBadgeForUnreadMessages)
+                    Toggle("Bounce the Dock icon on new activity", isOn: $dockBounceOnPrivateMessage)
+                    Toggle("Show unread count on the Dock icon", isOn: $dockBadgeForUnreadMessages)
+                    Toggle("Show unread badges in the sidebar", isOn: $sidebarBadges)
+                    Toggle("Flash the window title on new activity", isOn: $flashWindowTitle)
                 }
                 .padding(insidePadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
-                Label("Dock attention", systemImage: "app.badge")
+                Label("Attention", systemImage: "app.badge")
                     .font(.headline)
             }
         }

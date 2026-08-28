@@ -18,6 +18,86 @@
       },
       "shouldTranslate" : false
     },
+    "Attention" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aufmerksamkeit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知表示"
+          }
+        }
+      }
+    },
+    "Bounce the Dock icon on new activity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dock-Symbol bei neuer Aktivität hüpfen lassen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいアクティビティでDockアイコンをバウンス"
+          }
+        }
+      }
+    },
+    "Flash the window title on new activity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fenstertitel bei neuer Aktivität blinken lassen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新しいアクティビティでウインドウタイトルを点滅"
+          }
+        }
+      }
+    },
+    "Show unread badges in the sidebar" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungelesen-Kennzeichen in der Seitenleiste anzeigen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サイドバーに未読バッジを表示"
+          }
+        }
+      }
+    },
+    "Show unread count on the Dock icon" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzahl ungelesener Elemente im Dock-Symbol anzeigen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dockアイコンに未読数を表示"
+          }
+        }
+      }
+    },
     "…" : {
       "localizations" : {
         "de" : {
@@ -678,22 +758,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ブックマーク"
-          }
-        }
-      }
-    },
-    "Bounce the dock on a new private message" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dock-Symbol bei einer neuen privaten Nachricht hüpfen lassen"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新しいプライベートメッセージでDockアイコンをバウンスさせる"
           }
         }
       }
@@ -1672,22 +1736,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "サーバーから切断されました"
-          }
-        }
-      }
-    },
-    "Dock attention" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dock-Hinweis"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dock通知"
           }
         }
       }
@@ -4085,22 +4133,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "各メッセージの前にタイムスタンプを表示"
-          }
-        }
-      }
-    },
-    "Show unread message count on the dock icon" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anzahl ungelesener Nachrichten am Dock-Symbol anzeigen"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未読メッセージ数をDockアイコンに表示する"
           }
         }
       }
