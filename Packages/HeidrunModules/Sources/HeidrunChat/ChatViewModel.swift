@@ -7,6 +7,12 @@ import HeidrunUI
 /// `HotlineEvent` stream down to chat lines for one scope (public chat
 /// by default, or one private `ChatID`), accumulates them, and forwards
 /// outgoing chat through the supplied sender closure.
+/// Why a chat surface wants the user's attention.
+public enum ChatAttention: Sendable, Hashable {
+    case mention
+    case invite
+}
+
 @Observable
 @MainActor
 public final class ChatViewModel {
@@ -73,6 +79,14 @@ public final class ChatViewModel {
     public private(set) var serverName: String = ""
 
     public var draft: String = ""
+
+    /// Our own nickname on this server, for mention detection. Empty
+    /// disables it. Set by the host; refreshed on identity changes.
+    public var localNickname: String = ""
+
+    /// Fired for mentions (public scope) and private-chat invites. The
+    /// host mirrors it into the connection's `AttentionState`.
+    public var onAttention: (@MainActor (ChatAttention) -> Void)?
 
     /// Shell-style history of messages sent from this composer. In-memory
     /// and per-scope (each `ChatViewModel` owns its own). Drives ↑/↓
@@ -184,7 +198,13 @@ public final class ChatViewModel {
         for await event in events {
             switch event {
             case let .chatReceived(chat, message, isAction) where chat == chatScope:
-                lines.append(Line(rawMessage: message, isAction: isAction))
+                let line = Line(rawMessage: message, isAction: isAction)
+                lines.append(line)
+                if chatScope == nil, mentionsLocalUser(line) {
+                    onAttention?(.mention)
+                }
+            case .privateChatInvited where chatScope == nil:
+                onAttention?(.invite)
             // Private rooms match their own ChatID; public chat (scope
             // nil) also accepts a Chat-ID-0 subject — that's how a
             // Heidrun server pushes the public topic (TX 119).
@@ -218,6 +238,23 @@ public final class ChatViewModel {
                 )
             )
         }
+    }
+
+    /// Word-bounded, case-insensitive match of `localNickname`; lines we
+    /// sent ourselves (sender, or action prefix) never count.
+    private func mentionsLocalUser(_ line: Line) -> Bool {
+        let nickname = localNickname
+        guard !nickname.isEmpty else { return false }
+        if let sender = line.sender, sender.caseInsensitiveCompare(nickname) == .orderedSame {
+            return false
+        }
+        if line.isAction, line.body.lowercased().hasPrefix(nickname.lowercased()) {
+            return false
+        }
+        let pattern = "(?<![\\p{L}\\p{N}_])"
+            + NSRegularExpression.escapedPattern(for: nickname)
+            + "(?![\\p{L}\\p{N}_])"
+        return line.body.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }
 
     private func handleUserLeft(socket: UInt16) {
