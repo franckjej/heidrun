@@ -221,17 +221,26 @@ final class ConnectionHandle: Identifiable {
         // editing our account mid-session). Fail-open stays intact: empty +
         // no event ⇒ hasPrivilegeInfo false ⇒ controls enabled.
         let eventStream = client.events
+        let connectionInfo = await client.connectionInfo
+        let ownSocket = connectionInfo.connectionSocket
         privilegesTask = Task { [weak self] in
             for await event in eventStream {
-                guard case let .userAccessReceived(privileges) = event else { continue }
-                self?.selfPrivileges = privileges
-                self?.hasPrivilegeInfo = true
-                self?.filesVM.updatePrivileges(privileges)
-                self?.newsPlainVM.updatePrivileges(privileges)
-                self?.newsThreadedVM.updatePrivileges(privileges)
+                switch event {
+                case let .userAccessReceived(privileges):
+                    self?.selfPrivileges = privileges
+                    self?.hasPrivilegeInfo = true
+                    self?.filesVM.updatePrivileges(privileges)
+                    self?.newsPlainVM.updatePrivileges(privileges)
+                    self?.newsThreadedVM.updatePrivileges(privileges)
+                case let .userChanged(user) where user.socket == ownSocket && !user.nickname.isEmpty:
+                    // Server-side renames (agreement sheet, admin) must
+                    // keep mention detection pointed at our current name.
+                    self?.chatVM.localNickname = user.nickname
+                default:
+                    break
+                }
             }
         }
-        let connectionInfo = await client.connectionInfo
         newsCapability = NewsCapability(serverVersion: connectionInfo.serverVersion)
         let seededPrivileges = connectionInfo.privileges
         if !seededPrivileges.isEmpty {
@@ -247,7 +256,11 @@ final class ConnectionHandle: Identifiable {
         // other on every connect.
         let initialRoster: [User] = (try? await client.fetchUserList()) ?? []
         chatVM.seed(initialRoster: initialRoster)
-        chatVM.localNickname = settings.nickname.isEmpty ? NSFullUserName() : settings.nickname
+        // Prefer the roster's view of us — a URL connect has no nickname
+        // in `settings`, and the server may have renamed us at login.
+        let rosterNickname = initialRoster.first { $0.socket == ownSocket }?.nickname
+        let fallbackNickname = settings.nickname.isEmpty ? NSFullUserName() : settings.nickname
+        chatVM.localNickname = (rosterNickname?.isEmpty == false) ? rosterNickname! : fallbackNickname
         chatVM.start()
         messagesVM.start()
         newsPlainVM.start()

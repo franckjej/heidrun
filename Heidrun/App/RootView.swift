@@ -64,6 +64,10 @@ struct RootView: View {
         return nil
     }
 
+    private func restampWindowTitle(_ previous: String, _ title: String) {
+        windowHolder.window?.title = title
+    }
+
     /// Phase-aware window title. `navigationTitle` doesn't beat DocumentGroup's
     /// auto-set "Untitled" / filename string, so we set `window.title` directly.
     private var preferredWindowTitle: String {
@@ -74,8 +78,13 @@ struct RootView: View {
             let name = settings.name.isEmpty ? settings.address : settings.name
             return "🟢 \(name)"
         case .connected:
-            let dot = state.isConnected ? "🟢" : "🔴"
-            return "\(dot) \(state.serverName)"
+            let attention = state.currentHandle?.attention
+            return HostView.title(
+                serverName: state.serverName,
+                isConnected: state.isConnected,
+                attentionTotal: attention?.total ?? 0,
+                pulsing: attention?.titlePulsing ?? false
+            )
         }
     }
 
@@ -162,6 +171,9 @@ struct RootView: View {
             }
         }
         .focusedValue(\.hostState, state)
+        // Attention changes don't re-run the WindowAccessor closure, so
+        // re-stamp the title from a tracked read here.
+        .onChange(of: preferredWindowTitle, restampWindowTitle)
         .background(WindowAccessor { window in
             // Mark non-restorable so AppKit stops persisting per-window state
             // at quit — pairs with the NSQuitAlwaysKeepsWindows=off default.

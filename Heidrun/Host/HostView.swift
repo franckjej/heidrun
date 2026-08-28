@@ -21,7 +21,6 @@ struct HostView: View {
     @Environment(\.controlActiveState) private var controlActiveState
     @AppStorage(AppStorageKeys.sidebarBadges) private var sidebarBadges: Bool = true
     @AppStorage(AppStorageKeys.flashWindowTitle) private var flashWindowTitle: Bool = true
-    @State private var titlePulsing = false
     @State private var titlePulseTask: Task<Void, Never>?
     @State private var sidebarPulse: SidebarPulse?
     @State private var lastCounts: [String: Int] = [:]
@@ -65,7 +64,6 @@ struct HostView: View {
                     }
                 }
         }
-        .navigationTitle(titleWithStatus)
         .navigationSubtitle(addressSubtitle)
         .toolbar {
             if let state {
@@ -93,10 +91,14 @@ struct HostView: View {
                 selectedIdentifier = features.first?.identifier
             }
             // Auto-switch to Messages on PM. Re-bind on every appearance
-            // so a freshly-built handle's VM gets a live closure.
-            messagesVM?.onIncomingMessage = { socket in
+            // so a freshly-built handle's VM gets a live closure. Only a
+            // key window opens the thread — a background window keeps it
+            // unread so the badge and title marker can show it.
+            messagesVM?.onIncomingMessage = { [weak state] socket in
                 selectedIdentifier = MessagesFeature.identifier
-                messagesVM?.openThread(with: socket)
+                if NSApp.isActive, state?.currentHandle?.window?.isKeyWindow == true {
+                    messagesVM?.openThread(with: socket)
+                }
             }
         }
         .onChange(of: selectedIdentifier) { clearVisibleAttention() }
@@ -209,16 +211,8 @@ struct HostView: View {
         return "\(lock) \(settings.address):\(settings.port)"
     }
 
-    private var titleWithStatus: String {
-        guard let state else { return "Heidrun" }
-        return Self.title(
-            serverName: state.serverName,
-            isConnected: state.isConnected,
-            attentionTotal: attention?.total ?? 0,
-            pulsing: titlePulsing
-        )
-    }
-
+    /// Window-title text. Stamped by `RootView` (DocumentGroup overrides
+    /// `navigationTitle`), kept here next to the attention logic.
     nonisolated static func title(
         serverName: String,
         isConnected: Bool,
@@ -249,17 +243,18 @@ struct HostView: View {
             sidebarPulse = SidebarPulse(featureID: grown, token: token)
         }
         guard flashWindowTitle, !(isKeyWindow && selectedIdentifier == grown) else { return }
+        guard let attention else { return }
         titlePulseTask?.cancel()
         titlePulseTask = Task { @MainActor in
             for _ in 0..<3 {
-                titlePulsing = true
+                attention.titlePulsing = true
                 try? await Task.sleep(for: .milliseconds(200))
                 if Task.isCancelled { break }
-                titlePulsing = false
+                attention.titlePulsing = false
                 try? await Task.sleep(for: .milliseconds(200))
                 if Task.isCancelled { break }
             }
-            titlePulsing = false
+            attention.titlePulsing = false
         }
     }
 

@@ -9,6 +9,8 @@ final class AttentionState {
     private(set) var counts: [String: Int] = [:]
     /// Increments on every raise and on every growing `set`.
     private(set) var pulseToken: Int = 0
+    /// True while the window title is mid-flash; driven by the host view.
+    var titlePulsing = false
 
     var total: Int { counts.values.reduce(0, +) }
 
