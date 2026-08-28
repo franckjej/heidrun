@@ -41,7 +41,9 @@ public final class MessagesViewModel {
     public struct Thread: Sendable, Identifiable, Hashable {
         public let id: UInt16
         public var messages: [Message]
-        public var hasUnread: Bool
+        /// Incoming messages not yet seen in a visible, active thread.
+        public var unreadCount: Int
+        public var hasUnread: Bool { unreadCount > 0 }
         /// Last seen nickname for this socket; falls back to here when
         /// the user has logged off and the live user-list no longer
         /// contains them. `icon` mirrors the same idea.
@@ -54,14 +56,14 @@ public final class MessagesViewModel {
         public init(
             id: UInt16,
             messages: [Message] = [],
-            hasUnread: Bool = false,
+            unreadCount: Int = 0,
             cachedNickname: String? = nil,
             cachedIcon: UInt16? = nil,
             cachedEmoji: String? = nil
         ) {
             self.id = id
             self.messages = messages
-            self.hasUnread = hasUnread
+            self.unreadCount = unreadCount
             self.cachedNickname = cachedNickname
             self.cachedIcon = cachedIcon
             self.cachedEmoji = cachedEmoji
@@ -112,8 +114,9 @@ public final class MessagesViewModel {
     /// host mirrors it into the connection's `AttentionState`.
     public var onUnreadChanged: (@MainActor (Int) -> Void)?
 
-    public var unreadThreadCount: Int {
-        threads.lazy.filter(\.hasUnread).count
+    /// Total unread messages across threads — what the badges show.
+    public var unreadMessageCount: Int {
+        threads.reduce(0) { $0 + $1.unreadCount }
     }
 
     private let events: AsyncStream<HotlineEvent>
@@ -201,7 +204,7 @@ public final class MessagesViewModel {
     /// Mark the active thread as read.
     public func markActiveThreadRead() {
         guard let id = activeThreadID, let i = threads.firstIndex(where: { $0.id == id }) else { return }
-        threads[i].hasUnread = false
+        threads[i].unreadCount = 0
         notifyUnreadChanged()
     }
 
@@ -271,14 +274,16 @@ public final class MessagesViewModel {
         let line = Message(text: message, direction: .incoming)
         upsert(socket: socket) { thread in
             thread.messages.append(line)
-            thread.hasUnread = !(isVisible && socket == activeThreadID)
+            if !(isVisible && socket == activeThreadID) {
+                thread.unreadCount += 1
+            }
         }
         notifyUnreadChanged()
         onIncomingMessage?(socket)
     }
 
     private func notifyUnreadChanged() {
-        onUnreadChanged?(unreadThreadCount)
+        onUnreadChanged?(unreadMessageCount)
     }
 
     private func appendOutgoing(message: String, to socket: UInt16) {

@@ -115,7 +115,7 @@ struct MessagesViewModelTests {
         #expect(calls.isEmpty)
     }
 
-    @Test("onUnreadChanged reports the number of unread threads on receive, open, delete")
+    @Test("onUnreadChanged reports the number of unread messages on receive, open, delete")
     @MainActor
     func unreadCountEmission() async {
         let (events, continuation) = AsyncStream<HotlineEvent>.makeStream()
@@ -126,10 +126,13 @@ struct MessagesViewModelTests {
         let observation = Task { await viewModel.observe() }
         continuation.yield(.messageReceived(from: 7, message: "a"))
         continuation.yield(.messageReceived(from: 9, message: "b"))
+        continuation.yield(.messageReceived(from: 7, message: "c"))
         continuation.finish()
         await observation.value
-        #expect(recorder.reported == [1, 2])
+        #expect(recorder.reported == [1, 2, 3])
+        #expect(viewModel.threads.first { $0.id == 7 }?.unreadCount == 2)
 
+        viewModel.isVisible = true
         viewModel.openThread(with: 7)
         #expect(recorder.reported.last == 1)
 
