@@ -16,6 +16,10 @@ struct FeatureSidebarTableView: NSViewRepresentable {
     /// the Admin tab for an account without account-admin privileges. A UI
     /// hint only; the server enforces privileges regardless.
     var disabledIdentifiers: Set<String> = []
+    /// Feature identifier → unread count. Zero/absent hides the capsule.
+    var badges: [String: Int] = [:]
+    /// Changes when a row should flash. `nil` = never.
+    var pulse: SidebarPulse?
 
     @Environment(\.heidrunContentSize) private var contentSize
 
@@ -72,7 +76,13 @@ struct FeatureSidebarTableView: NSViewRepresentable {
             tableView.rowHeight = Self.rowHeight(for: contentSize)
             tableView.reloadData()
         }
-        context.coordinator.apply(features: features, disabled: disabledIdentifiers, to: tableView)
+        context.coordinator.apply(
+            features: features,
+            disabled: disabledIdentifiers,
+            badges: badges,
+            pulse: pulse,
+            to: tableView
+        )
         let targetRow = Self.rowIndex(for: selection, in: features)
         let targetRows: IndexSet = targetRow.map { IndexSet(integer: $0) } ?? IndexSet()
         if tableView.selectedRowIndexes != targetRows {
@@ -100,16 +110,40 @@ struct FeatureSidebarTableView: NSViewRepresentable {
         func beginProgrammaticSelection() { applyingSelection = true }
         func endProgrammaticSelection() { applyingSelection = false }
 
-        func apply(features newValue: [any HeidrunFeature.Type], disabled: Set<String>, to tableView: NSTableView) {
+        private var lastBadges: [String: Int] = [:]
+        private var lastPulse: SidebarPulse?
+
+        func apply(
+            features newValue: [any HeidrunFeature.Type],
+            disabled: Set<String>,
+            badges: [String: Int],
+            pulse: SidebarPulse?,
+            to tableView: NSTableView
+        ) {
             let identifiers = newValue.map { $0.identifier }
             let existingIdentifiers = features.map { $0.identifier }
             // Reload when the list OR the disabled set changes — the latter
             // so a row re-greys when privileges arrive after the first render.
-            let changed = identifiers != existingIdentifiers || disabled != lastDisabled
+            let structureChanged = identifiers != existingIdentifiers || disabled != lastDisabled
+            let previousBadges = lastBadges
             features = newValue
             lastDisabled = disabled
-            guard changed else { return }
-            tableView.reloadData()
+            lastBadges = badges
+            if structureChanged {
+                tableView.reloadData()
+            } else if badges != previousBadges {
+                let rows = IndexSet(identifiers.indices.filter {
+                    badges[identifiers[$0]] != previousBadges[identifiers[$0]]
+                })
+                tableView.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(integer: 0))
+            }
+            if let pulse, pulse != lastPulse {
+                lastPulse = pulse
+                if let row = identifiers.firstIndex(of: pulse.featureID),
+                   let cell = tableView.view(atColumn: 0, row: row, makeIfNecessary: false) as? FeatureSidebarCellView {
+                    cell.flash()
+                }
+            }
         }
 
         // MARK: Data source
@@ -133,6 +167,7 @@ struct FeatureSidebarTableView: NSViewRepresentable {
             cell.apply(contentSize: parent.contentSize)
             cell.configure(title: feature.displayName, systemImage: feature.systemImage)
             cell.setEnabled(!parent.disabledIdentifiers.contains(feature.identifier))
+            cell.setBadge(parent.badges[feature.identifier] ?? 0)
             return cell
         }
 
@@ -198,6 +233,8 @@ final class FeatureSidebarCellView: NSTableCellView {
     private let selectionView = NSView()
     private let iconView = NSImageView()
     private let nameLabel = NSTextField(labelWithString: "")
+    private let badgeLabel = NSTextField(labelWithString: "")
+    private var flashTask: Task<Void, Never>?
     private var iconWidthConstraint: NSLayoutConstraint?
     private var iconHeightConstraint: NSLayoutConstraint?
     private var selected = false
@@ -228,6 +265,15 @@ final class FeatureSidebarCellView: NSTableCellView {
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         addSubview(nameLabel)
 
+        badgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        badgeLabel.alignment = .center
+        badgeLabel.font = .monospacedDigitSystemFont(ofSize: currentSize.captionPointSize, weight: .semibold)
+        badgeLabel.textColor = .white
+        badgeLabel.wantsLayer = true
+        badgeLabel.layer?.cornerRadius = (currentSize.captionPointSize + Spacing.xxsmall.rawValue) / 2
+        badgeLabel.isHidden = true
+        addSubview(badgeLabel)
+
         let iconWidth = iconView.widthAnchor.constraint(equalToConstant: currentSize.iconSize)
         let iconHeight = iconView.heightAnchor.constraint(equalToConstant: currentSize.iconSize)
         iconWidthConstraint = iconWidth
@@ -245,8 +291,12 @@ final class FeatureSidebarCellView: NSTableCellView {
             iconHeight,
 
             nameLabel.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: Spacing.small.rawValue),
-            nameLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Spacing.medium.rawValue),
-            nameLabel.centerYAnchor.constraint(equalTo: iconView.centerYAnchor)
+            nameLabel.trailingAnchor.constraint(lessThanOrEqualTo: badgeLabel.leadingAnchor, constant: -Spacing.xsmall.rawValue),
+            nameLabel.centerYAnchor.constraint(equalTo: iconView.centerYAnchor),
+
+            badgeLabel.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Spacing.medium.rawValue),
+            badgeLabel.centerYAnchor.constraint(equalTo: iconView.centerYAnchor),
+            badgeLabel.widthAnchor.constraint(greaterThanOrEqualTo: badgeLabel.heightAnchor)
         ])
         updateAppearance()
     }
@@ -276,6 +326,46 @@ final class FeatureSidebarCellView: NSTableCellView {
         )
         iconWidthConstraint?.constant = contentSize.iconSize
         iconHeightConstraint?.constant = contentSize.iconSize
+        badgeLabel.font = .monospacedDigitSystemFont(ofSize: contentSize.captionPointSize, weight: .semibold)
+        badgeLabel.layer?.cornerRadius = (contentSize.captionPointSize + Spacing.xxsmall.rawValue) / 2
+    }
+
+    /// Raw count, no grouping separator. 0 hides the capsule.
+    func setBadge(_ count: Int) {
+        badgeLabel.isHidden = count <= 0
+        badgeLabel.stringValue = count > 0 ? "\u{2009}\(count)\u{2009}" : ""
+    }
+
+    /// Three accent ↔ base tint swaps over ~1.2 s. Reduce Motion → one
+    /// steady tint for the same duration.
+    func flash() {
+        flashTask?.cancel()
+        flashTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let cycles = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 1 : 3
+            for _ in 0..<cycles {
+                setTint(inverted: true)
+                try? await Task.sleep(for: .milliseconds(200))
+                if Task.isCancelled { break }
+                setTint(inverted: false)
+                try? await Task.sleep(for: .milliseconds(200))
+                if Task.isCancelled { break }
+            }
+            updateAppearance()
+        }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateAppearance()
+    }
+
+    private func setTint(inverted: Bool) {
+        let accentIsBase = selected && rowEnabled
+        let useAccent = accentIsBase != inverted
+        let color: NSColor = useAccent ? .controlAccentColor : (rowEnabled ? .labelColor : .tertiaryLabelColor)
+        nameLabel.textColor = color
+        iconView.contentTintColor = color
     }
 
     func setSelected(_ isSelected: Bool, emphasized isEmphasized: Bool) {
@@ -306,6 +396,7 @@ final class FeatureSidebarCellView: NSTableCellView {
         let baseColor: NSColor = rowEnabled ? .labelColor : .tertiaryLabelColor
         nameLabel.textColor = onEmphasized ? .controlAccentColor : baseColor
         iconView.contentTintColor = onEmphasized ? .controlAccentColor : baseColor
+        badgeLabel.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
     }
 }
 
@@ -335,4 +426,10 @@ final class FeatureSidebarRowView: NSTableRowView {
             cell.setSelected(isSelected, emphasized: isEmphasized)
         }
     }
+}
+
+/// One flash request: which row, and a token that changes per request.
+struct SidebarPulse: Equatable {
+    let featureID: String
+    let token: Int
 }
