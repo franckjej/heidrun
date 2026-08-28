@@ -18,6 +18,13 @@ struct HostView: View {
     @State private var imRecipient: User?
     @State private var infoRecipient: User?
     @State private var disconnectCandidate: User?
+    @Environment(\.controlActiveState) private var controlActiveState
+    @AppStorage(AppStorageKeys.sidebarBadges) private var sidebarBadges: Bool = true
+    @AppStorage(AppStorageKeys.flashWindowTitle) private var flashWindowTitle: Bool = true
+    @State private var titlePulsing = false
+    @State private var titlePulseTask: Task<Void, Never>?
+    @State private var sidebarPulse: SidebarPulse?
+    @State private var lastCounts: [String: Int] = [:]
 
     private var handle: ConnectionHandle? { state?.currentHandle }
     private var errorPresenter: ErrorPresenter? { handle?.errorPresenter }
@@ -30,6 +37,8 @@ struct HostView: View {
     private var newsCapability: NewsCapability? { handle?.newsCapability }
     private var adminVM: AdminViewModel? { handle?.adminVM }
     private var broadcastVM: BroadcastViewModel? { handle?.broadcastVM }
+    private var attention: AttentionState? { handle?.attention }
+    private var isKeyWindow: Bool { controlActiveState == .key }
 
     /// `address:port` for per-server preference scoping (window frames,
     /// sort orders) — unique within the user's bookmark set.
@@ -89,6 +98,12 @@ struct HostView: View {
                 selectedIdentifier = MessagesFeature.identifier
                 messagesVM?.openThread(with: socket)
             }
+        }
+        .onChange(of: selectedIdentifier) { clearVisibleAttention() }
+        .onChange(of: controlActiveState) { clearVisibleAttention() }
+        .onChange(of: attention?.pulseToken) { _, token in
+            guard let token, token > 0 else { return }
+            handlePulse(token: token)
         }
         .sheet(item: $imRecipient) { user in
             IMSendSheet(
@@ -196,8 +211,56 @@ struct HostView: View {
 
     private var titleWithStatus: String {
         guard let state else { return "Heidrun" }
-        let dot = state.isConnected ? "🟢" : "🔴"
-        return "\(dot) \(state.serverName)"
+        return Self.title(
+            serverName: state.serverName,
+            isConnected: state.isConnected,
+            attentionTotal: attention?.total ?? 0,
+            pulsing: titlePulsing
+        )
+    }
+
+    nonisolated static func title(
+        serverName: String,
+        isConnected: Bool,
+        attentionTotal: Int,
+        pulsing: Bool
+    ) -> String {
+        let dot = isConnected ? "🟢" : "🔴"
+        if pulsing { return "● \(dot) \(serverName)" }
+        if attentionTotal > 0 { return "(\(attentionTotal)) \(dot) \(serverName)" }
+        return "\(dot) \(serverName)"
+    }
+
+    /// Viewing a feature in the key window clears its badge. Messages is
+    /// authoritative from its own unread threads, so it's left alone.
+    private func clearVisibleAttention() {
+        guard isKeyWindow, let selected = selectedIdentifier, selected != MessagesFeature.identifier else { return }
+        attention?.clear(selected)
+        lastCounts = attention?.counts ?? [:]
+    }
+
+    /// Flash the row whose count grew (tracked via `lastCounts`) unless it
+    /// is the visible feature in the key window.
+    private func handlePulse(token: Int) {
+        let counts = attention?.counts ?? [:]
+        let grown = counts.first { featureID, count in count > (lastCounts[featureID] ?? 0) }?.key
+        lastCounts = counts
+        if let grown, !(isKeyWindow && selectedIdentifier == grown) {
+            sidebarPulse = SidebarPulse(featureID: grown, token: token)
+        }
+        guard flashWindowTitle, !(isKeyWindow && selectedIdentifier == grown) else { return }
+        titlePulseTask?.cancel()
+        titlePulseTask = Task { @MainActor in
+            for _ in 0..<3 {
+                titlePulsing = true
+                try? await Task.sleep(for: .milliseconds(200))
+                if Task.isCancelled { break }
+                titlePulsing = false
+                try? await Task.sleep(for: .milliseconds(200))
+                if Task.isCancelled { break }
+            }
+            titlePulsing = false
+        }
     }
 
     // MARK: - Layout variants
@@ -231,7 +294,9 @@ struct HostView: View {
                 selection: $selectedIdentifier,
                 disabledIdentifiers: (handle?.canAdministerAccounts ?? true)
                     ? []
-                    : [AdminFeature.identifier]
+                    : [AdminFeature.identifier],
+                badges: sidebarBadges ? (attention?.counts ?? [:]) : [:],
+                pulse: sidebarPulse
             )
             Spacer()
         }

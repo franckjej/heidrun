@@ -33,3 +33,21 @@ struct HostViewTitleTests {
         #expect(HostView.addressSubtitle(for: nil).isEmpty)
     }
 }
+
+@Suite("HostView.title")
+struct HostViewAttentionTitleTests {
+    @Test("no attention: status dot + name")
+    func plain() {
+        #expect(HostView.title(serverName: "Inn", isConnected: true, attentionTotal: 0, pulsing: false) == "🟢 Inn")
+    }
+
+    @Test("attention adds a count prefix")
+    func counted() {
+        #expect(HostView.title(serverName: "Inn", isConnected: true, attentionTotal: 3, pulsing: false) == "(3) 🟢 Inn")
+    }
+
+    @Test("pulsing swaps the prefix for a bullet")
+    func pulsing() {
+        #expect(HostView.title(serverName: "Inn", isConnected: false, attentionTotal: 3, pulsing: true) == "● 🔴 Inn")
+    }
+}
