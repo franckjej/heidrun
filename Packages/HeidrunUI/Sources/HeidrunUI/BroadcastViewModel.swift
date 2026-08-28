@@ -12,7 +12,7 @@ import HeidrunCore
 @MainActor
 @Observable
 public final class BroadcastViewModel {
-    private let client: any HotlineClient
+    private let events: AsyncStream<HotlineEvent>
     private var listenTask: Task<Void, Never>?
 
     /// Queue of broadcasts the user hasn't dismissed yet. Head is what
@@ -23,20 +23,31 @@ public final class BroadcastViewModel {
     /// queue is empty.
     public var current: BroadcastEntry? { pending.first }
 
-    public init(client: any HotlineClient) {
-        self.client = client
+    /// Fired per incoming broadcast. The host mirrors it into the
+    /// connection's `AttentionState`.
+    public var onAttention: (@MainActor () -> Void)?
+
+    public init(events: AsyncStream<HotlineEvent>) {
+        self.events = events
+    }
+
+    public convenience init(client: any HotlineClient) {
+        self.init(events: client.events)
+    }
+
+    public func observe() async {
+        for await event in events {
+            if Task.isCancelled { break }
+            apply(event)
+        }
     }
 
     /// Begin observing the client's event stream. Idempotent — calling
     /// twice cancels the previous loop first.
     public func start() async {
         listenTask?.cancel()
-        let stream = client.events
         listenTask = Task { [weak self] in
-            for await event in stream {
-                if Task.isCancelled { break }
-                self?.apply(event)
-            }
+            await self?.observe()
         }
     }
 
@@ -60,5 +71,6 @@ public final class BroadcastViewModel {
     private func apply(_ event: HotlineEvent) {
         guard case let .broadcastReceived(message) = event else { return }
         pending.append(BroadcastEntry(message: message))
+        onAttention?()
     }
 }

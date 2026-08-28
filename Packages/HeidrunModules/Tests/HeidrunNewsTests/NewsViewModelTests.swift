@@ -113,6 +113,29 @@ struct PlainNewsViewModelTests {
         await viewModel.refresh()
         #expect(recorder.last != nil)
     }
+
+    @Test("newsPosted raises attention except for our own post")
+    @MainActor
+    func newsPostedRaisesExceptOwn() async {
+        let (events, continuation) = AsyncStream<HotlineEvent>.makeStream()
+        let viewModel = PlainNewsViewModel(
+            events: events,
+            fetchFeed: { "" },
+            postNew: { _ in }
+        )
+        let recorder = RaiseRecorder()
+        viewModel.onAttention = { recorder.raised += 1 }
+        let observation = Task { await viewModel.observe() }
+        continuation.yield(.newsPosted(text: "Erika: hello"))
+        viewModel.draft = "mine"
+        await viewModel.postDraft()
+        continuation.yield(.newsPosted(text: "Jens: mine"))
+        continuation.yield(.newsPosted(text: "Erika: again"))
+        continuation.finish()
+        await observation.value
+        #expect(recorder.raised == 2)
+    }
+
 }
 
 @Suite("ThreadedNewsViewModel")
@@ -311,4 +334,9 @@ private actor NewsBundleRecorder {
     private(set) var threadPaths: [RemotePath] = []
     func recordBundleFetch(path: RemotePath) { bundlePaths.append(path) }
     func recordThreadFetch(path: RemotePath) { threadPaths.append(path) }
+}
+
+@MainActor
+private final class RaiseRecorder {
+    var raised = 0
 }

@@ -43,6 +43,13 @@ public final class PlainNewsViewModel {
     private let postNew: @Sendable (String) async throws -> Void
     private let present: @MainActor (Error) -> Void
 
+    /// Fired for server-pushed posts we didn't write. The host mirrors it
+    /// into the connection's `AttentionState`.
+    public var onAttention: (@MainActor () -> Void)?
+
+    /// Set by `postDraft`; the next `.newsPosted` is our own echo.
+    private var expectingOwnPost = false
+
     /// Task wrapping `observe()` when the VM is owned by a long-lived
     /// host (`ConnectionHandle`) rather than a transient view `.task`.
     /// Keeping the loop at connection scope means a `.newsPosted` push
@@ -82,6 +89,11 @@ public final class PlainNewsViewModel {
         for await event in events {
             if case let .newsPosted(text) = event {
                 feed = text + "\n\n" + feed
+                if expectingOwnPost {
+                    expectingOwnPost = false
+                } else {
+                    onAttention?()
+                }
             }
         }
     }
@@ -120,10 +132,12 @@ public final class PlainNewsViewModel {
     public func postDraft() async {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        expectingOwnPost = true
         do {
             try await postNew(text)
             draft = ""
         } catch {
+            expectingOwnPost = false
             present(error)
         }
     }
