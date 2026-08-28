@@ -3,18 +3,24 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.3.0] — 2026-08-28
 
 ### Added
-- **Per-server attention.** Each server window shows unread badges on its
-  sidebar items (private messages, chat mentions and invites, broadcasts,
-  news), a `(N)` marker in the window title that flashes briefly on new
-  activity, and the Dock badge now totals unread items across all servers.
-  New Settings → Notifications → Attention toggles.
+- **Per-server attention.** Each server window now shows unread badges on its
+  sidebar items — private messages (counted per message), public-chat mentions
+  of your nickname, private-chat invitations, server broadcasts, and new news
+  posts. The window title carries a `(N)` marker (visible in the Window menu)
+  and flashes briefly on new activity, and the Dock badge totals unread items
+  across all connected servers. New toggles under Settings → Notifications →
+  Attention.
+
+### Changed
+- A private message arriving in a background window no longer opens the
+  thread automatically; it stays unread until you view it.
 
 ### Fixed
-- The Dock badge no longer flip-flops between servers when connected to
-  more than one.
+- The Dock badge no longer flip-flops between servers when connected to more
+  than one.
 
 ## [1.2.0] — 2026-06-21
 
