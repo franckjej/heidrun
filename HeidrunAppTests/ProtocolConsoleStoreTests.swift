@@ -69,4 +69,46 @@ struct ProtocolConsoleStoreTests {
         }
         #expect(replyTo == 300)
     }
+
+    // MARK: - Server list / filter
+
+    private func record(_ store: ProtocolConsoleStore, server: String, taskNumber: UInt32) {
+        store.append(
+            server: server,
+            connectionID: server,
+            direction: .outbound,
+            classID: 0,
+            transactionID: 500,
+            taskNumber: taskNumber,
+            fields: []
+        )
+    }
+
+    @Test("servers are listed in first-seen order without duplicates")
+    func serversFirstSeenOrder() {
+        let store = ProtocolConsoleStore()
+        record(store, server: "b.example", taskNumber: 1)
+        record(store, server: "a.example", taskNumber: 1)
+        record(store, server: "b.example", taskNumber: 2)
+        #expect(store.servers == ["b.example", "a.example"])
+    }
+
+    @Test("clear empties the server list")
+    func clearEmptiesServers() {
+        let store = ProtocolConsoleStore()
+        record(store, server: "a.example", taskNumber: 1)
+        store.clear()
+        #expect(store.servers.isEmpty)
+    }
+
+    @Test("entries(for:) filters by server; nil returns all")
+    func entriesForServer() {
+        let store = ProtocolConsoleStore()
+        record(store, server: "a.example", taskNumber: 1)
+        record(store, server: "b.example", taskNumber: 1)
+        record(store, server: "a.example", taskNumber: 2)
+        #expect(store.entries(for: "a.example").map(\.taskNumber) == [1, 2])
+        #expect(store.entries(for: "b.example").count == 1)
+        #expect(store.entries(for: nil).count == 3)
+    }
 }

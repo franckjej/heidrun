@@ -65,6 +65,9 @@ final class ProtocolConsoleStore {
     /// count so the user can see how much got trimmed off the head.
     private(set) var totalRecorded: UInt64 = 0
 
+    /// Server labels in first-seen order — feeds the console's server popup.
+    private(set) var servers: [String] = []
+
     let capacity: Int = 2000
 
     private var nextID: UInt64 = 1
@@ -142,6 +145,9 @@ final class ProtocolConsoleStore {
         )
         nextID &+= 1
         entries.append(entry)
+        if !servers.contains(server) {
+            servers.append(server)
+        }
         if entries.count > capacity {
             entries.removeFirst(entries.count - capacity)
         }
@@ -156,6 +162,13 @@ final class ProtocolConsoleStore {
     func clear() {
         entries.removeAll(keepingCapacity: true)
         pendingTaskNumbers.removeAll(keepingCapacity: true)
+        servers.removeAll()
+    }
+
+    /// Entries for one server label; `nil` = every server.
+    func entries(for server: String?) -> [ProtocolConsoleEntry] {
+        guard let server else { return entries }
+        return entries.filter { $0.server == server }
     }
 
     static func transactionName(for transactionID: UInt16) -> String? {
