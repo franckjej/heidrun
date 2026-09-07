@@ -530,6 +530,22 @@
         }
       }
     },
+    "All Servers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Server"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すべてのサーバー"
+          }
+        }
+      }
+    },
     "Always reconnect" : {
       "localizations" : {
         "de" : {
