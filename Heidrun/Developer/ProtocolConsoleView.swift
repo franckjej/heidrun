@@ -20,23 +20,91 @@ import CommonTools
 ///   * inbound (←) unknown transaction id — red
 struct ProtocolConsoleView: View {
     @Bindable var store = ProtocolConsoleStore.shared
+    @Environment(ActiveConnections.self) private var connections
     /// Auto-scroll to the newest entry while the user is at the
     /// tail. If they've scrolled up to read, we stop auto-following
     /// so they can hold position.
     @State private var autoScroll: Bool = true
+    /// Address of the server whose lines are shown; `nil` = all.
+    @State private var selectedServer: String?
+
+    private var visibleEntries: [ProtocolConsoleEntry] {
+        store.entries(for: selectedServer)
+    }
+
+    /// Live connections, deduped by address, in registry order. The
+    /// address is the popup tag because that's what the store stamps on
+    /// each entry; the bookmark name is only the label.
+    private var liveServers: [(address: String, label: String)] {
+        var seen = Set<String>()
+        return connections.connections.compactMap { handle in
+            guard handle.isLive, seen.insert(handle.settings.address).inserted else { return nil }
+            return (handle.settings.address, handle.displayName)
+        }
+    }
+
+    /// Servers with lines in the buffer but no live session.
+    private var historicalServers: [String] {
+        let liveAddresses = Set(liveServers.map(\.address))
+        return store.servers.filter { !liveAddresses.contains($0) }
+    }
+
+    /// Every selectable address, for resetting a selection that vanished.
+    private var availableServers: [String] {
+        liveServers.map(\.address) + historicalServers
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            ProtocolConsoleTextView(store: store, autoScroll: $autoScroll)
+            header
+            Divider()
+            ProtocolConsoleTextView(
+                entries: visibleEntries,
+                filter: selectedServer,
+                autoScroll: $autoScroll
+            )
             Divider()
             footer
         }
         .frame(minWidth: 720, minHeight: 320)
+        .onChange(of: availableServers) { _, available in
+            if let selectedServer, !available.contains(selectedServer) {
+                self.selectedServer = nil
+            }
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            Picker(selection: $selectedServer) {
+                Text("All Servers").tag(String?.none)
+                if !liveServers.isEmpty {
+                    Divider()
+                    ForEach(liveServers, id: \.address) { server in
+                        Text(verbatim: server.label).tag(String?.some(server.address))
+                    }
+                }
+                if !historicalServers.isEmpty {
+                    Divider()
+                    ForEach(historicalServers, id: \.self) { address in
+                        Text(verbatim: address).tag(String?.some(address))
+                    }
+                }
+            } label: {
+                Text("Server")
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .controlSize(.small)
+            .fixedSize()
+            Spacer()
+        }
+        .padding(.small)
     }
 
     private var footer: some View {
         HStack(spacing: 12) {
-            Text("\(store.entries.count) / \(store.totalRecorded)")
+            Text(verbatim: countLabel)
                 .foregroundStyle(.secondary)
                 .font(.system(size: 11, design: .monospaced))
             Spacer()
@@ -50,6 +118,14 @@ struct ProtocolConsoleView: View {
         }
         .padding(.small)
     }
+
+    /// "buffered / total", or "shown / buffered / total" while filtered.
+    private var countLabel: String {
+        if selectedServer != nil {
+            return "\(visibleEntries.count) / \(store.entries.count) / \(store.totalRecorded)"
+        }
+        return "\(store.entries.count) / \(store.totalRecorded)"
+    }
 }
 
 // MARK: - NSTextView wrapper
@@ -59,7 +135,10 @@ struct ProtocolConsoleView: View {
 /// colour spans so unknown-inbound rows stand out red while
 /// outbound rows use a muted style.
 private struct ProtocolConsoleTextView: NSViewRepresentable {
-    @Bindable var store: ProtocolConsoleStore
+    let entries: [ProtocolConsoleEntry]
+    /// Server filter the entries were computed with; a change means the
+    /// transcript is a different document and must re-render.
+    let filter: String?
     @Binding var autoScroll: Bool
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -98,7 +177,8 @@ private struct ProtocolConsoleTextView: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         context.coordinator.applyUpdate(
-            entries: store.entries,
+            entries: entries,
+            filter: filter,
             autoScroll: autoScroll
         )
     }
@@ -115,14 +195,16 @@ private struct ProtocolConsoleTextView: NSViewRepresentable {
         /// whole transcript from scratch.
         private var lastRenderedID: UInt64 = 0
         private var renderedCount: Int = 0
+        private var renderedFilter: String?
 
-        func applyUpdate(entries: [ProtocolConsoleEntry], autoScroll: Bool) {
+        func applyUpdate(entries: [ProtocolConsoleEntry], filter: String?, autoScroll: Bool) {
             guard let textView, let textStorage = textView.textStorage else { return }
-            // Cleared or trimmed past the head — re-render from
-            // scratch. Cheap: the buffer caps at 2000 entries.
-            if entries.count < renderedCount {
+            // Cleared, trimmed past the head, or a different server
+            // filter — re-render from scratch. Cheap: ≤ 2000 entries.
+            if entries.count < renderedCount || filter != renderedFilter {
                 textStorage.setAttributedString(NSAttributedString())
                 lastRenderedID = 0
+                renderedFilter = filter
             }
             // Append only the new tail.
             let newOnes = entries.drop { $0.id <= lastRenderedID }

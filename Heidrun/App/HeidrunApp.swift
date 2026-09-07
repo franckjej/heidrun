@@ -186,6 +186,7 @@ struct HeidrunMainApp: App {
 
         Window("Protocol Console", id: WindowIDs.protocolConsole) {
             ProtocolConsoleView()
+                .environment(activeConnections)
                 .defaultAppStorage(AppDataEnvironment.defaults)
                 .heidrunContentSizeFromStorage()
         }
