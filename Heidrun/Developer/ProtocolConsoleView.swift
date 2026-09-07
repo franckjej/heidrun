@@ -27,9 +27,23 @@ struct ProtocolConsoleView: View {
     @State private var autoScroll: Bool = true
     /// Address of the server whose lines are shown; `nil` = all.
     @State private var selectedServer: String?
+    /// Substring the rendered rows must contain; empty = no text filter.
+    @State private var textFilter: String = ""
+
+    private var isFiltered: Bool {
+        selectedServer != nil || !textFilter.isEmpty
+    }
 
     private var visibleEntries: [ProtocolConsoleEntry] {
-        store.entries(for: selectedServer)
+        let byServer = store.entries(for: selectedServer)
+        guard !textFilter.isEmpty else { return byServer }
+        return byServer.filter { ProtocolConsoleRowText.matches($0, query: textFilter) }
+    }
+
+    /// Identifies the (server, text) filter pair the transcript was built
+    /// with; the text view re-renders when it changes.
+    private var filterKey: String {
+        "\(selectedServer ?? "")\u{1F}\(textFilter)"
     }
 
     /// Live connections, deduped by address, in registry order. The
@@ -60,7 +74,7 @@ struct ProtocolConsoleView: View {
             Divider()
             ProtocolConsoleTextView(
                 entries: visibleEntries,
-                filter: selectedServer,
+                filterKey: filterKey,
                 autoScroll: $autoScroll
             )
             Divider()
@@ -98,6 +112,10 @@ struct ProtocolConsoleView: View {
             .controlSize(.small)
             .fixedSize()
             Spacer()
+            TextField("Filter", text: $textFilter)
+                .textFieldStyle(.roundedBorder)
+                .controlSize(.small)
+                .frame(width: 220)
         }
         .padding(.small)
     }
@@ -121,7 +139,7 @@ struct ProtocolConsoleView: View {
 
     /// "buffered / total", or "shown / buffered / total" while filtered.
     private var countLabel: String {
-        if selectedServer != nil {
+        if isFiltered {
             return "\(visibleEntries.count) / \(store.entries.count) / \(store.totalRecorded)"
         }
         return "\(store.entries.count) / \(store.totalRecorded)"
@@ -136,9 +154,9 @@ struct ProtocolConsoleView: View {
 /// outbound rows use a muted style.
 private struct ProtocolConsoleTextView: NSViewRepresentable {
     let entries: [ProtocolConsoleEntry]
-    /// Server filter the entries were computed with; a change means the
+    /// Filter the entries were computed with; a change means the
     /// transcript is a different document and must re-render.
-    let filter: String?
+    let filterKey: String
     @Binding var autoScroll: Bool
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -178,7 +196,7 @@ private struct ProtocolConsoleTextView: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         context.coordinator.applyUpdate(
             entries: entries,
-            filter: filter,
+            filterKey: filterKey,
             autoScroll: autoScroll
         )
     }
@@ -195,16 +213,16 @@ private struct ProtocolConsoleTextView: NSViewRepresentable {
         /// whole transcript from scratch.
         private var lastRenderedID: UInt64 = 0
         private var renderedCount: Int = 0
-        private var renderedFilter: String?
+        private var renderedFilterKey: String = ""
 
-        func applyUpdate(entries: [ProtocolConsoleEntry], filter: String?, autoScroll: Bool) {
+        func applyUpdate(entries: [ProtocolConsoleEntry], filterKey: String, autoScroll: Bool) {
             guard let textView, let textStorage = textView.textStorage else { return }
-            // Cleared, trimmed past the head, or a different server
-            // filter — re-render from scratch. Cheap: ≤ 2000 entries.
-            if entries.count < renderedCount || filter != renderedFilter {
+            // Cleared, trimmed past the head, or a different filter —
+            // re-render from scratch. Cheap: ≤ 2000 entries.
+            if entries.count < renderedCount || filterKey != renderedFilterKey {
                 textStorage.setAttributedString(NSAttributedString())
                 lastRenderedID = 0
-                renderedFilter = filter
+                renderedFilterKey = filterKey
             }
             // Append only the new tail.
             let newOnes = entries.drop { $0.id <= lastRenderedID }
@@ -230,41 +248,10 @@ private struct ProtocolConsoleTextView: NSViewRepresentable {
 
     // MARK: - Line formatting
 
-    /// Per-entry one-line attributed string. Direction arrow, time,
-    /// server tag (so multiple connections are distinguishable),
-    /// task#, txID, name, then field summary.
+    /// One attributed row: `ProtocolConsoleRowText` supplies the text, this
+    /// adds the font and the direction / unknown-id colour.
     private static func line(for entry: ProtocolConsoleEntry) -> NSAttributedString {
-        let arrow: String
-        switch entry.direction {
-        case .outbound:
-            arrow = "→"
-        case .inbound:
-            arrow = "←"
-        }
-
-        let nameLabel: String
-        switch entry.kind {
-        case .outboundRequest:
-            nameLabel = entry.knownName ?? "???"
-        case .inboundPush:
-            nameLabel = entry.knownName ?? "???"
-        case .inboundReply(let replyTo):
-            // Reply name = the original request's name, suffixed for clarity.
-            let baseName = entry.knownName ?? ProtocolConsoleStore.transactionName(for: replyTo) ?? "tx\(replyTo)"
-            nameLabel = "\(baseName) reply"
-        case .inboundUnknown:
-            nameLabel = entry.knownName ?? "???"
-        }
-
-        let time = Self.timestampFormatter.string(from: entry.timestamp)
-        let summary = Self.summary(of: entry.fields)
-        let serverTag = entry.server.isEmpty ? "?" : entry.server
-
-        // Single tabular row. Tabs keep columns aligned without
-        // relying on a fixed monospace metric for the whole row.
-        let raw = "\(arrow)  \(time)  \(pad(serverTag, 18))  task=\(pad(String(entry.taskNumber), 6))  TX=\(pad(String(entry.transactionID), 4))  \(pad(nameLabel, 22))  \(summary)\n"
-
-        let attr = NSMutableAttributedString(string: raw)
+        let attr = NSMutableAttributedString(string: ProtocolConsoleRowText.text(for: entry) + "\n")
         let range = NSRange(location: 0, length: attr.length)
         attr.addAttribute(.font, value: monospace, range: range)
         attr.addAttribute(.foregroundColor, value: rowColor(for: entry), range: range)
@@ -281,138 +268,8 @@ private struct ProtocolConsoleTextView: NSViewRepresentable {
         }
     }
 
-    private static func pad(_ value: String, _ width: Int) -> String {
-        if value.count >= width { return value }
-        return value + String(repeating: " ", count: width - value.count)
-    }
-
     private static let monospace: NSFont = {
         if let menlo = NSFont(name: "Menlo", size: 12) { return menlo }
         return NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
     }()
-
-    private static let timestampFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss.SSS"
-        return formatter
-    }()
-
-    /// One-line preview of the packet payload. Known string fields
-    /// (chat / nick / login / message) appear quoted; everything else
-    /// collapses to `key:NB` byte counts so a busy line still fits.
-    private static func summary(of fields: [PacketField]) -> String {
-        if fields.isEmpty { return "[]" }
-        let parts = fields.map { field -> String in
-            if let preview = inlineValue(for: field) {
-                return "\(keyName(for: field.key))=\(preview)"
-            }
-            return "\(keyName(for: field.key)):\(field.data.count)B"
-        }
-        return parts.joined(separator: " ")
-    }
-
-    /// Names from `HotlineObjectKey` (heidrun-protocol). Stored as a
-    /// dictionary to keep the file out of SwiftLint's
-    /// `switch_case_on_newline` rule. Unknown ids fall back to
-    /// `f<NN>` so they're still searchable in the transcript.
-    private static func keyName(for key: UInt16) -> String {
-        keyNames[key] ?? "f\(key)"
-    }
-
-    private static let keyNames: [UInt16: String] = [
-        // Generic header / chat fields (1xx range)
-        100: "errMsg",
-        101: "msg",
-        102: "nick",
-        103: "socket",
-        104: "icon",
-        105: "login",
-        106: "pw",
-        107: "transferID",
-        108: "txSize",
-        109: "param",
-        110: "privs",
-        112: "status",
-        113: "banFlag",
-        114: "chatRef",
-        115: "chatSubj",
-        116: "txQueue",
-        152: "bannerType",
-        154: "autoAgree",
-        160: "version",
-        162: "serverName",
-        // File system (2xx range)
-        200: "fileEntry",
-        201: "name",
-        202: "path",
-        203: "resumeInfo",
-        204: "folderResume",
-        205: "type",
-        206: "creator",
-        207: "size",
-        208: "created",
-        209: "modified",
-        210: "comment",
-        211: "rename",
-        212: "destPath",
-        220: "itemCount",
-        // User list
-        300: "user",
-        // Threaded news
-        321: "threadList",
-        322: "newsCat",
-        323: "newsBundle",
-        325: "newsPath",
-        326: "newsID",
-        327: "newsType",
-        328: "newsTitle",
-        329: "newsAuthor",
-        330: "newsDate",
-        331: "newsPrev",
-        332: "newsNext",
-        333: "newsBody",
-        334: "newsFlags",
-        335: "newsParent",
-        336: "newsReply",
-        337: "newsCascade",
-        // Heidrun extension
-        0xE000: "emoji"
-    ]
-
-    /// String-shaped fields the console renders inline as quoted
-    /// previews (`key="…"`). Everything else falls back to the
-    /// `key:NB` byte-count form so the row stays narrow.
-    private static let inlineStringKeys: Set<UInt16> = [
-        100, 101, 102, 105, 115, 162,
-        201, 211,
-        322, 328, 329, 333,
-        0xE000
-    ]
-    private static let inlineNumericKeys: Set<UInt16> = [
-        103, 104, 107, 108, 109, 110, 112, 113, 152, 154, 160,
-        207, 220,
-        326, 334, 335, 336, 337
-    ]
-
-    private static func inlineValue(for field: PacketField) -> String? {
-        if inlineStringKeys.contains(field.key) {
-            let text = String(data: field.data, encoding: .utf8)
-                ?? String(data: field.data, encoding: .macOSRoman)
-            guard let text else { return nil }
-            let cleaned = text.replacingOccurrences(of: "\r", with: "↵")
-            if cleaned.count > 48 { return "\"\(cleaned.prefix(45))…\"" }
-            return "\"\(cleaned)\""
-        }
-        if inlineNumericKeys.contains(field.key) {
-            if field.data.count == 2 {
-                let n = field.data.reduce(UInt16(0)) { ($0 << 8) | UInt16($1) }
-                return "\(n)"
-            }
-            if field.data.count == 4 {
-                let n = field.data.reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
-                return "\(n)"
-            }
-        }
-        return nil
-    }
 }
