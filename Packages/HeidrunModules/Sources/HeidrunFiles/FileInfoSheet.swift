@@ -273,7 +273,13 @@ struct FileInfoSheet: View {
     /// a coarse category mapping. Falls back to `doc` for anything
     /// unrecognised — same default the legacy list view uses.
     private var iconName: String {
-        if entry.isFolder { return "folder.fill" }
+        if entry.isFolder {
+            switch FolderRole(name: entry.name) {
+            case .dropBox: return "tray.and.arrow.down.fill"
+            case .upload: return "tray.and.arrow.up.fill"
+            case .normal: return "folder.fill"
+            }
+        }
         let extn = (entry.name as NSString).pathExtension.lowercased()
         switch extn {
         case "txt", "md", "markdown", "rtf", "log":
