@@ -3,6 +3,16 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Drop boxes and upload folders.** Folders named `…upload…` / `…drop box…`
+  show their classic icons. Opening a drop box you may not view explains why
+  and returns you to the parent folder; dropping Finder files onto a folder
+  row uploads into that folder, so a drop box can be fed without opening it.
+  Upload controls are disabled in folders the account may not upload to
+  (Upload Anywhere vs. upload folders / drop boxes).
+
 ## [1.3.0] — 2026-08-28
 
 ### Added
