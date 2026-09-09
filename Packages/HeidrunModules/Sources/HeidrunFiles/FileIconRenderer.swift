@@ -72,9 +72,12 @@ enum FileIconRenderer {
     private static func baseIcon(for entry: RemoteFile) -> NSImage {
         if entry.isFolder {
             switch FolderRole(name: entry.name) {
-            case .dropBox: return dropBoxFolderIcon()
-            case .upload: return uploadFolderIcon()
-            case .normal: break
+            case .dropBox:
+                return dropBoxFolderIcon()
+            case .upload:
+                return uploadFolderIcon()
+            case .normal:
+                break
             }
         }
         if let utType = resolveUTType(for: entry) {

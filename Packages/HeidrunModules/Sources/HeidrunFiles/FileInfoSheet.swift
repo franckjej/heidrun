@@ -275,9 +275,12 @@ struct FileInfoSheet: View {
     private var iconName: String {
         if entry.isFolder {
             switch FolderRole(name: entry.name) {
-            case .dropBox: return "tray.and.arrow.down.fill"
-            case .upload: return "tray.and.arrow.up.fill"
-            case .normal: return "folder.fill"
+            case .dropBox:
+                return "tray.and.arrow.down.fill"
+            case .upload:
+                return "tray.and.arrow.up.fill"
+            case .normal:
+                return "folder.fill"
             }
         }
         let extn = (entry.name as NSString).pathExtension.lowercased()
