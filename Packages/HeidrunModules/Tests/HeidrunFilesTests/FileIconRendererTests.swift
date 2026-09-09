@@ -68,4 +68,20 @@ struct FileIconRendererTests {
         let entry = RemoteFile(name: "blob", type: "????", creator: "????")
         #expect(FileIconRenderer.resolveUTType(for: entry) == nil)
     }
+
+    @Test("drop box and upload folders get icons distinct from a plain folder and from each other")
+    func folderRoleIcons() throws {
+        let plain = try #require(FileIconRenderer.icon(for: RemoteFile(name: "Photos", type: .folder)).tiffRepresentation)
+        let dropBox = try #require(FileIconRenderer.icon(for: RemoteFile(name: "Drop Box", type: .folder)).tiffRepresentation)
+        let upload = try #require(FileIconRenderer.icon(for: RemoteFile(name: "Uploads", type: .folder)).tiffRepresentation)
+        #expect(plain != dropBox)
+        #expect(plain != upload)
+        #expect(dropBox != upload)
+    }
+
+    @Test("role icons are sized to the table cell glyph")
+    func folderRoleIconSize() {
+        let icon = FileIconRenderer.icon(for: RemoteFile(name: "Drop Box", type: .folder))
+        #expect(icon.size == FileIconRenderer.displaySize)
+    }
 }

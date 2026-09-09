@@ -70,6 +70,13 @@ enum FileIconRenderer {
     // MARK: - Implementation
 
     private static func baseIcon(for entry: RemoteFile) -> NSImage {
+        if entry.isFolder {
+            switch FolderRole(name: entry.name) {
+            case .dropBox: return dropBoxFolderIcon()
+            case .upload: return uploadFolderIcon()
+            case .normal: break
+            }
+        }
         if let utType = resolveUTType(for: entry) {
             return NSWorkspace.shared.icon(for: utType)
         }
@@ -77,5 +84,48 @@ enum FileIconRenderer {
             systemSymbolName: "doc",
             accessibilityDescription: nil
         ) ?? NSImage()
+    }
+
+    // MARK: - Folder roles
+
+    /// Finder's own drop-folder icon (the one on ~/Public/Drop Box).
+    /// Falls back to the plain folder icon if the legacy lookup vanishes.
+    private static func dropBoxFolderIcon() -> NSImage {
+        legacySystemIcon(hfsType: kDropFolderIcon) ?? NSWorkspace.shared.icon(for: .folder)
+    }
+
+    /// Plain Finder folder with a white up-arrow badge, placed where the
+    /// drop-folder icon carries its down-arrow so the pair reads as siblings.
+    private static func uploadFolderIcon() -> NSImage {
+        let base = NSWorkspace.shared.icon(for: .folder)
+        let canvas = NSSize(width: 128, height: 128)
+        return NSImage(size: canvas, flipped: false) { rect in
+            base.draw(in: rect)
+            let badgeSide = rect.width * 0.34
+            let badgeRect = NSRect(
+                x: rect.midX - badgeSide / 2,
+                y: rect.midY - badgeSide / 2 - rect.height * 0.06,
+                width: badgeSide,
+                height: badgeSide
+            )
+            // Translucent like the system drop-folder badge, not a hard white ring.
+            let configuration = NSImage.SymbolConfiguration(pointSize: badgeSide, weight: .regular)
+                .applying(.init(paletteColors: [NSColor.white.withAlphaComponent(0.65)]))
+            if let arrow = NSImage(systemSymbolName: "arrow.up.circle", accessibilityDescription: nil)?
+                .withSymbolConfiguration(configuration) {
+                arrow.draw(in: badgeRect)
+            }
+            return true
+        }
+    }
+
+    /// `-[NSWorkspace iconForFileType:]` for a classic HFS icon code.
+    /// Deprecated API reached via the selector so the compiler stays quiet.
+    private static func legacySystemIcon(hfsType code: Int) -> NSImage? {
+        let selector = NSSelectorFromString("iconForFileType:")
+        let workspace = NSWorkspace.shared
+        guard workspace.responds(to: selector) else { return nil }
+        let typeString = NSFileTypeForHFSTypeCode(OSType(code))
+        return workspace.perform(selector, with: typeString)?.takeUnretainedValue() as? NSImage
     }
 }
