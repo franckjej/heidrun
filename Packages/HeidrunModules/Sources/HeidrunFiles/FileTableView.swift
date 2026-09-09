@@ -43,6 +43,9 @@ struct FileRowActions {
     var secondaryLabel: (RemoteFile) -> String
     /// Upload local URLs dropped from Finder into the current folder.
     var dropURLs: ([URL]) -> Void
+    /// Upload local URLs dropped from Finder onto a folder row, into that
+    /// folder (lets users feed a drop box they can't open).
+    var dropURLsInto: ([URL], RemoteFile) -> Void
     /// Move dragged server rows (from their drag-start `source` path) into a
     /// folder row (internal drag-and-drop).
     var move: ([RemoteFile], RemotePath, RemoteFile) -> Void
@@ -74,6 +77,9 @@ struct FileTableView: NSViewRepresentable {
     /// still enforces). Defaults to permitting everything so other callers
     /// behave as before.
     var permits: (UserPrivileges) -> Bool = { _ in true }
+    /// Upload gate for a target path (privileges + upload-folder rule).
+    /// Defaults to permitting everything so other callers behave as before.
+    var canUploadTo: (RemotePath) -> Bool = { _ in true }
 
     @Environment(\.heidrunContentSize) private var contentSize
 
@@ -374,9 +380,21 @@ struct FileTableView: NSViewRepresentable {
                 }
                 return .move
             }
-            // External Finder drag-in (upload).
+            // External Finder drag-in (upload). A drop directly on a
+            // folder row lands in that folder; anywhere else uploads into
+            // the current one, cued by the whole-table highlight.
             cancelSpring()
-            return info.draggingPasteboard.canReadObject(forClasses: [NSURL.self]) ? .copy : []
+            guard info.draggingPasteboard.canReadObject(forClasses: [NSURL.self]) else { return [] }
+            let targetPath: RemotePath
+            if let folder = FileDropTarget.folder(atRow: row, dropOperation: dropOperation, in: files),
+               let folderRow = files.firstIndex(where: { $0.id == folder.id }) {
+                tableView.setDropRow(folderRow, dropOperation: .on)
+                targetPath = parent.currentPath.appending(folder.name)
+            } else {
+                tableView.setDropRow(-1, dropOperation: .on)
+                targetPath = parent.currentPath
+            }
+            return parent.canUploadTo(targetPath) ? .copy : []
         }
 
         func tableView(
@@ -403,7 +421,11 @@ struct FileTableView: NSViewRepresentable {
             }
             guard let urls = info.draggingPasteboard.readObjects(forClasses: [NSURL.self]) as? [URL],
                   !urls.isEmpty else { return false }
-            parent.actions.dropURLs(urls)
+            if let folder = FileDropTarget.folder(atRow: row, dropOperation: dropOperation, in: files) {
+                parent.actions.dropURLsInto(urls, folder)
+            } else {
+                parent.actions.dropURLs(urls)
+            }
             return true
         }
 
@@ -517,7 +539,7 @@ struct FileTableView: NSViewRepresentable {
             addItem(
                 to: menu,
                 String(localized: "Upload Here…", bundle: .module),
-                isEnabled: permits(.uploadFiles)
+                isEnabled: parent.canUploadTo(parent.currentPath)
             ) { actions.uploadHere() }
             addItem(
                 to: menu,
@@ -558,7 +580,7 @@ struct FileTableView: NSViewRepresentable {
             addItem(
                 to: menu,
                 String(localized: "Upload Here…", bundle: .module),
-                isEnabled: permits(.uploadFiles)
+                isEnabled: parent.canUploadTo(parent.currentPath)
             ) { actions.uploadHere() }
             addItem(
                 to: menu,

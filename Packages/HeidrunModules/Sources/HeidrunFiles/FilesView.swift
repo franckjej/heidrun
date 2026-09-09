@@ -327,7 +327,7 @@ public struct FilesView: View {
             ActionButton(
                 title: "Upload…",
                 systemImage: "arrow.up.circle",
-                isEnabled: viewModel.permits(.uploadFiles),
+                isEnabled: viewModel.canUpload(to: viewModel.currentPath),
                 size: .small,
                 fontWeight: .light,
                 bundle: .module
@@ -484,7 +484,8 @@ public struct FilesView: View {
             writeFile: { [path = viewModel.currentPath] entry, url in
                 try await viewModel.downloadFile(entry, at: path, to: url)
             },
-            permits: { viewModel.permits($0) }
+            permits: { viewModel.permits($0) },
+            canUploadTo: { viewModel.canUpload(to: $0) }
         )
     }
 
@@ -525,6 +526,18 @@ public struct FilesView: View {
                             await viewModel.uploadFolder(folderURL: url)
                         } else {
                             await viewModel.upload(fileURL: url)
+                        }
+                    }
+                }
+            },
+            dropURLsInto: { urls, folder in
+                let target = viewModel.currentPath.appending(folder.name)
+                Task {
+                    for url in urls {
+                        if Self.isDirectory(url) {
+                            await viewModel.uploadFolder(folderURL: url, at: target)
+                        } else {
+                            await viewModel.upload(fileURL: url, at: target)
                         }
                     }
                 }
