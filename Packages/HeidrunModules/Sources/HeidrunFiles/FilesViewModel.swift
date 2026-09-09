@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import HeidrunCore
+import HeidrunUI
 
 /// Remote-file browser VM: current path, listing, in-flight transfers.
 /// Transfer machinery lives in `FilesViewModel+Transfers.swift`; the
@@ -29,6 +30,13 @@ public final class FilesViewModel {
     /// Enabled unless we KNOW the account lacks `privilege`.
     public func permits(_ privilege: UserPrivileges) -> Bool {
         !hasPrivilegeInfo || selfPrivileges.contains(privilege)
+    }
+
+    /// Upload controls are enabled when the account may upload files AND
+    /// either may upload anywhere or `path` lies under an upload folder /
+    /// drop box. Fail-open like `permits`.
+    public func canUpload(to path: RemotePath) -> Bool {
+        permits(.uploadFiles) && (permits(.uploadAnywhere) || path.isUploadTarget)
     }
 
     /// Finished entries stay until `clearFinishedTransfers()` so the UI
@@ -313,6 +321,19 @@ public final class FilesViewModel {
         do {
             files = try await listFiles(currentPath)
         } catch {
+            // A refused listing inside a drop box (and we know the account
+            // lacks the bit): explain, then fall back to the parent rather
+            // than leaving an empty listing behind.
+            if currentPath.containsDropBox, !currentPath.isRoot, !permits(.viewDropBoxes) {
+                let folderName = currentPath.components.last ?? ""
+                present(PresentableError(String(
+                    localized: "“\(folderName)” is a drop box. You can drop files into it but can’t see its contents.",
+                    bundle: .module
+                )))
+                currentPath = currentPath.parent
+                await refresh()
+                return
+            }
             present(error)
             files = []
         }

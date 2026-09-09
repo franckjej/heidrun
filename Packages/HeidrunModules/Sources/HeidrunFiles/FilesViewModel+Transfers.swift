@@ -544,10 +544,12 @@ extension FilesViewModel {
 
     /// Recursively upload `folderURL`. Walks the local tree once to build
     /// the per-item list + total size, then drives the legacy folder-
-    /// upload framing (TX 213) over the side channel.
-    public func uploadFolder(folderURL: URL) async {
+    /// upload framing (TX 213) over the side channel. Defaults to
+    /// `currentPath`; a Finder drop onto a folder row hands an explicit `at:`.
+    public func uploadFolder(folderURL: URL, at explicitPath: RemotePath? = nil) async {
         let folderName = folderURL.lastPathComponent
         guard !folderName.isEmpty else { return }
+        let targetPath = explicitPath ?? currentPath
 
         let items: [FolderUploadItem]
         let totalSize: UInt64
@@ -569,7 +571,7 @@ extension FilesViewModel {
 
         let handle: TransferHandle
         do {
-            handle = try await beginFolderUpload(currentPath, folderName, totalSize, itemCount, false)
+            handle = try await beginFolderUpload(targetPath, folderName, totalSize, itemCount, false)
         } catch {
             present(error)
             return
@@ -580,7 +582,7 @@ extension FilesViewModel {
             displayName: folderName + "/",
             destination: nil,
             direction: .upload,
-            sourcePath: currentPath,
+            sourcePath: targetPath,
             sourceFile: nil,
             bytesWritten: 0,
             status: .running
