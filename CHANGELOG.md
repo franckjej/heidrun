@@ -3,7 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.4.0] — 2026-09-09
 
 ### Added
 - **Drop boxes and upload folders.** Classic icons for folders named `…upload…` / `…drop box…`; a refused drop box is explained; Finder drops onto a folder row upload into that folder.
