@@ -41,4 +41,38 @@ struct TrackerPickResolverTests {
         let address = "resolver-\(UUID().uuidString).example"
         #expect(TrackerPickResolver.resolveLogin(address: address, port: 5500).isEmpty)
     }
+
+    private func makeRecents() -> RecentsStore {
+        let suiteName = "TrackerPickResolverTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        return RecentsStore(defaults: defaults)
+    }
+
+    private var centralHub: TrackerServer {
+        TrackerServer(address: "74.208.191.206", port: 5500, users: 3, name: "Hotline Central Hub", description: "")
+    }
+
+    @Test("a window-mode pick builds settings and records them in Recents")
+    func pickRecordsRecent() {
+        let recents = makeRecents()
+        let settings = TrackerPickResolver.settings(
+            forPick: centralHub, nickname: "smoke", iconID: 7, recordingIn: recents, rememberRecents: true
+        )
+        #expect(settings.name == "Hotline Central Hub")
+        #expect(settings.address == "74.208.191.206")
+        #expect(settings.port == 5500)
+        #expect(settings.nickname == "smoke")
+        #expect(settings.icon == 7)
+        #expect(recents.entries.map(\.address) == ["74.208.191.206"])
+    }
+
+    @Test("a window-mode pick is not recorded when remembering recents is off")
+    func pickRespectsRememberRecentsOff() {
+        let recents = makeRecents()
+        _ = TrackerPickResolver.settings(
+            forPick: centralHub, nickname: "smoke", iconID: 0, recordingIn: recents, rememberRecents: false
+        )
+        #expect(recents.entries.isEmpty)
+    }
 }
