@@ -3,6 +3,11 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.1] — 2026-09-16
+
+### Fixed
+- **Downloads from classic Hotline servers were corrupt.** The client treated the transfer stream as a bare data fork, so the Hotline file envelope landed on disk and the last bytes of the file were cut off. Downloads, resumes and Quick Look previews now decode the envelope, sized from its own headers.
+
 ## [1.4.0] — 2026-09-09
 
 ### Added
