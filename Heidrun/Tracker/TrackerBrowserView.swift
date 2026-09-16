@@ -24,6 +24,7 @@ struct TrackerBrowserView: View {
     @Environment(\.newDocument) private var newDocument
     @AppStorage(AppStorageKeys.defaultNickname) private var defaultNickname: String = NSFullUserName()
     @AppStorage(AppStorageKeys.defaultIconID) private var defaultIconID: Int = 0
+    @AppStorage(AppStorageKeys.rememberRecents) private var rememberRecents: Bool = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -275,17 +276,12 @@ struct TrackerBrowserView: View {
     private func deliverPick(_ server: TrackerServer) {
         switch mode {
         case .window:
-            let resolvedLogin = TrackerPickResolver.resolveLogin(
-                address: server.address,
-                port: server.port
-            )
-            let settings = ConnectionSettings(
-                name: server.name,
-                address: server.address,
-                port: server.port,
+            let settings = TrackerPickResolver.settings(
+                forPick: server,
                 nickname: defaultNickname,
-                login: resolvedLogin,
-                icon: UInt16(clamping: defaultIconID)
+                iconID: defaultIconID,
+                recordingIn: RecentsRegistry.shared,
+                rememberRecents: rememberRecents
             )
             newDocument { HeidrunBookmarkDocument.seeded(with: settings) }
         case .sheet(let onPick, _):
