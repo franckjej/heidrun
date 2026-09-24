@@ -53,7 +53,14 @@ struct HostView: View {
     var body: some View {
         NavigationSplitView {
             sidebar
-                .background(Color.clear)
+                .background(CPAVisualEffectView(material: NSVisualEffectView.Material.sidebar, blendingMode: .behindWindow, state: .followsWindowActiveState, cornerRadius: .zero))
+                // marks the seam from window top to bottom.
+                .overlay(alignment: .trailing) {
+                    Rectangle()
+                        .fill(Color(.black).opacity(0.2))
+                        .frame(width: 1)
+                        .ignoresSafeArea()
+                }
         } detail: {
             detailPane
                 .background(.background)
