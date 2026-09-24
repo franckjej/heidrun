@@ -33,7 +33,8 @@ public extension NSXPCConnection {
         function: String = #function,
         _ body: (Service, CheckedContinuation<Value, Error>) -> Void
     ) async throws -> Value {
-        try await withCheckedThrowingContinuation(isolation: isolation, function: function) { continuation in
+        // The nonisolated(nonsending) overload runs on `isolation`, the caller's actor.
+        try await withCheckedThrowingContinuation(function: function) { continuation in
             let proxy = self.remoteObjectProxyWithErrorHandler { error in
                 continuation.resume(throwing: error)
             }

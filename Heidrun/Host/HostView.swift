@@ -86,7 +86,7 @@ struct HostView: View {
             // Toolbar-hairline suppression is at RootView level so it
             // covers the connecting / failed phases too.
         })
-        .onAppear {
+        .onAppear { [state] in
             if selectedIdentifier == nil {
                 selectedIdentifier = features.first?.identifier
             }
