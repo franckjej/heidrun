@@ -279,3 +279,42 @@ struct AggregatedTransfer: Identifiable, Hashable {
         hasher.combine(state.id)
     }
 }
+
+// MARK: - Connection uptime cells
+
+/// Connect time; adds the date once the session spans midnight.
+struct ConnectionSinceCell: View {
+    let handle: ConnectionHandle
+
+    var body: some View {
+        let connectedAt = handle.connectedAt
+        let isToday = Calendar.current.isDateInToday(connectedAt)
+        Text(connectedAt.formatted(date: isToday ? .omitted : .abbreviated, time: .shortened))
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .help(connectedAt.formatted(date: .complete, time: .standard))
+    }
+}
+
+/// Ticks once a second while live; frozen after a drop. Own struct so
+/// the timeline only redraws this cell, not the Table.
+struct ConnectionDurationCell: View {
+    let handle: ConnectionHandle
+
+    var body: some View {
+        if handle.isLive {
+            TimelineView(.periodic(from: handle.connectedAt, by: 1)) { context in
+                durationText(handle.connectionDuration(at: context.date))
+            }
+        } else {
+            durationText(handle.connectionDuration())
+        }
+    }
+
+    private func durationText(_ interval: TimeInterval) -> some View {
+        Text(verbatim: Duration.seconds(Int(interval)).formatted(.time(pattern: .hourMinuteSecond)))
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+}

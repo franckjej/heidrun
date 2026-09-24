@@ -164,7 +164,7 @@ final class HostState {
         phase = .connecting(settings)
 
         let trustEvaluator = certificateEvaluator()
-        connectTask = Task { [connector] in
+        connectTask = Task { [connector, self] in
             if let previousClient {
                 await previousClient.disconnect()
             }
@@ -240,7 +240,7 @@ final class HostState {
                 }
             } catch {
                 if Task.isCancelled { return }
-                await MainActor.run {
+                await MainActor.run { [self] in
                     self.pendingPostConnectResume = nil
                     self.pendingPassword = ""
                     self.pendingRememberPassword = false

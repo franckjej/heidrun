@@ -208,17 +208,28 @@ struct FeatureSidebarTableView: NSViewRepresentable {
 /// moving the focus section into the sidebar, so selecting a feature took
 /// two clicks while a transcript composer held first responder.
 private final class FirstMouseTableView: NSTableView {
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        // A recogniser, not a `mouseDown` override: overriding mouseDown
+        // makes AppKit disable NSTableView's gesture recogniser support.
+        let clickRecognizer = NSClickGestureRecognizer(target: self, action: #selector(applyDroppedSelection(_:)))
+        clickRecognizer.delaysPrimaryMouseButtonEvents = false
+        addGestureRecognizer(clickRecognizer)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
-    override func mouseDown(with event: NSEvent) {
-        let clickedRow = row(at: convert(event.locationInWindow, from: nil))
-        super.mouseDown(with: event)
-        // When another responder (notably an editing NSTextView, or the
-        // state right after a modal sheet like the server agreement is
-        // dismissed) held first responder, AppKit spends the first click
-        // transferring first responder to the table and skips the row
-        // selection — so the sidebar needed two clicks. Apply the dropped
-        // selection ourselves when that happened.
+    /// When another responder (an editing NSTextView, or right after a
+    /// sheet like the server agreement closes) held first responder,
+    /// AppKit spends the first click moving it to the table and skips the
+    /// row selection. Apply the dropped selection ourselves.
+    @objc private func applyDroppedSelection(_ recognizer: NSClickGestureRecognizer) {
+        let clickedRow = row(at: recognizer.location(in: self))
         guard clickedRow >= 0, selectedRow != clickedRow,
               delegate?.tableView?(self, shouldSelectRow: clickedRow) ?? true else { return }
         selectRowIndexes(IndexSet(integer: clickedRow), byExtendingSelection: false)

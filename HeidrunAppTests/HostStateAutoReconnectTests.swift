@@ -455,4 +455,33 @@ struct HostStateAutoReconnectTests {
         }
         #expect(coordinator.attempt == 0)
     }
+
+    @Test("unexpected disconnect freezes the handle's connection duration")
+    func unexpectedDisconnectFreezesDuration() async throws {
+        let scratch = Scratch()
+        defer { scratch.teardown() }
+        scratch.defaults.set(false, forKey: AppStorageKeys.autoReconnectEnabled)
+
+        let fake = FakeHotlineClient()
+        let state = makeTestHostState(
+            connector: { _, _, _ in fake },
+            autoReconnectCoordinator: makeCoordinator(defaults: scratch.defaults)
+        )
+
+        state.connect(settings: makeSettings())
+        await state.acknowledgeAgreementWhenReady()
+        await state.waitForSettling()
+        let handle = try #require(state.currentHandle)
+        #expect(handle.disconnectedAt == nil)
+
+        fake.simulateDisconnect(reason: "Connection reset by peer")
+        await poll(timeout: .seconds(3)) { !handle.isLive }
+
+        // Tombstone keeps the handle; its uptime no longer grows.
+        #expect(state.currentHandle === handle)
+        let disconnectedAt = try #require(handle.disconnectedAt)
+        #expect(disconnectedAt >= handle.connectedAt)
+        let frozen = handle.connectionDuration()
+        #expect(handle.connectionDuration(at: .now.addingTimeInterval(3_600)) == frozen)
+    }
 }

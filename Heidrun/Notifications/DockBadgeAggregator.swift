@@ -41,7 +41,7 @@ final class DockBadgeAggregator {
     private func observe() {
         withObservationTracking {
             refresh()
-        } onChange: {
+        } onChange: { [weak self] in
             Task { @MainActor [weak self] in self?.observe() }
         }
     }

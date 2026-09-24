@@ -60,6 +60,16 @@ final class ConnectionHandle: Identifiable {
 
     var phase: Phase = .connected
 
+    /// When the session came up. Shown in the TaskManager.
+    let connectedAt: Date
+    /// Set on unexpected disconnect so the uptime freezes.
+    private(set) var disconnectedAt: Date?
+
+    /// Session length up to `now`, or up to the drop if disconnected.
+    func connectionDuration(at now: Date = .now) -> TimeInterval {
+        max(0, (disconnectedAt ?? now).timeIntervalSince(connectedAt))
+    }
+
     /// The connected account's own privileges, from the server's "User
     /// Access" push (TX 354). UI-gating hint ONLY — the server enforces
     /// every privilege per request regardless. `hasPrivilegeInfo` tracks
@@ -119,9 +129,10 @@ final class ConnectionHandle: Identifiable {
         return false
     }
 
-    init(settings: ConnectionSettings, client: any HotlineClient) {
+    init(settings: ConnectionSettings, client: any HotlineClient, connectedAt: Date = .now) {
         let handleID = UUID()
         self.id = handleID
+        self.connectedAt = connectedAt
         self.settings = settings
         self.client = client
         let presenter = ErrorPresenter()
@@ -298,9 +309,10 @@ final class ConnectionHandle: Identifiable {
     /// sending a clean close — when the server pushes `.disconnected`
     /// the notification also comes from `NotificationCoordinator`'s
     /// event loop.
-    func markDisconnected(reason: String?) {
+    func markDisconnected(reason: String?, at disconnectDate: Date = .now) {
         guard case .connected = phase else { return }
         phase = .disconnected(reason: reason)
+        disconnectedAt = disconnectDate
         let coordinator = notificationCoordinator
         // Post BEFORE `cancel()` so the coordinator is still alive.
         Task { @MainActor in
