@@ -54,6 +54,7 @@ struct HostView: View {
         NavigationSplitView {
             sidebar
                 .background(CPAVisualEffectView(material: NSVisualEffectView.Material.sidebar, blendingMode: .behindWindow, state: .followsWindowActiveState, cornerRadius: .zero))
+                .ignoresSafeArea()
                 // marks the seam from window top to bottom.
                 .overlay(alignment: .trailing) {
                     Rectangle()
@@ -290,9 +291,7 @@ struct HostView: View {
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
             serverBannerHeader
-                .padding(.top, (Spacing.small.rawValue - Spacing.xxsmall.rawValue))
-                .ignoresSafeArea(.container)
-            Spacer()
+
             FeatureSidebarTableView(
                 features: features,
                 selection: $selectedIdentifier,
@@ -302,8 +301,8 @@ struct HostView: View {
                 badges: sidebarBadges ? (attention?.counts ?? [:]) : [:],
                 pulse: sidebarPulse
             )
-            Spacer()
         }
+        .padding(.top, (Spacing.medium.rawValue - Spacing.xxsmall.rawValue))
         .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 303)
     }
 
@@ -311,17 +310,22 @@ struct HostView: View {
     /// banner; `.url` banners are unsupported in v1.
     @ViewBuilder
     private var serverBannerHeader: some View {
-        if let banner = handle?.serverBanner,
-           banner.kind != .url,
-           let nsImage = NSImage(data: banner.data) {
-            Image(nsImage: nsImage)
-                .resizable()
-                .scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: 100)
-                .padding(.horizontal, .small)
-                .padding(.vertical, .xxxsmall)
-                .accessibilityLabel("Server banner")
+        VStack(alignment: .leading, spacing: 0) {
+            if let banner = handle?.serverBanner,
+               banner.kind != .url,
+               let nsImage = NSImage(data: banner.data) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: 100)
+                    .padding(.horizontal, .small)
+                    .padding(.vertical, .xxxsmall)
+                    .accessibilityLabel("Server banner")
+            } else {
+                Spacer()
+            }
         }
+        .frame(height: 100)
     }
 
     @ViewBuilder
