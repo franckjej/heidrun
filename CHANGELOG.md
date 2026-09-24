@@ -3,6 +3,14 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] — 2026-09-24
+
+### Added
+- **Connection uptime in the Task Manager.** Each server shows when it connected and for how long; the time stops at an unexpected disconnect.
+
+### Fixed
+- macOS 27: the activity strip no longer shows a glass capsule, and the sidebar seam is back.
+
 ## [1.4.1] — 2026-09-16
 
 ### Fixed
