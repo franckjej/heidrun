@@ -33,7 +33,7 @@ struct TaskManagerView: View {
             transfersPane
                 .frame(minHeight: 200)
         }
-        .frame(minWidth: 640, minHeight: 420)
+        .frame(minWidth: 800, minHeight: 420)
         .toolbar { toolbarItems }
         .navigationTitle("Task Manager")
         .task { await refreshLoop() }
@@ -139,6 +139,14 @@ struct TaskManagerView: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .width(min: 80, ideal: 90, max: 110)
+                    TableColumn("Connected Since") { handle in
+                        ConnectionSinceCell(handle: handle)
+                    }
+                    .width(min: 90, ideal: 110, max: 160)
+                    TableColumn("Duration") { handle in
+                        ConnectionDurationCell(handle: handle)
+                    }
+                    .width(min: 70, ideal: 80, max: 100)
                     TableColumn("") { handle in
                         connectionRowActions(handle)
                             .frame(maxWidth: .infinity, alignment: .trailing)

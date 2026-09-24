@@ -125,6 +125,26 @@ struct ConnectionHandleTests {
         #expect(handle.permits(.canBroadcast))
         #expect(handle.canAdministerAccounts)
     }
+
+    @MainActor
+    @Test("connection duration runs from connectedAt while live")
+    func connectionDurationWhileLive() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        let handle = ConnectionHandle(settings: makeSettings(), client: ConnectionHandleFakeClient(), connectedAt: start)
+        #expect(handle.connectedAt == start)
+        #expect(handle.disconnectedAt == nil)
+        #expect(handle.connectionDuration(at: start.addingTimeInterval(3_725)) == 3_725)
+    }
+
+    @MainActor
+    @Test("connection duration freezes at the disconnect")
+    func connectionDurationFreezesOnDisconnect() {
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        let handle = ConnectionHandle(settings: makeSettings(), client: ConnectionHandleFakeClient(), connectedAt: start)
+        handle.markDisconnected(reason: "lost", at: start.addingTimeInterval(90))
+        #expect(handle.disconnectedAt == start.addingTimeInterval(90))
+        #expect(handle.connectionDuration(at: start.addingTimeInterval(5_000)) == 90)
+    }
 }
 
 // MARK: - Test helpers
