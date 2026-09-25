@@ -24,6 +24,11 @@ struct HostView: View {
     @State private var titlePulseTask: Task<Void, Never>?
     @State private var sidebarPulse: SidebarPulse?
     @State private var lastCounts: [String: Int] = [:]
+    /// Window-space tops of the sidebar and detail columns. The detail top
+    /// moves with the toolbar and an optional window tab bar; the sidebar
+    /// pads by the difference so the banner lines up with the chat header.
+    @State private var sidebarTop: CGFloat = 0
+    @State private var detailTop: CGFloat = 0
 
     private var handle: ConnectionHandle? { state?.currentHandle }
     private var errorPresenter: ErrorPresenter? { handle?.errorPresenter }
@@ -53,6 +58,7 @@ struct HostView: View {
     var body: some View {
         NavigationSplitView {
             sidebar
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { sidebarTop = $0 }
                 .background(CPAVisualEffectView(material: NSVisualEffectView.Material.sidebar, blendingMode: .behindWindow, state: .followsWindowActiveState, cornerRadius: .zero))
                 .ignoresSafeArea()
                 // marks the seam from window top to bottom.
@@ -62,8 +68,11 @@ struct HostView: View {
                         .frame(width: 1)
                         .ignoresSafeArea()
                 }
+                // Outermost so the split view sees it through the wrappers.
+                .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 303)
         } detail: {
             detailPane
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { detailTop = $0 }
                 .background(.background)
                 .overlay(alignment: .bottom) {
                     if let state {
@@ -302,8 +311,7 @@ struct HostView: View {
                 pulse: sidebarPulse
             )
         }
-        .padding(.top, .medium)
-        .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 303)
+        .padding(.top, max(detailTop - sidebarTop, 0) + FilledHeaderBoxModifier.outerPadding.rawValue)
     }
 
     /// Server banner (JPEG/GIF/BMP/PICT from TX 212). Empty for no
@@ -317,15 +325,17 @@ struct HostView: View {
                 Image(nsImage: nsImage)
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: 100)
+                    // A banner shorter than the header box centres on it.
+                    .frame(minHeight: FilledHeaderBoxModifier.boxHeight)
+                    .frame(maxWidth: .infinity, maxHeight: 100, alignment: .top)
                     .padding(.horizontal, .small)
-                    .padding(.vertical, .xxxsmall)
+                    .padding(.bottom, .xxxsmall)
                     .accessibilityLabel("Server banner")
             } else {
                 Spacer()
             }
         }
-        .frame(height: 100)
+        .frame(height: 100, alignment: .top)
     }
 
     @ViewBuilder
