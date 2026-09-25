@@ -302,7 +302,7 @@ struct HostView: View {
                 pulse: sidebarPulse
             )
         }
-        .padding(.top, (Spacing.medium.rawValue - Spacing.xxsmall.rawValue))
+        .padding(.top, .medium)
         .navigationSplitViewColumnWidth(min: 200, ideal: 280, max: 303)
     }
 
