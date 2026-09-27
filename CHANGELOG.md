@@ -3,6 +3,14 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] — 2026-09-27
+
+### Added
+- **Protocol Console:** Export… saves the shown transcript as a log file.
+
+### Fixed
+- **Uploads to classic Hotline servers stalled at 0 bytes.** The client sent the transfer handshake twice; it now sends it once, as the original Heidrun did.
+
 ## [1.5.0] — 2026-09-24
 
 ### Added
