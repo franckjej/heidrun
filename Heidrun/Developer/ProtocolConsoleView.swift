@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 import HeidrunCore
 import CommonTools
 
@@ -129,12 +130,37 @@ struct ProtocolConsoleView: View {
             Toggle("Auto-scroll", isOn: $autoScroll)
                 .controlSize(.small)
                 .toggleStyle(.checkbox)
+            Button("Export…") {
+                exportVisibleEntries()
+            }
+            .controlSize(.small)
+            .disabled(visibleEntries.isEmpty)
             Button("Clear") {
                 store.clear()
             }
             .controlSize(.small)
         }
         .padding(.small)
+    }
+
+    /// Save the shown (filtered) lines as plain text.
+    private func exportVisibleEntries() {
+        let transcript = visibleEntries
+            .map { ProtocolConsoleRowText.text(for: $0) + "\n" }
+            .joined()
+        let timestamp = Date.now.formatted(.iso8601.year().month().day().time(includingFractionalSeconds: false))
+            .replacingOccurrences(of: ":", with: "-")
+        let panel = NSSavePanel()
+        panel.title = String(localized: "Export Console")
+        panel.nameFieldStringValue = "Heidrun Console \(timestamp).log"
+        panel.allowedContentTypes = [.log, .plainText]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try Data(transcript.utf8).write(to: url, options: .atomic)
+        } catch {
+            let alert = NSAlert(error: error)
+            alert.runModal()
+        }
     }
 
     /// "buffered / total", or "shown / buffered / total" while filtered.

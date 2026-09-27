@@ -230,6 +230,7 @@ final class ProtocolConsoleStore {
         211: "downloadFolderReply",
         212: "downloadBanner",
         213: "uploadFolder",
+        214: "killDownload",
         300: "getUserList",
         301: "userChanged",
         302: "userLeft",
