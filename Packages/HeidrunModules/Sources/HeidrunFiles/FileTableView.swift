@@ -54,6 +54,11 @@ struct FileRowActions {
     var moveToParent: ([RemoteFile], RemotePath) -> Void
     /// Open the enclosing folder (the `..` row's double-click + spring-load).
     var navigateUp: () -> Void
+    /// Back/forward through visited folders (swipe, mouse buttons, ⌘[ ⌘]).
+    var goBack: () -> Void
+    var goForward: () -> Void
+    var canGoBack: () -> Bool
+    var canGoForward: () -> Bool
 }
 
 /// AppKit `NSTableView` file list, wrapped for SwiftUI. Replaces the
@@ -101,6 +106,15 @@ struct FileTableView: NSViewRepresentable {
         }
         tableView.onSpace = { [weak coordinator = context.coordinator] in
             coordinator?.invokeForSelectedRow { $0.quickLook }
+        }
+        tableView.onBack = { [weak coordinator = context.coordinator] in coordinator?.parent.actions.goBack() }
+        tableView.onForward = { [weak coordinator = context.coordinator] in coordinator?.parent.actions.goForward() }
+        tableView.onUp = { [weak coordinator = context.coordinator] in coordinator?.parent.actions.navigateUp() }
+        tableView.canGoBack = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.actions.canGoBack() ?? false
+        }
+        tableView.canGoForward = { [weak coordinator = context.coordinator] in
+            coordinator?.parent.actions.canGoForward() ?? false
         }
         tableView.dataSource = context.coordinator
         tableView.delegate = context.coordinator
@@ -648,28 +662,6 @@ struct FileTableView: NSViewRepresentable {
             ])
             return cell
         }
-    }
-}
-
-/// NSTableView that adds two keyboard affordances: Cmd+I → Get Info
-/// and Spacebar → Quick Look for the currently-selected row. Anything
-/// else falls through to the default NSTableView handler (arrows for
-/// selection, Return, etc.).
-final class FileShortcutTableView: NSTableView {
-    var onCommandI: () -> Void = {}
-    var onSpace: () -> Void = {}
-
-    override func keyDown(with event: NSEvent) {
-        let chars = event.charactersIgnoringModifiers ?? ""
-        if event.modifierFlags.contains(.command), chars == "i" {
-            onCommandI()
-            return
-        }
-        if chars == " " {
-            onSpace()
-            return
-        }
-        super.keyDown(with: event)
     }
 }
 

@@ -553,7 +553,11 @@ public struct FilesView: View {
             },
             navigateUp: {
                 Task { await viewModel.navigateUp() }
-            }
+            },
+            goBack: { Task { await viewModel.goBack() } },
+            goForward: { Task { await viewModel.goForward() } },
+            canGoBack: { viewModel.canGoBack },
+            canGoForward: { viewModel.canGoForward }
         )
     }
 
