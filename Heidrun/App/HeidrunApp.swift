@@ -90,8 +90,8 @@ struct HeidrunMainApp: App {
             )
             .environment(activeConnections)
             .frame(minWidth: 1100, minHeight: 720)
-            .defaultAppStorage(AppDataEnvironment.defaults)
             .heidrunContentSizeFromStorage()
+            .defaultAppStorage(AppDataEnvironment.defaults)
             .windowToolbarFullScreenVisibility(.onHover)
         }
         .defaultSize(width: 1280, height: 820)
@@ -162,24 +162,24 @@ struct HeidrunMainApp: App {
         Window("Task Manager", id: WindowIDs.taskManager) {
             TaskManagerView()
                 .environment(activeConnections)
-                .defaultAppStorage(AppDataEnvironment.defaults)
                 .heidrunContentSizeFromStorage()
+                .defaultAppStorage(AppDataEnvironment.defaults)
         }
         .defaultSize(width: 760, height: 520)
         .commandsRemoved()
 
         Window("Heidrun Help", id: WindowIDs.help) {
             HelpView()
-                .defaultAppStorage(AppDataEnvironment.defaults)
                 .heidrunContentSizeFromStorage()
+                .defaultAppStorage(AppDataEnvironment.defaults)
         }
         .defaultSize(width: 860, height: 580)
         .commandsRemoved()
 
         Window("Browse Trackers", id: WindowIDs.trackerBrowser) {
             TrackerWindowView()
-                .defaultAppStorage(AppDataEnvironment.defaults)
                 .heidrunContentSizeFromStorage()
+                .defaultAppStorage(AppDataEnvironment.defaults)
         }
         .defaultSize(width: 860, height: 540)
         .commandsRemoved()
@@ -187,16 +187,16 @@ struct HeidrunMainApp: App {
         Window("Protocol Console", id: WindowIDs.protocolConsole) {
             ProtocolConsoleView()
                 .environment(activeConnections)
-                .defaultAppStorage(AppDataEnvironment.defaults)
                 .heidrunContentSizeFromStorage()
+                .defaultAppStorage(AppDataEnvironment.defaults)
         }
         .defaultSize(width: 880, height: 480)
         .commandsRemoved()
 
         Settings {
             SettingsView()
-                .defaultAppStorage(AppDataEnvironment.defaults)
                 .heidrunContentSizeFromStorage()
+                .defaultAppStorage(AppDataEnvironment.defaults)
         }
     }
 }
