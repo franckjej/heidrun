@@ -57,8 +57,9 @@ struct FileRowActions {
     /// Back/forward through visited folders (swipe, mouse buttons, ⌘[ ⌘]).
     var goBack: () -> Void
     var goForward: () -> Void
-    var canGoBack: () -> Bool
-    var canGoForward: () -> Bool
+    /// Where back / forward would go; `nil` = nowhere.
+    var backTarget: () -> RemotePath?
+    var forwardTarget: () -> RemotePath?
 }
 
 /// AppKit `NSTableView` file list, wrapped for SwiftUI. Replaces the
@@ -90,7 +91,7 @@ struct FileTableView: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
-    func makeNSView(context: Context) -> NSScrollView {
+    func makeNSView(context: Context) -> FileSwipeContainerView {
         let tableView = FileShortcutTableView()
         tableView.style = .inset
         tableView.usesAlternatingRowBackgroundColors = false
@@ -107,15 +108,7 @@ struct FileTableView: NSViewRepresentable {
         tableView.onSpace = { [weak coordinator = context.coordinator] in
             coordinator?.invokeForSelectedRow { $0.quickLook }
         }
-        tableView.onBack = { [weak coordinator = context.coordinator] in coordinator?.parent.actions.goBack() }
-        tableView.onForward = { [weak coordinator = context.coordinator] in coordinator?.parent.actions.goForward() }
-        tableView.onUp = { [weak coordinator = context.coordinator] in coordinator?.parent.actions.navigateUp() }
-        tableView.canGoBack = { [weak coordinator = context.coordinator] in
-            coordinator?.parent.actions.canGoBack() ?? false
-        }
-        tableView.canGoForward = { [weak coordinator = context.coordinator] in
-            coordinator?.parent.actions.canGoForward() ?? false
-        }
+        Self.wireNavigation(tableView, to: context.coordinator)
         tableView.dataSource = context.coordinator
         tableView.delegate = context.coordinator
         tableView.menu = context.coordinator.makeMenu()
@@ -157,12 +150,15 @@ struct FileTableView: NSViewRepresentable {
         scrollView.borderType = .noBorder
         scrollView.automaticallyAdjustsContentInsets = false
         scrollView.contentInsets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 16)
-        return scrollView
+        let container = FileSwipeContainerView(scrollView: scrollView)
+        context.coordinator.container = container
+        context.coordinator.displayedPath = currentPath
+        return container
     }
 
-    func updateNSView(_ scrollView: NSScrollView, context: Context) {
+    func updateNSView(_ container: FileSwipeContainerView, context: Context) {
         context.coordinator.parent = self
-        guard let tableView = scrollView.documentView as? NSTableView else { return }
+        guard let tableView = container.scrollView.documentView as? NSTableView else { return }
         // Reflect any user-driven `ContentSize` change immediately —
         // body-size overrides (Appearance picker's inline +/-) don't
         // bump rowHeight, but the cell font + icon frame do change,
@@ -173,7 +169,14 @@ struct FileTableView: NSViewRepresentable {
             tableView.rowHeight = contentSize.rowHeight
             tableView.reloadData()
         }
+        let pathChanged = context.coordinator.displayedPath != currentPath
+        if pathChanged {
+            context.coordinator.pathWillChange(to: currentPath)
+        }
         context.coordinator.apply(files: files, to: tableView)
+        if pathChanged {
+            context.coordinator.restoreScrollPosition()
+        }
         // Sync selection from SwiftUI → AppKit (guarded so the resulting
         // selection notification doesn't write straight back).
         context.coordinator.beginProgrammaticSelection()
@@ -190,6 +193,11 @@ struct FileTableView: NSViewRepresentable {
     final class Coordinator: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
         var parent: FileTableView
         weak var tableView: NSTableView?
+        /// Swipe slide host + per-folder snapshots / scroll offsets.
+        weak var container: FileSwipeContainerView?
+        var snapshots = FileSwipeSnapshotStore<PageSnapshot>()
+        /// The folder whose rows the table currently shows.
+        var displayedPath = RemotePath()
         private var files: [RemoteFile] = []
         private var applyingSelection = false
         /// Last `ContentSize` we applied. `nil` = first render.

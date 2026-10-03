@@ -578,8 +578,8 @@ public struct FilesView: View {
             },
             goBack: { Task { await viewModel.goBack() } },
             goForward: { Task { await viewModel.goForward() } },
-            canGoBack: { viewModel.canGoBack },
-            canGoForward: { viewModel.canGoForward }
+            backTarget: { viewModel.backStack.last },
+            forwardTarget: { viewModel.forwardStack.last }
         )
     }
 

@@ -12,6 +12,10 @@ final class FileShortcutTableView: NSTableView {
     var onUp: () -> Void = {}
     var canGoBack: () -> Bool = { false }
     var canGoForward: () -> Bool = { false }
+    /// Slide hooks: began, continuous amount (> 0 back, < 0 forward), done.
+    var onSwipeBegan: () -> Void = {}
+    var onSwipeChanged: (CGFloat) -> Void = { _ in }
+    var onSwipeFinished: () -> Void = {}
 
     override func keyDown(with event: NSEvent) {
         let chars = event.charactersIgnoringModifiers ?? ""
@@ -54,16 +58,25 @@ final class FileShortcutTableView: NSTableView {
             super.scrollWheel(with: event)
             return
         }
+        onSwipeBegan()
         event.trackSwipeEvent(
             options: [.lockDirection, .clampGestureAmount],
             dampenAmountThresholdMin: canForward ? -1 : 0,
             max: canBack ? 1 : 0
-        ) { [weak self] gestureAmount, phase, _, _ in
-            guard phase == .ended, let self else { return }
-            if gestureAmount > 0 {
-                self.onBack()
-            } else if gestureAmount < 0 {
-                self.onForward()
+        ) { [weak self] gestureAmount, phase, isComplete, _ in
+            guard let self else { return }
+            self.onSwipeChanged(gestureAmount)
+            // Past the threshold: navigate now so the cached listing is in
+            // place by the time the slide finishes.
+            if phase == .ended {
+                if gestureAmount > 0 {
+                    self.onBack()
+                } else if gestureAmount < 0 {
+                    self.onForward()
+                }
+            }
+            if isComplete {
+                self.onSwipeFinished()
             }
         }
     }
