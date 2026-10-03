@@ -13,6 +13,12 @@ public final class FilesViewModel {
     public internal(set) var files: [RemoteFile] = []
     public internal(set) var isLoading: Bool = false
 
+    /// Folders visited before / after `currentPath`, for back/forward.
+    public internal(set) var backStack: [RemotePath] = []
+    public internal(set) var forwardStack: [RemotePath] = []
+    public var canGoBack: Bool { !backStack.isEmpty }
+    public var canGoForward: Bool { !forwardStack.isEmpty }
+
     /// The connected account's own privileges (from the server's "User
     /// Access" push, fed by the host). UI hint only — the server still
     /// enforces every file op. `hasPrivilegeInfo` stays false until the
@@ -301,7 +307,25 @@ public final class FilesViewModel {
     // MARK: - Navigation
 
     public func navigate(to path: RemotePath) async {
+        if path != currentPath {
+            backStack.append(currentPath)
+            forwardStack.removeAll()
+        }
         currentPath = path
+        await refresh()
+    }
+
+    public func goBack() async {
+        guard let previous = backStack.popLast() else { return }
+        forwardStack.append(currentPath)
+        currentPath = previous
+        await refresh()
+    }
+
+    public func goForward() async {
+        guard let next = forwardStack.popLast() else { return }
+        backStack.append(currentPath)
+        currentPath = next
         await refresh()
     }
 
@@ -331,6 +355,8 @@ public final class FilesViewModel {
                     bundle: .module
                 )))
                 currentPath = currentPath.parent
+                // Don't leave "back" pointing at where we already are.
+                while backStack.last == currentPath { backStack.removeLast() }
                 await refresh()
                 return
             }

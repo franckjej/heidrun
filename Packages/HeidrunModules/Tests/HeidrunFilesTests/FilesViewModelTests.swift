@@ -732,7 +732,7 @@ private actor UploadCaptureProbe {
     }
 }
 
-private actor PathRecorder {
+actor PathRecorder {
     private(set) var paths: [RemotePath] = []
     func record(_ path: RemotePath) { paths.append(path) }
 }
