@@ -16,6 +16,8 @@ final class FileShortcutTableView: NSTableView {
     var onSwipeBegan: () -> Void = {}
     var onSwipeChanged: (CGFloat) -> Void = { _ in }
     var onSwipeFinished: () -> Void = {}
+    /// Bumped per two-finger swipe; only the newest one drives the slide.
+    private var swipeSerial = 0
 
     override func keyDown(with event: NSEvent) {
         let chars = event.charactersIgnoringModifiers ?? ""
@@ -58,13 +60,21 @@ final class FileShortcutTableView: NSTableView {
             super.scrollWheel(with: event)
             return
         }
+        swipeSerial += 1
+        let serial = swipeSerial
         onSwipeBegan()
         event.trackSwipeEvent(
             options: [.lockDirection, .clampGestureAmount],
             dampenAmountThresholdMin: canForward ? -1 : 0,
             max: canBack ? 1 : 0
-        ) { [weak self] gestureAmount, phase, isComplete, _ in
+        ) { [weak self] gestureAmount, phase, isComplete, stop in
             guard let self else { return }
+            // A newer swipe started while this one was still settling:
+            // AppKit keeps calling both, so drop the old one.
+            guard serial == self.swipeSerial else {
+                stop.pointee = true
+                return
+            }
             self.onSwipeChanged(gestureAmount)
             // Past the threshold: navigate now so the cached listing is in
             // place by the time the slide finishes.

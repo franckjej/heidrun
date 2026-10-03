@@ -4,8 +4,16 @@ import QuartzCore
 /// A rendered file-list page used by the swipe slide.
 struct PageSnapshot {
     let image: CGImage
-    /// Size in points; a snapshot only fits a page of the same size.
+    /// Size in points.
     let size: CGSize
+    /// Light or dark — the appearance it was drawn in.
+    let appearance: NSAppearance.Name
+
+    /// Whether it can stand in for a page of `pageSize` drawn in
+    /// `pageAppearance` (not after a resize or a light/dark switch).
+    func fits(size pageSize: CGSize, appearance pageAppearance: NSAppearance.Name) -> Bool {
+        size == pageSize && appearance == pageAppearance
+    }
 }
 
 /// Hosts the file list's scroll view and, during a two-finger swipe, a
@@ -53,16 +61,17 @@ final class FileSwipeContainerView: NSView {
         else { return nil }
         scrollView.cacheDisplay(in: pageBounds, to: bitmap)
         guard let image = bitmap.cgImage else { return nil }
-        return PageSnapshot(image: image, size: pageBounds.size)
+        return PageSnapshot(image: image, size: pageBounds.size, appearance: pageAppearance)
     }
 
-    /// Start a slide. Targets that don't fit the current size (window
-    /// resized since) are dropped; the slide then shows plain background.
+    /// Start a slide. Targets that no longer fit (window resized or
+    /// light/dark switched since) are dropped; the slide then shows plain
+    /// background.
     func beginSlide(back: PageSnapshot?, forward: PageSnapshot?) {
         let pageSize = scrollView.bounds.size
         currentPage = capturePage()
-        backPage = back?.size == pageSize ? back : nil
-        forwardPage = forward?.size == pageSize ? forward : nil
+        backPage = back.flatMap { $0.fits(size: pageSize, appearance: pageAppearance) ? $0 : nil }
+        forwardPage = forward.flatMap { $0.fits(size: pageSize, appearance: pageAppearance) ? $0 : nil }
         let background = resolvedBackground()
         let scale = window?.backingScaleFactor ?? 2
         CATransaction.begin()
@@ -111,6 +120,11 @@ final class FileSwipeContainerView: NSView {
         currentPage = nil
         backPage = nil
         forwardPage = nil
+    }
+
+    /// Light or dark, ignoring vibrancy / high-contrast variants.
+    private var pageAppearance: NSAppearance.Name {
+        effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) ?? .aqua
     }
 
     /// Opaque fill behind the (partly transparent) page bitmaps, in the
