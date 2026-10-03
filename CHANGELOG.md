@@ -6,7 +6,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- **Back and forward in Files.** Swipe with two fingers, use the mouse side buttons, ⌘[ / ⌘] or the new ‹ › buttons; ⌘↑ goes up.
+- **Back and forward in Files.** Swipe with two fingers (the page slides like Safari), use the mouse side buttons, ⌘[ / ⌘] or the new ‹ › buttons; ⌘↑ goes up. Revisited folders appear instantly.
 
 ## [1.5.1] — 2026-09-27
 
