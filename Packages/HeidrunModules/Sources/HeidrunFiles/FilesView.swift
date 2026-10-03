@@ -301,6 +301,28 @@ public struct FilesView: View {
     private var header: some View {
         HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
             ActionButton(
+                title: "Back",
+                systemImage: "chevron.left",
+                isEnabled: viewModel.canGoBack,
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
+            ) {
+                Task { await viewModel.goBack() }
+            }
+
+            ActionButton(
+                title: "Forward",
+                systemImage: "chevron.right",
+                isEnabled: viewModel.canGoForward,
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
+            ) {
+                Task { await viewModel.goForward() }
+            }
+
+            ActionButton(
                 title: "Up",
                 systemImage: "chevron.up",
                 isEnabled: !viewModel.currentPath.isRoot,
