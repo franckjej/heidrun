@@ -13,6 +13,16 @@ public final class FilesViewModel {
     public internal(set) var files: [RemoteFile] = []
     public internal(set) var isLoading: Bool = false
 
+    /// Folders visited before / after `currentPath`, for back/forward.
+    public internal(set) var backStack: [RemotePath] = []
+    public internal(set) var forwardStack: [RemotePath] = []
+    public var canGoBack: Bool { !backStack.isEmpty }
+    public var canGoForward: Bool { !forwardStack.isEmpty }
+
+    /// Last successful listing per folder; shown at once on revisits
+    /// while the refresh runs.
+    public internal(set) var listingCache: [RemotePath: [RemoteFile]] = [:]
+
     /// The connected account's own privileges (from the server's "User
     /// Access" push, fed by the host). UI hint only — the server still
     /// enforces every file op. `hasPrivilegeInfo` stays false until the
@@ -301,7 +311,32 @@ public final class FilesViewModel {
     // MARK: - Navigation
 
     public func navigate(to path: RemotePath) async {
+        if path != currentPath {
+            backStack.append(currentPath)
+            forwardStack.removeAll()
+        }
+        await show(path)
+    }
+
+    public func goBack() async {
+        guard let previous = backStack.popLast() else { return }
+        forwardStack.append(currentPath)
+        await show(previous)
+    }
+
+    public func goForward() async {
+        guard let next = forwardStack.popLast() else { return }
+        backStack.append(currentPath)
+        await show(next)
+    }
+
+    /// Switch to `path`, showing its cached listing (if any) until the
+    /// server's arrives.
+    private func show(_ path: RemotePath) async {
         currentPath = path
+        if let cached = listingCache[path] {
+            files = cached
+        }
         await refresh()
     }
 
@@ -316,11 +351,18 @@ public final class FilesViewModel {
     }
 
     public func refresh() async {
+        let path = currentPath
         isLoading = true
         defer { isLoading = false }
         do {
-            files = try await listFiles(currentPath)
+            let listing = try await listFiles(path)
+            listingCache[path] = listing
+            // The user may have moved on while this was in flight.
+            guard currentPath == path else { return }
+            files = listing
         } catch {
+            listingCache[path] = nil
+            guard currentPath == path else { return }
             // A refused listing inside a drop box (and we know the account
             // lacks the bit): explain, then fall back to the parent rather
             // than leaving an empty listing behind.
@@ -331,6 +373,8 @@ public final class FilesViewModel {
                     bundle: .module
                 )))
                 currentPath = currentPath.parent
+                // Don't leave "back" pointing at where we already are.
+                while backStack.last == currentPath { backStack.removeLast() }
                 await refresh()
                 return
             }
