@@ -166,6 +166,7 @@ struct FileTableView: NSViewRepresentable {
         // than just rowHeight.
         if context.coordinator.lastContentSize != contentSize {
             context.coordinator.lastContentSize = contentSize
+            container.contentSize = contentSize
             tableView.rowHeight = contentSize.rowHeight
             tableView.reloadData()
         }

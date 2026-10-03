@@ -1,5 +1,6 @@
 import AppKit
 import QuartzCore
+import CommonTools
 
 /// A rendered file-list page used by the swipe slide.
 struct PageSnapshot {
@@ -8,11 +9,18 @@ struct PageSnapshot {
     let size: CGSize
     /// Light or dark — the appearance it was drawn in.
     let appearance: NSAppearance.Name
+    /// Content density + text size the rows were drawn at.
+    let contentSize: ContentSize
 
     /// Whether it can stand in for a page of `pageSize` drawn in
-    /// `pageAppearance` (not after a resize or a light/dark switch).
-    func fits(size pageSize: CGSize, appearance pageAppearance: NSAppearance.Name) -> Bool {
-        size == pageSize && appearance == pageAppearance
+    /// `pageAppearance` at `pageContentSize` (not after a resize, a
+    /// light/dark switch or a density change).
+    func fits(
+        size pageSize: CGSize,
+        appearance pageAppearance: NSAppearance.Name,
+        contentSize pageContentSize: ContentSize
+    ) -> Bool {
+        size == pageSize && appearance == pageAppearance && contentSize == pageContentSize
     }
 }
 
@@ -20,6 +28,8 @@ struct PageSnapshot {
 /// Safari-style slide of page snapshots above it.
 final class FileSwipeContainerView: NSView {
     let scrollView: NSScrollView
+    /// Density the table currently draws at; kept in sync by the owner.
+    var contentSize = ContentSize.default
     private let overlayView = NSView()
     private let underLayer = CALayer()
     private let topLayer = CALayer()
@@ -61,17 +71,22 @@ final class FileSwipeContainerView: NSView {
         else { return nil }
         scrollView.cacheDisplay(in: pageBounds, to: bitmap)
         guard let image = bitmap.cgImage else { return nil }
-        return PageSnapshot(image: image, size: pageBounds.size, appearance: pageAppearance)
+        return PageSnapshot(
+            image: image,
+            size: pageBounds.size,
+            appearance: pageAppearance,
+            contentSize: contentSize
+        )
     }
 
-    /// Start a slide. Targets that no longer fit (window resized or
-    /// light/dark switched since) are dropped; the slide then shows plain
+    /// Start a slide. Targets that no longer fit (window resized, light/dark
+    /// or density changed since) are dropped; the slide then shows plain
     /// background.
     func beginSlide(back: PageSnapshot?, forward: PageSnapshot?) {
         let pageSize = scrollView.bounds.size
         currentPage = capturePage()
-        backPage = back.flatMap { $0.fits(size: pageSize, appearance: pageAppearance) ? $0 : nil }
-        forwardPage = forward.flatMap { $0.fits(size: pageSize, appearance: pageAppearance) ? $0 : nil }
+        backPage = back.flatMap { fits($0, size: pageSize) ? $0 : nil }
+        forwardPage = forward.flatMap { fits($0, size: pageSize) ? $0 : nil }
         let background = resolvedBackground()
         let scale = window?.backingScaleFactor ?? 2
         CATransaction.begin()
@@ -120,6 +135,10 @@ final class FileSwipeContainerView: NSView {
         currentPage = nil
         backPage = nil
         forwardPage = nil
+    }
+
+    private func fits(_ page: PageSnapshot, size pageSize: CGSize) -> Bool {
+        page.fits(size: pageSize, appearance: pageAppearance, contentSize: contentSize)
     }
 
     /// Light or dark, ignoring vibrancy / high-contrast variants.
