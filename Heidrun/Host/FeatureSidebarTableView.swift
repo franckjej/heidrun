@@ -400,11 +400,15 @@ final class FeatureSidebarCellView: NSTableCellView {
     }
 
     private func setTint(inverted: Bool) {
-        let accentIsBase = selected && rowEnabled
-        let useAccent = accentIsBase != inverted
-        let color: NSColor = useAccent ? .controlAccentColor : (rowEnabled ? .labelColor : .tertiaryLabelColor)
+        let color = inverted ? .controlAccentColor : baseTint
         nameLabel.textColor = color
         iconView.contentTintColor = color
+    }
+
+    /// Light text on the accent pill, label colour elsewhere.
+    private var baseTint: NSColor {
+        guard rowEnabled else { return .tertiaryLabelColor }
+        return selected ? .alternateSelectedControlTextColor : .labelColor
     }
 
     func setSelected(_ isSelected: Bool, emphasized isEmphasized: Bool) {
@@ -424,17 +428,9 @@ final class FeatureSidebarCellView: NSTableCellView {
     }
 
     private func updateAppearance() {
-        let fill: NSColor
-        if selected && rowEnabled {
-            fill = .textBackgroundColor
-        } else {
-            fill = .clear
-        }
+        let fill: NSColor = selected && rowEnabled ? .controlAccentColor : .clear
         selectionView.layer?.backgroundColor = fill.cgColor
-        let onEmphasized = selected && rowEnabled
-        let baseColor: NSColor = rowEnabled ? .labelColor : .tertiaryLabelColor
-        nameLabel.textColor = onEmphasized ? .controlAccentColor : baseColor
-        iconView.contentTintColor = onEmphasized ? .controlAccentColor : baseColor
+        setTint(inverted: false)
         badgeLabel.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
     }
 }
