@@ -18,16 +18,33 @@ extension FileTableView {
 
 extension FileTableView.Coordinator {
     /// Before the rows of a newly-shown folder go in: remember how the
-    /// outgoing folder looked and where it was scrolled.
+    /// outgoing folder looked, where it was scrolled and what was selected.
     func pathWillChange(to newPath: RemotePath) {
-        if let container {
+        if let container, let tableView {
             snapshots.store(
                 container.capturePage(),
                 offset: container.scrollView.contentView.bounds.origin,
+                selection: FileSelectionMapping.selection(forRows: tableView.selectedRowIndexes, in: files),
                 for: displayedPath
             )
         }
         displayedPath = newPath
+        awaitingListing = true
+    }
+
+    /// Once the new folder's rows are in, bring back what was selected
+    /// there. The binding is written next turn (not mid view update);
+    /// `pendingSelection` stands in until then.
+    func restoreSelection() {
+        guard awaitingListing else { return }
+        awaitingListing = false
+        let restored = snapshots.selection(for: displayedPath).intersection(files.map(\.id))
+        pendingSelection = restored
+        Task { @MainActor [weak self] in
+            guard let self, pendingSelection == restored else { return }
+            parent.selection = restored
+            pendingSelection = nil
+        }
     }
 
     /// Scroll the newly-shown folder to where it was left, else the top.

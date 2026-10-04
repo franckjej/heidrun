@@ -75,13 +75,16 @@ final class FileShortcutTableView: NSTableView {
                 stop.pointee = true
                 return
             }
-            self.onSwipeChanged(gestureAmount)
+            // No target that way: hold still instead of rubber-banding a
+            // blank page in.
+            let amount = min(max(gestureAmount, canForward ? -1 : 0), canBack ? 1 : 0)
+            self.onSwipeChanged(amount)
             // Past the threshold: navigate now so the cached listing is in
             // place by the time the slide finishes.
             if phase == .ended {
-                if gestureAmount > 0 {
+                if amount > 0 {
                     self.onBack()
-                } else if gestureAmount < 0 {
+                } else if amount < 0 {
                     self.onForward()
                 }
             }
