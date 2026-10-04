@@ -5,8 +5,14 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-10-04
+
 ### Added
-- **Back and forward in Files.** Swipe with two fingers (the page slides like Safari), use the mouse side buttons, ⌘[ / ⌘] or the new ‹ › buttons; ⌘↑ goes up. Revisited folders appear instantly.
+- **Back and forward in Files.** Swipe with two fingers (the page slides like Safari), use the mouse side buttons, ⌘[ / ⌘] or the new ‹ › buttons; ⌘↑ goes up. Revisited folders appear instantly, with their selection and scroll position.
+
+### Changed
+- The sidebar marks the open feature with an accent-coloured pill.
+- The Files column header has a single full-width divider line.
 
 ## [1.5.1] — 2026-09-27
 
