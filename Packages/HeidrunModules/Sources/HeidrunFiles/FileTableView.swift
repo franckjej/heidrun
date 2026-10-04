@@ -141,6 +141,9 @@ struct FileTableView: NSViewRepresentable {
         sizeColumn.sortDescriptorPrototype = NSSortDescriptor(key: FileSortKey.size.rawValue, ascending: false)
         tableView.addTableColumn(sizeColumn)
 
+        nameColumn.headerCell = ClassicHeaderCell(replacing: nameColumn.headerCell, indent: Spacing.xsmall.rawValue)
+        sizeColumn.headerCell = ClassicHeaderCell(replacing: sizeColumn.headerCell)
+
         context.coordinator.tableView = tableView
 
         let scrollView = NSScrollView()
@@ -148,8 +151,9 @@ struct FileTableView: NSViewRepresentable {
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = false
         scrollView.borderType = .noBorder
+        // No side insets (they'd inset the header too); the cells and the
+        // Name title carry the header-bar alignment instead.
         scrollView.automaticallyAdjustsContentInsets = false
-        scrollView.contentInsets = NSEdgeInsets(top: 0, left: 8, bottom: 0, right: 16)
         let container = FileSwipeContainerView(scrollView: scrollView)
         context.coordinator.container = container
         context.coordinator.displayedPath = currentPath
@@ -174,7 +178,9 @@ struct FileTableView: NSViewRepresentable {
         if pathChanged {
             context.coordinator.pathWillChange(to: currentPath)
         }
-        context.coordinator.apply(files: files, to: tableView)
+        if context.coordinator.apply(files: files, to: tableView) {
+            context.coordinator.restoreSelection()
+        }
         if pathChanged {
             context.coordinator.restoreScrollPosition()
         }
@@ -182,7 +188,10 @@ struct FileTableView: NSViewRepresentable {
         // selection notification doesn't write straight back).
         context.coordinator.beginProgrammaticSelection()
         defer { context.coordinator.endProgrammaticSelection() }
-        let targetRows = FileSelectionMapping.rowIndexes(for: selection, in: files)
+        let targetRows = FileSelectionMapping.rowIndexes(
+            for: context.coordinator.pendingSelection ?? selection,
+            in: files
+        )
         if tableView.selectedRowIndexes != targetRows {
             // Empty set deselects all; this also covers the "selection
             // cleared after refresh" case the old code special-cased.
@@ -199,8 +208,12 @@ struct FileTableView: NSViewRepresentable {
         var snapshots = FileSwipeSnapshotStore<PageSnapshot>()
         /// The folder whose rows the table currently shows.
         var displayedPath = RemotePath()
-        private var files: [RemoteFile] = []
+        private(set) var files: [RemoteFile] = []
         private var applyingSelection = false
+        /// Path changed; its selection comes back with its first listing.
+        var awaitingListing = false
+        /// Restored selection not yet written to the binding.
+        var pendingSelection: Set<RemoteFile.ID>?
         /// Last `ContentSize` we applied. `nil` = first render.
         var lastContentSize: ContentSize?
         /// `NSFilePromiseProvider.delegate` is weak — retain in-flight
@@ -223,10 +236,13 @@ struct FileTableView: NSViewRepresentable {
         func beginProgrammaticSelection() { applyingSelection = true }
         func endProgrammaticSelection() { applyingSelection = false }
 
-        func apply(files newFiles: [RemoteFile], to tableView: NSTableView) {
-            guard files != newFiles else { return }
+        /// Returns whether the rows changed.
+        @discardableResult
+        func apply(files newFiles: [RemoteFile], to tableView: NSTableView) -> Bool {
+            guard files != newFiles else { return false }
             files = newFiles
             tableView.reloadData()
+            return true
         }
 
         // MARK: Data source
@@ -340,6 +356,8 @@ struct FileTableView: NSViewRepresentable {
 
         func tableViewSelectionDidChange(_ notification: Notification) {
             guard let tableView, !applyingSelection else { return }
+            // A click beats a selection restore still in flight.
+            pendingSelection = nil
             parent.selection = FileSelectionMapping.selection(
                 forRows: tableView.selectedRowIndexes,
                 in: files
@@ -657,8 +675,12 @@ struct FileTableView: NSViewRepresentable {
             cell.imageWidthConstraint = imageWidth
             cell.imageHeightConstraint = imageHeight
 
+            let isSizeColumn = identifier.rawValue == FileSortKey.size.rawValue
             NSLayoutConstraint.activate([
-                imageView.leadingAnchor.constraint(equalTo: cell.leadingAnchor),
+                imageView.leadingAnchor.constraint(
+                    equalTo: cell.leadingAnchor,
+                    constant: isSizeColumn ? 0 : Spacing.xsmall.rawValue
+                ),
                 imageView.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
                 imageWidth,
                 imageHeight,
@@ -666,7 +688,10 @@ struct FileTableView: NSViewRepresentable {
                     equalTo: imageView.trailingAnchor,
                     constant: Spacing.xsmall.rawValue
                 ),
-                textField.trailingAnchor.constraint(equalTo: cell.trailingAnchor),
+                textField.trailingAnchor.constraint(
+                    equalTo: cell.trailingAnchor,
+                    constant: isSizeColumn ? -Spacing.small.rawValue : 0
+                ),
                 textField.centerYAnchor.constraint(equalTo: cell.centerYAnchor)
             ])
             return cell
@@ -727,5 +752,35 @@ final class FilePromiseDelegate: NSObject, NSFilePromiseProviderDelegate, @unche
                 complete(error)
             }
         }
+    }
+}
+
+/// Opts the header out of the macOS 26 scroll-edge style, which stacks a
+/// second hairline under the header's own. AppKit falls back to the classic
+/// header (one line) for cells that draw themselves.
+final class ClassicHeaderCell: NSTableHeaderCell {
+    convenience init(replacing original: NSTableHeaderCell, indent: CGFloat = 0) {
+        self.init(textCell: original.stringValue)
+        font = original.font
+        alignment = original.alignment
+        guard indent > 0 else { return }
+        let style = NSMutableParagraphStyle()
+        style.firstLineHeadIndent = indent
+        style.headIndent = indent
+        style.lineBreakMode = .byTruncatingTail
+        attributedStringValue = NSAttributedString(
+            string: original.stringValue,
+            attributes: [
+                .font: original.font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+                .foregroundColor: NSColor.headerTextColor,
+                .paragraphStyle: style
+            ]
+        )
+    }
+
+    // The override itself is the opt-out; it must stay.
+    // swiftlint:disable:next unneeded_override
+    override func draw(withFrame cellFrame: NSRect, in controlView: NSView) {
+        super.draw(withFrame: cellFrame, in: controlView)
     }
 }

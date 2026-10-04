@@ -36,4 +36,14 @@ struct FileSwipeSnapshotStoreTests {
         #expect(store.snapshot(for: ["a"]) == nil)
         #expect(store.offset(for: ["a"]) == CGPoint(x: 0, y: 5))
     }
+
+    @Test("remembers each folder's selection, empty when unknown")
+    func keepsSelection() {
+        var store = FileSwipeSnapshotStore<String>(capacity: 1)
+        store.store("a", offset: .zero, selection: ["x", "y"], for: ["a"])
+        store.store("b", offset: .zero, for: ["b"])
+        #expect(store.selection(for: ["a"]) == ["x", "y"])
+        #expect(store.selection(for: ["b"]).isEmpty)
+        #expect(store.selection(for: ["c"]).isEmpty)
+    }
 }

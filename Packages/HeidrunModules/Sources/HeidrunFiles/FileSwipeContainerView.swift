@@ -45,8 +45,6 @@ final class FileSwipeContainerView: NSView {
         scrollView.autoresizingMask = [.width, .height]
         addSubview(scrollView)
 
-        overlayView.frame = bounds
-        overlayView.autoresizingMask = [.width, .height]
         overlayView.wantsLayer = true
         overlayView.isHidden = true
         overlayView.layer?.masksToBounds = true
@@ -63,14 +61,31 @@ final class FileSwipeContainerView: NSView {
         fatalError("init(coder:) is not supported")
     }
 
-    /// Bitmap of the scroll view as it looks right now.
+    /// Bitmap of the rows area as it looks right now (header excluded).
     func capturePage() -> PageSnapshot? {
-        let pageBounds = scrollView.bounds
+        let pageBounds = pageRect
+        let fullBounds = scrollView.bounds
         guard pageBounds.width > 0, pageBounds.height > 0,
-              let bitmap = scrollView.bitmapImageRepForCachingDisplay(in: pageBounds)
+              let bitmap = scrollView.bitmapImageRepForCachingDisplay(in: fullBounds),
+              let context = NSGraphicsContext(bitmapImageRep: bitmap)
         else { return nil }
-        scrollView.cacheDisplay(in: pageBounds, to: bitmap)
-        guard let image = bitmap.cgImage else { return nil }
+        // Live text draws unsmoothed; `cacheDisplay` smooths it, which
+        // reads as heavier, brighter text during the slide.
+        context.cgContext.setShouldSmoothFonts(false)
+        // Draw everything, then crop: with a sub-rect, subviews come out
+        // shifted by its origin.
+        scrollView.displayIgnoringOpacity(fullBounds, in: context)
+        let scale = CGFloat(bitmap.pixelsWide) / fullBounds.width
+        let topOffset = scrollView.isFlipped
+            ? pageBounds.minY - fullBounds.minY
+            : fullBounds.maxY - pageBounds.maxY
+        let cropRect = CGRect(
+            x: (pageBounds.minX - fullBounds.minX) * scale,
+            y: topOffset * scale,
+            width: pageBounds.width * scale,
+            height: pageBounds.height * scale
+        ).integral
+        guard let image = bitmap.cgImage?.cropping(to: cropRect) else { return nil }
         return PageSnapshot(
             image: image,
             size: pageBounds.size,
@@ -83,7 +98,10 @@ final class FileSwipeContainerView: NSView {
     /// or density changed since) are dropped; the slide then shows plain
     /// background.
     func beginSlide(back: PageSnapshot?, forward: PageSnapshot?) {
-        let pageSize = scrollView.bounds.size
+        let pageFrame = pageRect
+        let pageSize = pageFrame.size
+        // Cover only the rows; the live column header stays put above.
+        overlayView.frame = convert(pageFrame, from: scrollView)
         currentPage = capturePage()
         backPage = back.flatMap { fits($0, size: pageSize) ? $0 : nil }
         forwardPage = forward.flatMap { fits($0, size: pageSize) ? $0 : nil }
@@ -135,6 +153,25 @@ final class FileSwipeContainerView: NSView {
         currentPage = nil
         backPage = nil
         forwardPage = nil
+    }
+
+    /// The scroll view's bounds minus the column header band, in scroll
+    /// view coordinates. The header's material background doesn't survive
+    /// `cacheDisplay`, so it never goes into a snapshot.
+    private var pageRect: NSRect {
+        var rect = scrollView.bounds
+        guard let headerClip = (scrollView.documentView as? NSTableView)?.headerView?.superview else {
+            return rect
+        }
+        let headerRect = scrollView.convert(headerClip.bounds, from: headerClip).intersection(rect)
+        guard !headerRect.isEmpty else { return rect }
+        if headerRect.minY <= rect.minY {
+            rect.size.height = rect.maxY - headerRect.maxY
+            rect.origin.y = headerRect.maxY
+        } else {
+            rect.size.height = headerRect.minY - rect.minY
+        }
+        return rect
     }
 
     private func fits(_ page: PageSnapshot, size pageSize: CGSize) -> Bool {
