@@ -408,7 +408,7 @@ final class FeatureSidebarCellView: NSTableCellView {
     /// Light text on the accent pill, label colour elsewhere.
     private var baseTint: NSColor {
         guard rowEnabled else { return .tertiaryLabelColor }
-        return selected ? .alternateSelectedControlTextColor : .labelColor
+        return selected && emphasized ? .alternateSelectedControlTextColor : .labelColor
     }
 
     func setSelected(_ isSelected: Bool, emphasized isEmphasized: Bool) {
@@ -428,7 +428,12 @@ final class FeatureSidebarCellView: NSTableCellView {
     }
 
     private func updateAppearance() {
-        let fill: NSColor = selected && rowEnabled ? .controlAccentColor : .clear
+        let fill: NSColor
+        if selected && rowEnabled {
+            fill = emphasized ? .controlAccentColor : .unemphasizedSelectedContentBackgroundColor
+        } else {
+            fill = .clear
+        }
         selectionView.layer?.backgroundColor = fill.cgColor
         setTint(inverted: false)
         badgeLabel.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
@@ -437,10 +442,28 @@ final class FeatureSidebarCellView: NSTableCellView {
 
 /// Row view that suppresses the system selection highlight and hands the
 /// selection state to its cell, which draws the pill itself. Mirrors
-/// `BookmarkRowView`.
+/// `BookmarkRowView`. Emphasis follows the app being active, not the
+/// table's first-responder state.
 final class FeatureSidebarRowView: NSTableRowView {
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        let center = NotificationCenter.default
+        for name in [NSApplication.didBecomeActiveNotification, NSApplication.didResignActiveNotification] {
+            center.addObserver(self, selector: #selector(appActivationChanged), name: name, object: nil)
+        }
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
     override func drawSelection(in dirtyRect: NSRect) {
         // Intentionally empty — the cell draws the selection pill.
+    }
+
+    @objc private func appActivationChanged() {
+        propagateSelection()
     }
 
     override var isSelected: Bool {
@@ -458,7 +481,7 @@ final class FeatureSidebarRowView: NSTableRowView {
 
     private func propagateSelection() {
         for case let cell as FeatureSidebarCellView in subviews {
-            cell.setSelected(isSelected, emphasized: isEmphasized)
+            cell.setSelected(isSelected, emphasized: NSApp.isActive)
         }
     }
 }
