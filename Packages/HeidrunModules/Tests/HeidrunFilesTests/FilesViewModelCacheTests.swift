@@ -75,9 +75,9 @@ struct FilesViewModelCacheTests {
         #expect(viewModel.files.map(\.name) == ["a-new"])
     }
 
-    @Test("an uncached folder keeps the old rows until the server answers")
+    @Test("an uncached folder shows no rows, not the previous folder's, until the server answers")
     @MainActor
-    func cacheMissKeepsOldRows() async {
+    func cacheMissClearsOldRows() async {
         let server = FakeListingServer()
         await server.set(["a-file"], at: ["a"])
         await server.set(["b-file"], at: ["b"])
@@ -87,7 +87,8 @@ struct FilesViewModelCacheTests {
         await server.holdNext()
         let navigation = Task { await viewModel.navigate(to: ["b"]) }
         await server.waitUntilHeld()
-        #expect(viewModel.files.map(\.name) == ["a-file"])
+        #expect(viewModel.currentPath == ["b"])
+        #expect(viewModel.files.isEmpty)
 
         await server.release()
         await navigation.value

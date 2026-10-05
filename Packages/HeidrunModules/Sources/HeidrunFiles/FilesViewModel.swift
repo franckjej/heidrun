@@ -330,13 +330,11 @@ public final class FilesViewModel {
         await show(next)
     }
 
-    /// Switch to `path`, showing its cached listing (if any) until the
-    /// server's arrives.
+    /// Switch to `path`, showing its cached listing (or nothing, never the
+    /// previous folder's rows) until the server's arrives.
     private func show(_ path: RemotePath) async {
         currentPath = path
-        if let cached = listingCache[path] {
-            files = cached
-        }
+        files = listingCache[path] ?? []
         await refresh()
     }
 
