@@ -5,6 +5,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.1] — 2026-10-05
+
+### Fixed
+- Opening a folder briefly showed the previous folder's files until the new listing arrived.
+- The sidebar selection turns grey while Heidrun is in the background, like other Mac sidebars.
+
 ## [1.6.0] — 2026-10-04
 
 ### Added
