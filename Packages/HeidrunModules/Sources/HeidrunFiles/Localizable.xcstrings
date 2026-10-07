@@ -1077,6 +1077,28 @@
         }
       }
     },
+    "Upload into “%@”…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In „%@“ hochladen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upload into “%@”…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“%@”にアップロード…"
+          }
+        }
+      }
+    },
     "Uploads and downloads will appear here while they're running and after they finish." : {
       "localizations" : {
         "de" : {

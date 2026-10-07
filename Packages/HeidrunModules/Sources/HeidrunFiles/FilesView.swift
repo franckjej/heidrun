@@ -351,12 +351,12 @@ public struct FilesView: View {
             ActionButton(
                 title: "Upload…",
                 systemImage: "arrow.up.circle",
-                isEnabled: viewModel.canUpload(to: viewModel.currentPath),
+                isEnabled: uploadDestination != nil,
                 size: .small,
                 fontWeight: .light,
                 bundle: .module
             ) {
-                pickAndUpload()
+                if let uploadDestination { pickAndUpload(into: uploadDestination) }
             }
 
             ActionButton(
@@ -456,6 +456,16 @@ public struct FilesView: View {
         return selectedEntries.first
     }
 
+    /// Where the Upload button sends files: the current folder, or — when
+    /// that's not uploadable — a selected drop box / upload folder the
+    /// user can't open.
+    private var uploadDestination: RemotePath? {
+        if viewModel.canUpload(to: viewModel.currentPath) { return viewModel.currentPath }
+        guard let folder = singleSelection, folder.isFolder, !folder.isParentPlaceholder else { return nil }
+        let folderPath = viewModel.currentPath.appending(folder.name)
+        return viewModel.canUpload(to: folderPath) ? folderPath : nil
+    }
+
     /// The single selection if it's something the preview panel can show.
     /// Drives the enabled state of the Quick Look button.
     private var previewableSelection: RemoteFile? {
@@ -550,6 +560,7 @@ public struct FilesView: View {
             downloadMany: { entries in requestDownloadSelection(entries) },
             deleteMany: { entries in deleteTargets = entries },
             uploadHere: { pickAndUpload() },
+            uploadInto: { folder in pickAndUpload(into: viewModel.currentPath.appending(folder.name)) },
             newFolder: {
                 newFolderDraft = ""
                 creatingFolder = true
@@ -688,7 +699,8 @@ public struct FilesView: View {
 
     // MARK: - Picker
 
-    private func pickAndUpload() {
+    /// `destination` defaults to the current folder.
+    private func pickAndUpload(into destination: RemotePath? = nil) {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
@@ -699,9 +711,9 @@ public struct FilesView: View {
         Task {
             for url in urls {
                 if Self.isDirectory(url) {
-                    await viewModel.uploadFolder(folderURL: url)
+                    await viewModel.uploadFolder(folderURL: url, at: destination)
                 } else {
-                    await viewModel.upload(fileURL: url)
+                    await viewModel.upload(fileURL: url, at: destination)
                 }
             }
         }
