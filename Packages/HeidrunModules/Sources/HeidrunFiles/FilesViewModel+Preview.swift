@@ -1,9 +1,10 @@
 import Foundation
+import ImageIO
 import HeidrunCore
 
 /// In-memory Quick Look pipeline for `FilesViewModel`. Streams a
 /// small file via the existing download side channel, caps the size,
-/// decodes it as text, and exposes the result through `previewState`.
+/// decodes it as text or an image, and exposes the result through `previewState`.
 extension FilesViewModel {
     /// Pull `entry` into memory and decode it for the Quick Look panel.
     /// Rejects folders, unsupported types, and anything larger than
@@ -14,9 +15,10 @@ extension FilesViewModel {
             previewState = .failed("\"\(entry.name)\" can't be previewed.")
             return
         }
-        guard UInt64(entry.size) <= Self.maxPreviewBytes else {
+        let byteLimit = Self.maxPreviewBytes(for: entry)
+        guard UInt64(entry.size) <= byteLimit else {
             let limit = ByteCountFormatter.string(
-                fromByteCount: Int64(Self.maxPreviewBytes),
+                fromByteCount: Int64(byteLimit),
                 countStyle: .file
             )
             previewState = .failed(
@@ -65,14 +67,15 @@ extension FilesViewModel {
         previewHandle = handle
 
         let expectedTotal = max(UInt64(entry.size), 1)
+        let byteLimit = Self.maxPreviewBytes(for: entry)
         var buffer = Data()
-        buffer.reserveCapacity(min(Int(entry.size), Int(Self.maxPreviewBytes)))
+        buffer.reserveCapacity(min(Int(entry.size), Int(byteLimit)))
 
         do {
             for try await chunk in downloadBytes(handle) {
                 if Task.isCancelled { return }
                 buffer.append(chunk)
-                if UInt64(buffer.count) > Self.maxPreviewBytes {
+                if UInt64(buffer.count) > byteLimit {
                     let cancelClosure = cancelTransferAt
                     let abortedHandle = handle
                     Task { _ = try? await cancelClosure(abortedHandle) }
@@ -93,6 +96,15 @@ extension FilesViewModel {
         previewHandle = nil
         if Task.isCancelled { return }
 
+        if Self.isPreviewableImage(entry) {
+            guard Self.isDecodableImage(buffer) else {
+                previewState = .failed("Couldn't decode \"\(entry.name)\" as an image.")
+                return
+            }
+            previewState = .ready(PreviewPayload(fileName: entry.name, kind: .image(buffer)))
+            return
+        }
+
         guard let decoded = Self.decodeAsText(buffer) else {
             previewState = .failed("Couldn't decode \"\(entry.name)\" as text.")
             return
@@ -100,6 +112,12 @@ extension FilesViewModel {
         previewState = .ready(
             PreviewPayload(fileName: entry.name, kind: .text(decoded))
         )
+    }
+
+    /// True when ImageIO recognises the bytes and yields at least one frame.
+    nonisolated static func isDecodableImage(_ data: Data) -> Bool {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return false }
+        return CGImageSourceGetCount(source) > 0
     }
 
     /// Try a small ordered list of encodings; pick the first that round-trips

@@ -77,6 +77,17 @@ struct FilePreviewPanel: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.small)
             }
+        case .image(let data):
+            if let image = NSImage(data: data) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: image.size.width, maxHeight: image.size.height)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.small)
+            } else {
+                placeholder(title: "Couldn’t preview", isError: true)
+            }
         }
     }
 

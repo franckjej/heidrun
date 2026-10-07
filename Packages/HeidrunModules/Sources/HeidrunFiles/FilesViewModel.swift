@@ -88,6 +88,17 @@ public final class FilesViewModel {
 
     /// Larger files fall back to the regular Download path.
     public static let maxPreviewBytes: UInt64 = 5 * 1024 * 1024
+    /// Images get a higher cap — camera JPEGs routinely exceed 5 MB.
+    public static let maxImagePreviewBytes: UInt64 = 25 * 1024 * 1024
+
+    /// Formats ImageIO decodes natively.
+    public static let previewableImageExtensions: Set<String> = [
+        "png", "jpg", "jpeg", "gif", "tif", "tiff", "bmp",
+        "heic", "heif", "webp", "ico", "icns"
+    ]
+
+    /// Classic Mac HFS types for extension-less images.
+    static let previewableImageTypes: Set<String> = ["PNGf", "JPEG", "GIFf", "TIFF", "BMP "]
 
     /// Conservative — anything missing still works via Download.
     public static let previewableTextExtensions: Set<String> = [
@@ -103,9 +114,20 @@ public final class FilesViewModel {
         guard !entry.isFolder, !entry.isUnresolvedAlias else { return false }
         let fileExtension = (entry.name as NSString).pathExtension.lowercased()
         if previewableTextExtensions.contains(fileExtension) { return true }
+        if isPreviewableImage(entry) { return true }
         // Classic Mac "TEXT" — extension-less files on older Hotline trees
         // where the HFS type carries the only hint.
         return entry.type.stringValue == "TEXT"
+    }
+
+    static func isPreviewableImage(_ entry: RemoteFile) -> Bool {
+        let fileExtension = (entry.name as NSString).pathExtension.lowercased()
+        return previewableImageExtensions.contains(fileExtension)
+            || previewableImageTypes.contains(entry.type.stringValue)
+    }
+
+    static func maxPreviewBytes(for entry: RemoteFile) -> UInt64 {
+        isPreviewableImage(entry) ? maxImagePreviewBytes : maxPreviewBytes
     }
 
     var previewTask: Task<Void, Never>?

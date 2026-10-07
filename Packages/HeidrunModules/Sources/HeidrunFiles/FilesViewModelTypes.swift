@@ -105,10 +105,11 @@ extension FilesViewModel {
 
     // MARK: - Quick Look preview
 
-    /// Phase 1 carries text only; PDF / image / AV variants slot in
-    /// here without changing call sites that switch on `kind`.
+    /// What the Quick Look panel renders.
     public enum PreviewKind: Sendable, Equatable {
         case text(String)
+        /// Encoded image bytes ImageIO has already validated.
+        case image(Data)
     }
 
     /// Decoded contents of a file pulled into memory for preview.
