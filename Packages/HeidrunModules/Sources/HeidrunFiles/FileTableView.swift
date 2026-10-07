@@ -40,6 +40,9 @@ struct FileRowActions {
     /// Delete several entries at once. Drives "Delete N Items…".
     var deleteMany: ([RemoteFile]) -> Void
     var uploadHere: () -> Void
+    /// Pick local files and upload them into a folder row (drop boxes the
+    /// user can't open).
+    var uploadInto: (RemoteFile) -> Void
     var newFolder: () -> Void
     var refresh: () -> Void
     var secondaryLabel: (RemoteFile) -> String
@@ -584,6 +587,13 @@ struct FileTableView: NSViewRepresentable {
                 String(localized: "Upload Here…", bundle: .module),
                 isEnabled: parent.canUploadTo(parent.currentPath)
             ) { actions.uploadHere() }
+            if entry.isFolder, !entry.isParentPlaceholder,
+               parent.canUploadTo(parent.currentPath.appending(entry.name)) {
+                addItem(
+                    to: menu,
+                    String(localized: "Upload into “\(entry.name)”…", bundle: .module)
+                ) { actions.uploadInto(entry) }
+            }
             addItem(
                 to: menu,
                 String(localized: "New Folder…", bundle: .module),
