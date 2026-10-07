@@ -5,6 +5,16 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.6.2] — 2026-10-07
+
+### Added
+- **Quick Look shows images:** PNG, JPEG, GIF, TIFF, HEIC, WebP and more.
+- **Upload into a drop box** from its context menu, or select it and click Upload….
+- A close button hides the transfer box under the file list without clearing the Task Manager.
+
+### Changed
+- Space bar closes Quick Look again when it already shows the selected file.
+
 ## [1.6.1] — 2026-10-05
 
 ### Fixed
