@@ -567,6 +567,28 @@
         }
       }
     },
+    "Hide Transfers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übertragungen ausblenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Transfers"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "転送を隠す"
+          }
+        }
+      }
+    },
     "Loading…" : {
       "localizations" : {
         "de" : {

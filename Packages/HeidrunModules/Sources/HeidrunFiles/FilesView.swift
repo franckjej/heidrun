@@ -21,6 +21,9 @@ public struct FilesView: View {
     /// Merge / Cancel, one at a time.
     @State private var folderConflicts: [RemoteFile] = []
     @State private var showingTaskManager: Bool = false
+    /// Highest transfer ID the user closed the drawer on; a newer
+    /// transfer brings it back.
+    @State private var drawerDismissedThroughID: UInt32?
     @State private var previewWindowController = FilePreviewWindowController()
     /// The file last sent to the preview panel, for space-bar toggling.
     @State private var previewedFile: PreviewedFile?
@@ -44,9 +47,13 @@ public struct FilesView: View {
             breadcrumb
             Divider()
             fileList
-            if !viewModel.transfers.isEmpty {
+            if TransferDrawer.isShown(viewModel.transfers, dismissedThroughID: drawerDismissedThroughID) {
                 Divider()
-                transferDrawer
+                TransferDrawer(
+                    viewModel: viewModel,
+                    dismissedThroughID: $drawerDismissedThroughID,
+                    showTaskManager: { showingTaskManager = true }
+                )
             }
             // Errors surface through the scene-root ErrorPresenter.
         }
@@ -626,75 +633,8 @@ public struct FilesView: View {
 
     // MARK: - Transfer drawer
 
-    /// Compact drawer: at most one upload + one download "primary" tile
-    /// (newest running, falling back to newest finished). The full
-    /// history lives behind Task Manager.
-    private var transferDrawer: some View {
-        VStack(alignment: .leading, spacing: Spacing.xsmall.rawValue) {
-            HStack(spacing: Spacing.xsmall.rawValue) {
-                Label(String(localized: "Transfers", bundle: .module), systemImage: "arrow.up.arrow.down.circle")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                if hasFinishedTransfers {
-                    Button(String(localized: "Clear", bundle: .module)) {
-                        viewModel.clearFinishedTransfers()
-                    }
-                    .buttonStyle(.borderless)
-                    .controlSize(.small)
-                    .foregroundStyle(.secondary)
-                }
-                Button {
-                    showingTaskManager = true
-                } label: {
-                    Label(
-                        viewModel.transfers.count > visibleTransfers.count
-                            ? "Task Manager (\(viewModel.transfers.count))"
-                            : "Task Manager",
-                        systemImage: "list.bullet.rectangle"
-                    )
-                    .labelStyle(.titleAndIcon)
-                }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
-            }
-            .padding(.horizontal, .xsmall)
-
-            ForEach(visibleTransfers, id: \.id) { state in
-                TransferTile(state: state) {
-                    Task { await viewModel.cancel(state.handle) }
-                }
-            }
-        }
-        .padding(.horizontal, .xsmall)
-        .padding(.vertical, .xxsmall)
-    }
-
     private var sortedTransfers: [FilesViewModel.TransferState] {
         viewModel.transfers.values.sorted { $0.handle.transferID > $1.handle.transferID }
-    }
-
-    /// Download first when both directions exist (mirrors the
-    /// arrow.down.arrow.up reading direction).
-    private var visibleTransfers: [FilesViewModel.TransferState] {
-        [
-            primaryTransfer(direction: .download),
-            primaryTransfer(direction: .upload)
-        ].compactMap { $0 }
-    }
-
-    private var hasFinishedTransfers: Bool {
-        viewModel.transfers.values.contains(where: { $0.status != .running })
-    }
-
-    /// Newest = highest transferID (actor mints monotonically).
-    private func primaryTransfer(direction: FilesViewModel.TransferDirection) -> FilesViewModel.TransferState? {
-        let candidates = viewModel.transfers.values.filter { $0.direction == direction }
-        let running = candidates.filter { $0.status == .running }
-        if let mostRecentRunning = running.max(by: { $0.handle.transferID < $1.handle.transferID }) {
-            return mostRecentRunning
-        }
-        return candidates.max(by: { $0.handle.transferID < $1.handle.transferID })
     }
 
     // MARK: - Picker
