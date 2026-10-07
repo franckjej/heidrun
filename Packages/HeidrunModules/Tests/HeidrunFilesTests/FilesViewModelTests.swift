@@ -561,6 +561,25 @@ struct FilesViewModelPartialDownloadTests {
         #expect(FilesViewModel.isPreviewable(RemoteFile(name: "readme", type: "TEXT")))
     }
 
+    @Test("isPreviewable accepts image extensions and HFS image types")
+    @MainActor
+    func isPreviewableAcceptsImages() {
+        #expect(FilesViewModel.isPreviewable(RemoteFile(name: "logo.png")))
+        #expect(FilesViewModel.isPreviewable(RemoteFile(name: "photo.JPG")))
+        #expect(FilesViewModel.isPreviewable(RemoteFile(name: "scan", type: "JPEG")))
+        #expect(FilesViewModel.maxPreviewBytes(for: RemoteFile(name: "photo.jpeg")) == FilesViewModel.maxImagePreviewBytes)
+        #expect(FilesViewModel.maxPreviewBytes(for: RemoteFile(name: "notes.txt")) == FilesViewModel.maxPreviewBytes)
+    }
+
+    @Test("isDecodableImage accepts PNG bytes and rejects text")
+    func isDecodableImageChecksBytes() throws {
+        // 1×1 transparent PNG.
+        let pngBytes = try #require(Data(base64Encoded:
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="))
+        #expect(FilesViewModel.isDecodableImage(pngBytes))
+        #expect(!FilesViewModel.isDecodableImage(Data("not an image".utf8)))
+    }
+
     @Test("previewFile rejects files larger than the preview cap")
     @MainActor
     func previewRejectsOversizedFiles() async {

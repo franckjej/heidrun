@@ -77,6 +77,17 @@ struct FilePreviewPanel: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.small)
             }
+        case .image(let data):
+            if let image = NSImage(data: data) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: image.size.width, maxHeight: image.size.height)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.small)
+            } else {
+                placeholder(title: "Couldn’t preview", isError: true)
+            }
         }
     }
 
@@ -103,6 +114,12 @@ struct FilePreviewPanel: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
+
+/// Identifies the file shown in the preview panel.
+struct PreviewedFile: Equatable {
+    let path: RemotePath
+    let name: String
 }
 
 /// Owns the `NSPanel` that hosts `FilePreviewPanel`. Lives on a `@State`
@@ -241,6 +258,8 @@ final class FilePreviewWindowController {
         }
         panel.setFrameAutosaveName("Heidrun.PreviewPanel\(suffix)")
     }
+
+    var isVisible: Bool { panel?.isVisible ?? false }
 
     /// Close the panel programmatically (e.g. when the connection is torn
     /// down). Safe to call when nothing is open.

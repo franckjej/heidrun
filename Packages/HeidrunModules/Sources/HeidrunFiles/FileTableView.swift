@@ -27,6 +27,8 @@ struct FileRowActions {
     var activate: (RemoteFile) -> Void
     var download: (RemoteFile) -> Void
     var quickLook: (RemoteFile) -> Void
+    /// Space bar: open Quick Look, or close it if it already shows the row.
+    var toggleQuickLook: (RemoteFile) -> Void
     var isPreviewable: (RemoteFile) -> Bool
     var navigateInto: (RemoteFile) -> Void
     var getInfo: (RemoteFile) -> Void
@@ -106,7 +108,7 @@ struct FileTableView: NSViewRepresentable {
             coordinator?.invokeForSelectedRow { $0.getInfo }
         }
         tableView.onSpace = { [weak coordinator = context.coordinator] in
-            coordinator?.invokeForSelectedRow { $0.quickLook }
+            coordinator?.invokeForSelectedRow { $0.toggleQuickLook }
         }
         Self.wireNavigation(tableView, to: context.coordinator)
         tableView.dataSource = context.coordinator
