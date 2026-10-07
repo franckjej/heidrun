@@ -105,6 +105,12 @@ struct FilePreviewPanel: View {
     }
 }
 
+/// Identifies the file shown in the preview panel.
+struct PreviewedFile: Equatable {
+    let path: RemotePath
+    let name: String
+}
+
 /// Owns the `NSPanel` that hosts `FilePreviewPanel`. Lives on a `@State`
 /// in `FilesView` so it survives view re-renders. The panel is a
 /// utility-style floating panel: it stays above the connection window,
@@ -241,6 +247,8 @@ final class FilePreviewWindowController {
         }
         panel.setFrameAutosaveName("Heidrun.PreviewPanel\(suffix)")
     }
+
+    var isVisible: Bool { panel?.isVisible ?? false }
 
     /// Close the panel programmatically (e.g. when the connection is torn
     /// down). Safe to call when nothing is open.

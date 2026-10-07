@@ -22,6 +22,8 @@ public struct FilesView: View {
     @State private var folderConflicts: [RemoteFile] = []
     @State private var showingTaskManager: Bool = false
     @State private var previewWindowController = FilePreviewWindowController()
+    /// The file last sent to the preview panel, for space-bar toggling.
+    @State private var previewedFile: PreviewedFile?
     @State private var sortKey: FileSortKey = .name
     @State private var sortAscending: Bool = true
 
@@ -466,6 +468,7 @@ public struct FilesView: View {
     /// panel forward. Always pre-opens the panel so the user sees the
     /// loading state while the bytes drain in.
     private func presentPreview(for entry: RemoteFile) {
+        previewedFile = PreviewedFile(path: viewModel.currentPath, name: entry.name)
         Task { await viewModel.previewFile(entry) }
         let hostWindow = NSApp.keyWindow ?? NSApp.mainWindow
         previewWindowController.show(
@@ -473,6 +476,17 @@ public struct FilesView: View {
             near: hostWindow,
             serverIdentifier: serverIdentifier
         )
+    }
+
+    /// Finder-style space bar: close the panel when it already shows
+    /// `entry`, otherwise preview it.
+    private func togglePreview(for entry: RemoteFile) {
+        let requested = PreviewedFile(path: viewModel.currentPath, name: entry.name)
+        if previewWindowController.isVisible, previewedFile == requested {
+            previewWindowController.close()
+        } else {
+            presentPreview(for: entry)
+        }
     }
 
     // MARK: - List
@@ -524,6 +538,7 @@ public struct FilesView: View {
                 }
             },
             quickLook: { presentPreview(for: $0) },
+            toggleQuickLook: { togglePreview(for: $0) },
             isPreviewable: { FilesViewModel.isPreviewable($0) },
             navigateInto: { entry in Task { await viewModel.navigateInto(entry) } },
             getInfo: { infoTarget = $0 },
