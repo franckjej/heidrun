@@ -9,8 +9,9 @@ import CommonTools
 /// panes share the same shape.
 struct BundleListActions {
     /// Single-click handler. Folders should descend; categories should
-    /// load their threads. Caller decides which.
-    var navigate: (NewsBundle) -> Void
+    /// load their threads. Caller decides which. `byKeyboard` replaces
+    /// the history step instead of adding one.
+    var navigate: (_ bundle: NewsBundle, _ byKeyboard: Bool) -> Void
     /// Menu entries built lazily on right-click.
     var menuItems: (NewsBundle) -> [ThreadMenuItem]
 }
@@ -149,7 +150,7 @@ struct BundleTableView: NSViewRepresentable {
             guard let tableView, !applyingSelection else { return }
             let row = tableView.selectedRow
             guard row >= 0, row < bundles.count else { return }
-            parent.actions.navigate(bundles[row])
+            parent.actions.navigate(bundles[row], NSApp.currentEvent?.type == .keyDown)
         }
 
         // MARK: Context menu

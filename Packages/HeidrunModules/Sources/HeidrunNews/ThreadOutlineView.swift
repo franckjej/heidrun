@@ -8,8 +8,9 @@ import CommonTools
 /// context menu, drag-out payload). Closures so `ThreadedNewsScreen`
 /// keeps owning the sheets / alerts / clipboard formatter.
 struct ThreadOutlineActions {
-    /// User clicked / keyboard-selected a row — drive `openThread`.
-    var open: (NewsThread) -> Void
+    /// User clicked / keyboard-selected a row — drive `openThread`;
+    /// `byKeyboard` replaces the history step instead of adding one.
+    var open: (_ thread: NewsThread, _ byKeyboard: Bool) -> Void
     /// Items for the per-row context menu. Built lazily on right-click;
     /// each entry's handler runs when the user picks it.
     var menuItems: (NewsThread) -> [ThreadMenuItem]
@@ -236,7 +237,7 @@ struct ThreadOutlineView: NSViewRepresentable {
             guard row >= 0,
                   let node = outlineView.item(atRow: row) as? ThreadOutlineNode
             else { return }
-            parent.actions.open(node.thread)
+            parent.actions.open(node.thread, NSApp.currentEvent?.type == .keyDown)
         }
 
         // MARK: Context menu
