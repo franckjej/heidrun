@@ -8,11 +8,14 @@ extension FileTableView {
         tableView.onBack = { [weak coordinator] in coordinator?.parent.actions.goBack() }
         tableView.onForward = { [weak coordinator] in coordinator?.parent.actions.goForward() }
         tableView.onUp = { [weak coordinator] in coordinator?.parent.actions.navigateUp() }
-        tableView.canGoBack = { [weak coordinator] in coordinator?.parent.actions.backTarget() != nil }
-        tableView.canGoForward = { [weak coordinator] in coordinator?.parent.actions.forwardTarget() != nil }
-        tableView.onSwipeBegan = { [weak coordinator] in coordinator?.swipeBegan() }
-        tableView.onSwipeChanged = { [weak coordinator] amount in coordinator?.container?.updateSlide(amount: amount) }
-        tableView.onSwipeFinished = { [weak coordinator] in coordinator?.container?.endSlide() }
+        let tracker = tableView.swipeTracker
+        tracker.canGoBack = { [weak coordinator] in coordinator?.parent.actions.backTarget() != nil }
+        tracker.canGoForward = { [weak coordinator] in coordinator?.parent.actions.forwardTarget() != nil }
+        tracker.onBack = { [weak coordinator] in coordinator?.parent.actions.goBack() }
+        tracker.onForward = { [weak coordinator] in coordinator?.parent.actions.goForward() }
+        tracker.onSwipeBegan = { [weak coordinator] in coordinator?.swipeBegan() }
+        tracker.onSwipeChanged = { [weak coordinator] amount in coordinator?.container?.updateSlide(amount: amount) }
+        tracker.onSwipeFinished = { [weak coordinator] in coordinator?.container?.endSlide() }
     }
 }
 

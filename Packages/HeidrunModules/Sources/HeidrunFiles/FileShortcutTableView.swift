@@ -1,4 +1,5 @@
 import AppKit
+import HeidrunUI
 
 /// NSTableView adding the list's shortcuts: Cmd+I → Get Info, Space →
 /// Quick Look, Cmd+[ / Cmd+] / Cmd+↑ → back / forward / up. Also turns
@@ -10,14 +11,8 @@ final class FileShortcutTableView: NSTableView {
     var onBack: () -> Void = {}
     var onForward: () -> Void = {}
     var onUp: () -> Void = {}
-    var canGoBack: () -> Bool = { false }
-    var canGoForward: () -> Bool = { false }
-    /// Slide hooks: began, continuous amount (> 0 back, < 0 forward), done.
-    var onSwipeBegan: () -> Void = {}
-    var onSwipeChanged: (CGFloat) -> Void = { _ in }
-    var onSwipeFinished: () -> Void = {}
-    /// Bumped per two-finger swipe; only the newest one drives the slide.
-    private var swipeSerial = 0
+    /// Two-finger swipe → back/forward + slide; set up by the owner.
+    let swipeTracker = SwipeTracker()
 
     override func keyDown(with event: NSEvent) {
         let chars = event.charactersIgnoringModifiers ?? ""
@@ -47,50 +42,10 @@ final class FileShortcutTableView: NSTableView {
         super.keyDown(with: event)
     }
 
-    /// Two-finger horizontal swipe ("Swipe between pages"): fingers right
-    /// = back, left = forward, like Safari.
+    /// Two-finger horizontal swipe ("Swipe between pages").
     override func scrollWheel(with event: NSEvent) {
-        let canBack = canGoBack()
-        let canForward = canGoForward()
-        guard event.phase == .began,
-              NSEvent.isSwipeTrackingFromScrollEventsEnabled,
-              abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY),
-              canBack || canForward
-        else {
+        if !swipeTracker.track(event) {
             super.scrollWheel(with: event)
-            return
-        }
-        swipeSerial += 1
-        let serial = swipeSerial
-        onSwipeBegan()
-        event.trackSwipeEvent(
-            options: [.lockDirection, .clampGestureAmount],
-            dampenAmountThresholdMin: canForward ? -1 : 0,
-            max: canBack ? 1 : 0
-        ) { [weak self] gestureAmount, phase, isComplete, stop in
-            guard let self else { return }
-            // A newer swipe started while this one was still settling:
-            // AppKit keeps calling both, so drop the old one.
-            guard serial == self.swipeSerial else {
-                stop.pointee = true
-                return
-            }
-            // No target that way: hold still instead of rubber-banding a
-            // blank page in.
-            let amount = min(max(gestureAmount, canForward ? -1 : 0), canBack ? 1 : 0)
-            self.onSwipeChanged(amount)
-            // Past the threshold: navigate now so the cached listing is in
-            // place by the time the slide finishes.
-            if phase == .ended {
-                if amount > 0 {
-                    self.onBack()
-                } else if amount < 0 {
-                    self.onForward()
-                }
-            }
-            if isComplete {
-                self.onSwipeFinished()
-            }
         }
     }
 
