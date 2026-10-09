@@ -21,10 +21,10 @@ public final class ThreadedNewsViewModel {
 
     /// Selecting a category KEEPS `currentPath` where it is so the user
     /// can flip between sibling categories without re-navigating.
-    public private(set) var currentPath: RemotePath = []
+    public internal(set) var currentPath: RemotePath = []
 
-    public private(set) var bundles: [NewsBundle] = []
-    public private(set) var selectedBundleID: NewsBundle.ID?
+    public internal(set) var bundles: [NewsBundle] = []
+    public internal(set) var selectedBundleID: NewsBundle.ID?
 
     /// Connected account's privileges (fed by the host from the User Access
     /// push). Fail-open until set. UI hint only — the server still enforces.
@@ -40,8 +40,8 @@ public final class ThreadedNewsViewModel {
 
     // MARK: - Right pane
 
-    public private(set) var threads: [NewsThread] = []
-    public private(set) var selectedThreadID: UInt16?
+    public internal(set) var threads: [NewsThread] = []
+    public internal(set) var selectedThreadID: UInt16?
 
     /// Reads from `threads` (not `loadedThread`) so a top-level / empty-
     /// body post is fully actionable the moment its row is selected —
@@ -51,7 +51,7 @@ public final class ThreadedNewsViewModel {
         return threads.first { $0.threadID == id }
     }
 
-    public private(set) var loadedThread: NewsThread?
+    public internal(set) var loadedThread: NewsThread?
 
     /// Prefer `loadedThread` (TX 400, carries the body) when it matches
     /// the current selection; fall back to the list metadata (TX 371).
@@ -75,6 +75,21 @@ public final class ThreadedNewsViewModel {
     public private(set) var isGatheringCopy: Bool = false
 
     public var isLoading: Bool { isLoadingBundles || isLoadingThreads || isLoadingBody }
+
+    // MARK: - History
+
+    /// Locations visited before / after the current one.
+    public internal(set) var backStack: [NewsLocation] = []
+    public internal(set) var forwardStack: [NewsLocation] = []
+
+    /// Called just before a location is left for a new step, so the view
+    /// can snapshot it for the swipe slide.
+    @ObservationIgnored public var onWillLeaveLocation: ((NewsLocation) -> Void)?
+
+    /// Last successful fetches, shown at once on revisits while refreshing.
+    @ObservationIgnored var bundlesCache: [RemotePath: [NewsBundle]] = [:]
+    @ObservationIgnored var threadsCache: [RemotePath: [NewsThread]] = [:]
+    @ObservationIgnored var bodyCache: [NewsThreadKey: NewsThread] = [:]
 
     public var selectedCategoryPath: RemotePath? {
         guard let id = selectedBundleID, id.kind == .category else { return nil }
@@ -157,7 +172,8 @@ public final class ThreadedNewsViewModel {
     /// just highlight without descending (descent requires `descend` /
     /// double-click). Matches Finder semantics so a freshly-created empty
     /// folder doesn't make the user feel like they lost their work.
-    public func select(_ bundle: NewsBundle) async {
+    public func select(_ bundle: NewsBundle, replacesHistory: Bool = false) async {
+        recordHistory(toward: NewsLocation(path: currentPath, bundleID: bundle.id), replacing: replacesHistory)
         selectedBundleID = bundle.id
         clearThreadState()
         if bundle.kind == .category {
@@ -168,7 +184,9 @@ public final class ThreadedNewsViewModel {
     /// Double-tap on a folder. No-op for categories (terminal nodes).
     public func descend(into bundle: NewsBundle) async {
         guard bundle.kind == .bundle else { return }
-        currentPath = currentPath.appending(bundle.title)
+        let path = currentPath.appending(bundle.title)
+        recordHistory(toward: NewsLocation(path: path), replacing: false)
+        currentPath = path
         selectedBundleID = nil
         clearThreadState()
         await refreshBundles()
@@ -176,6 +194,7 @@ public final class ThreadedNewsViewModel {
 
     public func navigateUp() async {
         guard !currentPath.isRoot else { return }
+        recordHistory(toward: NewsLocation(path: currentPath.parent), replacing: false)
         currentPath = currentPath.parent
         selectedBundleID = nil
         clearThreadState()
@@ -187,7 +206,9 @@ public final class ThreadedNewsViewModel {
     public func navigate(toDepth depth: Int) async {
         let count = currentPath.components.count
         guard depth >= 0, depth < count else { return }
-        currentPath = RemotePath(components: Array(currentPath.components.prefix(depth)))
+        let path = RemotePath(components: Array(currentPath.components.prefix(depth)))
+        recordHistory(toward: NewsLocation(path: path), replacing: false)
+        currentPath = path
         selectedBundleID = nil
         clearThreadState()
         await refreshBundles()
@@ -209,23 +230,36 @@ public final class ThreadedNewsViewModel {
         await refreshBundles()
     }
 
-    private func refreshBundles() async {
+    func refreshBundles() async {
+        let path = currentPath
+        bundles = bundlesCache[path] ?? []
         isLoadingBundles = true
         defer { isLoadingBundles = false }
         do {
-            bundles = try await fetchBundles(currentPath)
+            let listing = try await fetchBundles(path)
+            bundlesCache[path] = listing
+            guard currentPath == path else { return }
+            bundles = listing
         } catch {
+            bundlesCache[path] = nil
+            guard currentPath == path else { return }
             present(error)
             bundles = []
         }
     }
 
-    private func loadThreads(at path: RemotePath) async {
+    func loadThreads(at path: RemotePath) async {
+        threads = threadsCache[path] ?? []
         isLoadingThreads = true
         defer { isLoadingThreads = false }
         do {
-            threads = try await fetchThreads(path)
+            let listing = try await fetchThreads(path)
+            threadsCache[path] = listing
+            guard selectedCategoryPath == path else { return }
+            threads = listing
         } catch {
+            threadsCache[path] = nil
+            guard selectedCategoryPath == path else { return }
             present(error)
             threads = []
         }
@@ -233,7 +267,11 @@ public final class ThreadedNewsViewModel {
 
     // MARK: - Thread bodies
 
-    public func openThread(_ thread: NewsThread) async {
+    public func openThread(_ thread: NewsThread, replacesHistory: Bool = false) async {
+        recordHistory(
+            toward: NewsLocation(path: currentPath, bundleID: selectedBundleID, threadID: thread.threadID),
+            replacing: replacesHistory
+        )
         selectedThreadID = thread.threadID
         let mime = thread.elements.first?.mimeType ?? ThreadElement.plainTextType
         await openThread(threadID: thread.threadID, type: mime)
@@ -242,11 +280,18 @@ public final class ThreadedNewsViewModel {
     public func openThread(threadID: UInt16, type: String = ThreadElement.plainTextType) async {
         guard let path = selectedCategoryPath else { return }
         selectedThreadID = threadID
-        isLoadingBody = true
+        let key = NewsThreadKey(categoryPath: path, threadID: threadID)
+        let cached = bodyCache[key]
+        loadedThread = cached
+        isLoadingBody = cached == nil
         defer { isLoadingBody = false }
         do {
-            loadedThread = try await fetchThread(path, threadID, type)
+            let thread = try await fetchThread(path, threadID, type)
+            bodyCache[key] = thread
+            guard selectedCategoryPath == path, selectedThreadID == threadID else { return }
+            loadedThread = thread
         } catch {
+            bodyCache[key] = nil
             present(error)
         }
     }
@@ -311,6 +356,7 @@ public final class ThreadedNewsViewModel {
         guard let path = selectedCategoryPath else { return }
         do {
             try await deleteThreadAt(path, threadID, cascade)
+            bodyCache[NewsThreadKey(categoryPath: path, threadID: threadID)] = nil
             if selectedThreadID == threadID { dismissLoadedThread() }
             await reloadThreadsAndBundles(at: path)
         } catch {
@@ -335,6 +381,7 @@ public final class ThreadedNewsViewModel {
         let parentID = original.parentID
         do {
             try await deleteThreadAt(path, threadID, false)
+            bodyCache[NewsThreadKey(categoryPath: path, threadID: threadID)] = nil
             try await postThread(path, parentID, newTitle, type, newBody)
             await reloadThreadsAndBundles(at: path)
         } catch {
@@ -411,7 +458,7 @@ public final class ThreadedNewsViewModel {
 
     // MARK: - Private helpers
 
-    private func clearThreadState() {
+    func clearThreadState() {
         threads = []
         selectedThreadID = nil
         loadedThread = nil
