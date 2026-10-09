@@ -1,19 +1,17 @@
 import CoreGraphics
 import HeidrunCore
+import HeidrunUI
 
 /// Per-folder page snapshots, scroll offsets and selections for the swipe
-/// slide. Snapshots are window-sized bitmaps, so only the `capacity` most
-/// recent are kept; offsets and selections are tiny and kept for every folder.
+/// slide. Only the most recent snapshots are kept; offsets and selections
+/// are tiny and kept for every folder.
 struct FileSwipeSnapshotStore<Snapshot> {
-    let capacity: Int
-    private var snapshots: [RemotePath: Snapshot] = [:]
-    /// Oldest first.
-    private var recency: [RemotePath] = []
+    private var snapshots: SnapshotCache<RemotePath, Snapshot>
     private var offsets: [RemotePath: CGPoint] = [:]
     private var selections: [RemotePath: Set<RemoteFile.ID>] = [:]
 
     init(capacity: Int = 10) {
-        self.capacity = capacity
+        snapshots = SnapshotCache(capacity: capacity)
     }
 
     mutating func store(
@@ -24,19 +22,10 @@ struct FileSwipeSnapshotStore<Snapshot> {
     ) {
         offsets[path] = offset
         selections[path] = selection
-        recency.removeAll { $0 == path }
-        guard let snapshot else {
-            snapshots[path] = nil
-            return
-        }
-        snapshots[path] = snapshot
-        recency.append(path)
-        while recency.count > capacity {
-            snapshots[recency.removeFirst()] = nil
-        }
+        snapshots.store(snapshot, for: path)
     }
 
-    func snapshot(for path: RemotePath) -> Snapshot? { snapshots[path] }
+    func snapshot(for path: RemotePath) -> Snapshot? { snapshots.snapshot(for: path) }
     func offset(for path: RemotePath) -> CGPoint? { offsets[path] }
     func selection(for path: RemotePath) -> Set<RemoteFile.ID> { selections[path] ?? [] }
 }

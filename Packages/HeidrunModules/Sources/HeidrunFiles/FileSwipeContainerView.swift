@@ -1,28 +1,7 @@
 import AppKit
 import QuartzCore
 import CommonTools
-
-/// A rendered file-list page used by the swipe slide.
-struct PageSnapshot {
-    let image: CGImage
-    /// Size in points.
-    let size: CGSize
-    /// Light or dark — the appearance it was drawn in.
-    let appearance: NSAppearance.Name
-    /// Content density + text size the rows were drawn at.
-    let contentSize: ContentSize
-
-    /// Whether it can stand in for a page of `pageSize` drawn in
-    /// `pageAppearance` at `pageContentSize` (not after a resize, a
-    /// light/dark switch or a density change).
-    func fits(
-        size pageSize: CGSize,
-        appearance pageAppearance: NSAppearance.Name,
-        contentSize pageContentSize: ContentSize
-    ) -> Bool {
-        size == pageSize && appearance == pageAppearance && contentSize == pageContentSize
-    }
-}
+import HeidrunUI
 
 /// Hosts the file list's scroll view and, during a two-finger swipe, a
 /// Safari-style slide of page snapshots above it.
@@ -63,35 +42,7 @@ final class FileSwipeContainerView: NSView {
 
     /// Bitmap of the rows area as it looks right now (header excluded).
     func capturePage() -> PageSnapshot? {
-        let pageBounds = pageRect
-        let fullBounds = scrollView.bounds
-        guard pageBounds.width > 0, pageBounds.height > 0,
-              let bitmap = scrollView.bitmapImageRepForCachingDisplay(in: fullBounds),
-              let context = NSGraphicsContext(bitmapImageRep: bitmap)
-        else { return nil }
-        // Live text draws unsmoothed; `cacheDisplay` smooths it, which
-        // reads as heavier, brighter text during the slide.
-        context.cgContext.setShouldSmoothFonts(false)
-        // Draw everything, then crop: with a sub-rect, subviews come out
-        // shifted by its origin.
-        scrollView.displayIgnoringOpacity(fullBounds, in: context)
-        let scale = CGFloat(bitmap.pixelsWide) / fullBounds.width
-        let topOffset = scrollView.isFlipped
-            ? pageBounds.minY - fullBounds.minY
-            : fullBounds.maxY - pageBounds.maxY
-        let cropRect = CGRect(
-            x: (pageBounds.minX - fullBounds.minX) * scale,
-            y: topOffset * scale,
-            width: pageBounds.width * scale,
-            height: pageBounds.height * scale
-        ).integral
-        guard let image = bitmap.cgImage?.cropping(to: cropRect) else { return nil }
-        return PageSnapshot(
-            image: image,
-            size: pageBounds.size,
-            appearance: pageAppearance,
-            contentSize: contentSize
-        )
+        PageSnapshot.capture(of: scrollView, rect: pageRect, contentSize: contentSize)
     }
 
     /// Start a slide. Targets that no longer fit (window resized, light/dark
