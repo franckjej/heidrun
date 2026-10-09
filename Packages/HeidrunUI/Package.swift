@@ -28,7 +28,10 @@ let package = Package(
         ),
         .testTarget(
             name: "HeidrunUITests",
-            dependencies: ["HeidrunUI"]
+            dependencies: [
+                "HeidrunUI",
+                .product(name: "CommonTools", package: "CommonTools")
+            ]
         )
     ],
     swiftLanguageModes: [.v6]

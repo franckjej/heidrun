@@ -5,6 +5,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Back and forward in threaded news:** two-finger swipe, mouse side buttons, ⌘[ / ⌘] or the new arrows.
+
 ## [1.6.2] — 2026-10-07
 
 ### Added

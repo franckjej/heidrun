@@ -307,6 +307,7 @@ private struct ThreadedNewsScreen: View {
                 rightPane
                     .frame(minWidth: 320)
             }
+            .overlay { NewsSwipeOverlay(viewModel: viewModel) }
             .padding(.top, .xsmall)
             // Errors surface through the scene-root ErrorPresenter.
         }
@@ -408,6 +409,30 @@ private struct ThreadedNewsScreen: View {
 
     private var breadcrumb: some View {
         HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+            ActionButton(
+                title: "Back",
+                systemImage: "chevron.left",
+                isEnabled: viewModel.canGoBack,
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
+            ) {
+                Task { await viewModel.goBack() }
+            }
+
+            ActionButton(
+                title: "Forward",
+                systemImage: "chevron.right",
+                isEnabled: viewModel.canGoForward,
+                size: .small,
+                fontWeight: .light,
+                bundle: .module
+            ) {
+                Task { await viewModel.goForward() }
+            }
+
+            Divider().frame(height: 16)
+
             Image(systemName: "house")
                 .resizable()
                 .scaledToFit()
@@ -572,12 +597,12 @@ private struct ThreadedNewsScreen: View {
     private var bundleListActions: BundleListActions {
         let actions = self.actions
         return BundleListActions(
-            navigate: { bundle in
+            navigate: { bundle, byKeyboard in
                 Task {
                     if bundle.kind == .bundle {
                         await viewModel.descend(into: bundle)
                     } else {
-                        await viewModel.select(bundle)
+                        await viewModel.select(bundle, replacesHistory: byKeyboard)
                     }
                 }
             },
@@ -677,8 +702,8 @@ private struct ThreadedNewsScreen: View {
         // NewsThreadActions the toolbar/menu builders use.
         let actions = self.actions
         return ThreadOutlineActions(
-            open: { thread in
-                Task { await viewModel.openThread(thread) }
+            open: { thread, byKeyboard in
+                Task { await viewModel.openThread(thread, replacesHistory: byKeyboard) }
             },
             menuItems: { thread in
                 var items: [ThreadMenuItem] = []

@@ -1,7 +1,7 @@
 import AppKit
 import Testing
 import CommonTools
-@testable import HeidrunFiles
+import HeidrunUI
 
 @Suite("PageSnapshot")
 struct PageSnapshotTests {

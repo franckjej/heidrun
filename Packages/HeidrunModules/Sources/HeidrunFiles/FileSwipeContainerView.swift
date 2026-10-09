@@ -1,28 +1,6 @@
 import AppKit
-import QuartzCore
 import CommonTools
-
-/// A rendered file-list page used by the swipe slide.
-struct PageSnapshot {
-    let image: CGImage
-    /// Size in points.
-    let size: CGSize
-    /// Light or dark — the appearance it was drawn in.
-    let appearance: NSAppearance.Name
-    /// Content density + text size the rows were drawn at.
-    let contentSize: ContentSize
-
-    /// Whether it can stand in for a page of `pageSize` drawn in
-    /// `pageAppearance` at `pageContentSize` (not after a resize, a
-    /// light/dark switch or a density change).
-    func fits(
-        size pageSize: CGSize,
-        appearance pageAppearance: NSAppearance.Name,
-        contentSize pageContentSize: ContentSize
-    ) -> Bool {
-        size == pageSize && appearance == pageAppearance && contentSize == pageContentSize
-    }
-}
+import HeidrunUI
 
 /// Hosts the file list's scroll view and, during a two-finger swipe, a
 /// Safari-style slide of page snapshots above it.
@@ -30,13 +8,7 @@ final class FileSwipeContainerView: NSView {
     let scrollView: NSScrollView
     /// Density the table currently draws at; kept in sync by the owner.
     var contentSize = ContentSize.default
-    private let overlayView = NSView()
-    private let underLayer = CALayer()
-    private let topLayer = CALayer()
-    private var currentPage: PageSnapshot?
-    private var backPage: PageSnapshot?
-    private var forwardPage: PageSnapshot?
-    private var isSliding = false
+    private let slideView = SwipeSlideView()
 
     init(scrollView: NSScrollView) {
         self.scrollView = scrollView
@@ -44,16 +16,7 @@ final class FileSwipeContainerView: NSView {
         scrollView.frame = bounds
         scrollView.autoresizingMask = [.width, .height]
         addSubview(scrollView)
-
-        overlayView.wantsLayer = true
-        overlayView.isHidden = true
-        overlayView.layer?.masksToBounds = true
-        overlayView.layer?.addSublayer(underLayer)
-        overlayView.layer?.addSublayer(topLayer)
-        topLayer.shadowOpacity = 0.25
-        topLayer.shadowRadius = 8
-        topLayer.shadowOffset = .zero
-        addSubview(overlayView)
+        addSubview(slideView)
     }
 
     @available(*, unavailable)
@@ -63,96 +26,22 @@ final class FileSwipeContainerView: NSView {
 
     /// Bitmap of the rows area as it looks right now (header excluded).
     func capturePage() -> PageSnapshot? {
-        let pageBounds = pageRect
-        let fullBounds = scrollView.bounds
-        guard pageBounds.width > 0, pageBounds.height > 0,
-              let bitmap = scrollView.bitmapImageRepForCachingDisplay(in: fullBounds),
-              let context = NSGraphicsContext(bitmapImageRep: bitmap)
-        else { return nil }
-        // Live text draws unsmoothed; `cacheDisplay` smooths it, which
-        // reads as heavier, brighter text during the slide.
-        context.cgContext.setShouldSmoothFonts(false)
-        // Draw everything, then crop: with a sub-rect, subviews come out
-        // shifted by its origin.
-        scrollView.displayIgnoringOpacity(fullBounds, in: context)
-        let scale = CGFloat(bitmap.pixelsWide) / fullBounds.width
-        let topOffset = scrollView.isFlipped
-            ? pageBounds.minY - fullBounds.minY
-            : fullBounds.maxY - pageBounds.maxY
-        let cropRect = CGRect(
-            x: (pageBounds.minX - fullBounds.minX) * scale,
-            y: topOffset * scale,
-            width: pageBounds.width * scale,
-            height: pageBounds.height * scale
-        ).integral
-        guard let image = bitmap.cgImage?.cropping(to: cropRect) else { return nil }
-        return PageSnapshot(
-            image: image,
-            size: pageBounds.size,
-            appearance: pageAppearance,
-            contentSize: contentSize
-        )
+        PageSnapshot.capture(of: scrollView, rect: pageRect, contentSize: contentSize)
     }
 
-    /// Start a slide. Targets that no longer fit (window resized, light/dark
-    /// or density changed since) are dropped; the slide then shows plain
-    /// background.
+    /// Start a slide over the rows; the live column header stays put above.
     func beginSlide(back: PageSnapshot?, forward: PageSnapshot?) {
-        let pageFrame = pageRect
-        let pageSize = pageFrame.size
-        // Cover only the rows; the live column header stays put above.
-        overlayView.frame = convert(pageFrame, from: scrollView)
-        currentPage = capturePage()
-        backPage = back.flatMap { fits($0, size: pageSize) ? $0 : nil }
-        forwardPage = forward.flatMap { fits($0, size: pageSize) ? $0 : nil }
-        let background = resolvedBackground()
-        let scale = window?.backingScaleFactor ?? 2
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        for layer in [underLayer, topLayer] {
-            layer.frame = overlayView.bounds
-            layer.backgroundColor = background
-            layer.contentsScale = scale
-        }
-        topLayer.shadowPath = CGPath(rect: CGRect(origin: .zero, size: overlayView.bounds.size), transform: nil)
-        CATransaction.commit()
-        isSliding = true
-        overlayView.isHidden = false
-        updateSlide(amount: 0)
+        slideView.frame = convert(pageRect, from: scrollView)
+        slideView.contentSize = contentSize
+        slideView.beginSlide(current: capturePage(), back: back, forward: forward)
     }
 
-    /// `amount` > 0 moves toward back, < 0 toward forward; ±1 = done.
-    /// Back: the current page slides right off the previous one.
-    /// Forward: the next page slides in from the right over the current.
     func updateSlide(amount: CGFloat) {
-        guard isSliding else { return }
-        let width = overlayView.bounds.width
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        if amount >= 0 {
-            underLayer.contents = backPage?.image
-            topLayer.contents = currentPage?.image
-            topLayer.frame.origin.x = amount * width
-        } else {
-            underLayer.contents = currentPage?.image
-            topLayer.contents = forwardPage?.image
-            topLayer.frame.origin.x = (1 + amount) * width
-        }
-        CATransaction.commit()
+        slideView.updateSlide(amount: amount)
     }
 
     func endSlide() {
-        guard isSliding else { return }
-        isSliding = false
-        overlayView.isHidden = true
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        underLayer.contents = nil
-        topLayer.contents = nil
-        CATransaction.commit()
-        currentPage = nil
-        backPage = nil
-        forwardPage = nil
+        slideView.endSlide()
     }
 
     /// The scroll view's bounds minus the column header band, in scroll
@@ -172,24 +61,5 @@ final class FileSwipeContainerView: NSView {
             rect.size.height = headerRect.minY - rect.minY
         }
         return rect
-    }
-
-    private func fits(_ page: PageSnapshot, size pageSize: CGSize) -> Bool {
-        page.fits(size: pageSize, appearance: pageAppearance, contentSize: contentSize)
-    }
-
-    /// Light or dark, ignoring vibrancy / high-contrast variants.
-    private var pageAppearance: NSAppearance.Name {
-        effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) ?? .aqua
-    }
-
-    /// Opaque fill behind the (partly transparent) page bitmaps, in the
-    /// view's current light/dark appearance.
-    private func resolvedBackground() -> CGColor {
-        var color = NSColor.windowBackgroundColor.cgColor
-        effectiveAppearance.performAsCurrentDrawingAppearance {
-            color = NSColor.windowBackgroundColor.cgColor
-        }
-        return color
     }
 }
