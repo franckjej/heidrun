@@ -3,10 +3,15 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.6.3] — 2026-10-10
 
 ### Added
 - **Back and forward in threaded news:** two-finger swipe, mouse side buttons, ⌘[ / ⌘] or the new arrows.
+- **New Connection button in the toolbar** opens another connection window.
+
+### Changed
+- The Task Manager toolbar button has a simpler arrows icon.
+- New Connection uses the same icon in the toolbar and the Task Manager.
 
 ## [1.6.2] — 2026-10-07
 
