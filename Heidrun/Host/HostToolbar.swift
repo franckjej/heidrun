@@ -48,7 +48,7 @@ private struct TransfersToolbarButton: View {
         Button {
             toggleTaskManager()
         } label: {
-            Image(systemName: "arrow.up.arrow.down.circle")
+            Image(systemName: "arrow.up.arrow.down")
                 .overlay(alignment: .topTrailing) {
                     if transferCount > 0 {
                         Text(verbatim: "\(transferCount)")
