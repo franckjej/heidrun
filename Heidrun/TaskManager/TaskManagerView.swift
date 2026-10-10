@@ -306,7 +306,7 @@ struct TaskManagerView: View {
             Button {
                 newDocument { HeidrunBookmarkDocument() }
             } label: {
-                Label("New Connection", systemImage: "plus")
+                Label("New Connection", systemImage: "plus.bubble")
             }
             .help("Open a new connection window")
         }

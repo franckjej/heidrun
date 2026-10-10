@@ -7,11 +7,21 @@ import CommonTools
 /// no `@Bindable` needed since the body only reads properties and dispatches
 /// method calls.
 struct HostToolbar: ToolbarContent {
+    @Environment(\.newDocument) private var newDocument
+
     let state: HostState
     let transferCount: Int
 
     var body: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
+            Button {
+                newDocument { HeidrunBookmarkDocument() }
+            } label: {
+                Image(systemName: "plus.bubble")
+                    .padding(.horizontal, .tiny)
+            }
+            .help("Open a new connection window")
+
             TransfersToolbarButton(transferCount: transferCount)
 
             Button(role: .destructive) {
@@ -39,7 +49,6 @@ private struct TransfersToolbarButton: View {
             toggleTaskManager()
         } label: {
             Image(systemName: "arrow.up.arrow.down.circle")
-                .symbolRenderingMode(.hierarchical)
                 .overlay(alignment: .topTrailing) {
                     if transferCount > 0 {
                         Text(verbatim: "\(transferCount)")
