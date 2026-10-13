@@ -1012,18 +1012,18 @@
         }
       }
     },
-    "Close All" : {
+    "Close Others" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle schließen"
+            "value" : "Andere schließen"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "すべて閉じる"
+            "value" : "ほかを閉じる"
           }
         }
       }

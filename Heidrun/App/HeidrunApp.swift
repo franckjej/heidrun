@@ -122,10 +122,23 @@ struct HeidrunMainApp: App {
                 }
                 .keyboardShortcut("w", modifiers: .command)
 
-                Button("Close All") {
+                Button("Close Others") {
                     // `performClose` routes through `windowShouldClose`
                     // so a live connection still gets its prompt.
-                    for window in NSApp.windows where window.isVisible {
+                    let keyWindow = NSApp.keyWindow
+                    let activeWindow = keyWindow?.sheetParent ?? keyWindow
+                    // Background tabs aren't `isVisible`; pull them in via their group.
+                    let candidates = NSApp.windows
+                        .filter(\.isVisible)
+                        .flatMap { $0.tabbedWindows ?? [$0] }
+                    var closedWindows = Set<ObjectIdentifier>()
+                    for window in candidates
+                    where window !== activeWindow && window.sheetParent == nil
+                        && closedWindows.insert(ObjectIdentifier(window)).inserted {
+                        // AppKit refuses to close a window with a sheet up (e.g. the agreement).
+                        while let sheet = window.attachedSheet {
+                            window.endSheet(sheet)
+                        }
                         window.performClose(nil)
                     }
                 }
