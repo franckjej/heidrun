@@ -11,6 +11,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - The plain news input is a fixed, smaller height.
+- The Connecting screen shows the New Connection and Task Manager toolbar buttons.
 
 ### Fixed
 - The message input in Messages no longer touches the transcript divider; Chat uses the same gap.
