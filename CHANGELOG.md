@@ -9,8 +9,13 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - **Per-sound switches:** turn each sound effect on or off in Settings → Sounds.
 - **Board/Threaded switch in News:** threaded servers also show their plain news board, as in classic Heidrun.
 
+### Changed
+- The plain news input is a fixed, smaller height.
+
 ### Fixed
 - The message input in Messages no longer touches the transcript divider; Chat uses the same gap.
+- Closing a reopened connection no longer asks to save an “Untitled” document.
+- Reopening connections at launch no longer leaves an extra tab stuck on “Connecting…”.
 
 ## [1.6.3] — 2026-10-10
 
