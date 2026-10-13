@@ -3,6 +3,11 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **⌥⌘W closes all other windows and tabs** (File → Close Others), also ones showing the server agreement.
+
 ## [1.6.4] — 2026-10-13
 
 ### Added
