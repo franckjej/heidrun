@@ -3,6 +3,14 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Per-sound switches:** turn each sound effect on or off in Settings → Sounds.
+
+### Fixed
+- The message input in Messages no longer touches the transcript divider; Chat uses the same gap.
+
 ## [1.6.3] — 2026-10-10
 
 ### Added
