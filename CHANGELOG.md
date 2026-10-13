@@ -3,7 +3,7 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/); the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.6.4] — 2026-10-13
 
 ### Added
 - **Per-sound switches:** turn each sound effect on or off in Settings → Sounds.
