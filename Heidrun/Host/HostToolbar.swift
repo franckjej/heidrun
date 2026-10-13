@@ -7,20 +7,12 @@ import CommonTools
 /// no `@Bindable` needed since the body only reads properties and dispatches
 /// method calls.
 struct HostToolbar: ToolbarContent {
-    @Environment(\.newDocument) private var newDocument
-
     let state: HostState
     let transferCount: Int
 
     var body: some ToolbarContent {
         ToolbarItemGroup(placement: .primaryAction) {
-            Button {
-                newDocument { HeidrunBookmarkDocument() }
-            } label: {
-                Image(systemName: "plus.bubble")
-                    .padding(.horizontal, .tiny)
-            }
-            .help("Open a new connection window")
+            NewConnectionToolbarButton()
 
             TransfersToolbarButton(transferCount: transferCount)
 
@@ -33,6 +25,32 @@ struct HostToolbar: ToolbarContent {
             .help("Disconnect")
             // Keyboard shortcut lives on the Connection menu item (FocusedConnectionCommands).
         }
+    }
+}
+
+/// `ConnectingPane`'s toolbar: the host items minus Disconnect (the pane
+/// has Cancel). Keeps `window.toolbar` non-nil while connecting, so a tab
+/// group's toolbar sync doesn't log "attempt to show a toolbar which is nil".
+struct ConnectingToolbar: ToolbarContent {
+    var body: some ToolbarContent {
+        ToolbarItemGroup(placement: .primaryAction) {
+            NewConnectionToolbarButton()
+            TransfersToolbarButton(transferCount: 0)
+        }
+    }
+}
+
+private struct NewConnectionToolbarButton: View {
+    @Environment(\.newDocument) private var newDocument
+
+    var body: some View {
+        Button {
+            newDocument { HeidrunBookmarkDocument() }
+        } label: {
+            Image(systemName: "plus.bubble")
+                .padding(.horizontal, .tiny)
+        }
+        .help("Open a new connection window")
     }
 }
 

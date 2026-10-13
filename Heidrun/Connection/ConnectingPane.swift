@@ -39,5 +39,6 @@ struct ConnectingPane: View {
         }
         .padding(.xlarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .toolbar { ConnectingToolbar() }
     }
 }
