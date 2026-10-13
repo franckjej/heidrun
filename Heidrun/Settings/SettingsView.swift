@@ -381,19 +381,14 @@ struct SettingsView: View {
             GroupBox {
                 VStack(alignment: .leading, spacing: Spacing.xsmall.rawValue) {
                     ForEach(SoundCue.allCases, id: \.self) { cue in
-                        HStack {
-                            Text(cue.resourceName)
-                                .font(.body.monospaced())
-                            Spacer()
-                            Button("Play") { SoundPlayer.shared.play(cue) }
-                                .disabled(!soundsEnabled)
-                        }
+                        SoundCueRow(cue: cue)
                     }
                 }
+                .disabled(!soundsEnabled)
                 .padding(insidePadding)
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
-                Label("Preview", systemImage: "play.circle")
+                Label("Sounds", systemImage: "music.note.list")
                     .font(.headline)
             }
         }

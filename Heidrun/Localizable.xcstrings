@@ -834,6 +834,22 @@
         }
       }
     },
+    "Chat message" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chatnachricht"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チャットメッセージ"
+          }
+        }
+      }
+    },
     "Choose a tab in the sidebar to get started." : {
       "localizations" : {
         "de" : {
@@ -1128,6 +1144,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hotline サーバーに接続"
+          }
+        }
+      }
+    },
+    "Connected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbunden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続"
           }
         }
       }
@@ -1634,6 +1666,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ との接続を切断しますか？"
+          }
+        }
+      }
+    },
+    "Disconnected" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Getrennt"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "切断"
           }
         }
       }
@@ -3131,6 +3179,22 @@
         }
       }
     },
+    "Private message or broadcast" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Private Nachricht oder Rundsendung"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プライベートメッセージまたはブロードキャスト"
+          }
+        }
+      }
+    },
     "Progress" : {
       "localizations" : {
         "de" : {
@@ -4541,6 +4605,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "トラッカー…"
+          }
+        }
+      }
+    },
+    "Transfer finished" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übertragung abgeschlossen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "転送完了"
           }
         }
       }
