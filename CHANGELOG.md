@@ -7,6 +7,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 - **Per-sound switches:** turn each sound effect on or off in Settings → Sounds.
+- **Board/Threaded switch in News:** threaded servers also show their plain news board, as in classic Heidrun.
 
 ### Fixed
 - The message input in Messages no longer touches the transcript divider; Chat uses the same gap.
