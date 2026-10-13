@@ -44,7 +44,7 @@ public struct ChatView: View {
             messageList
             Divider()
             inputRow
-                .padding(.top, .xxsmall)
+                .padding(.top, .xsmall)
                 .padding(.bottom, .small)
         }
         .padding(.bottom, .small)

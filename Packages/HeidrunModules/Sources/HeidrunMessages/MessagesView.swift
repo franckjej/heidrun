@@ -200,6 +200,7 @@ private struct ThreadDetail: View {
             messages
             Divider()
             inputRow
+                .padding(.top, .xsmall)
         }
     }
 
