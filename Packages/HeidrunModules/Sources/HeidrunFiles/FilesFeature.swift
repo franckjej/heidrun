@@ -40,6 +40,11 @@ public enum FilesFeature: HeidrunFeature {
     /// is set or it can no longer be resolved.
     @Sendable
     public static func resolveDownloadFolder() -> URL {
+        resolveDownloadFolder(in: .standard)
+    }
+
+    /// `defaults` = the suite the app's Settings writes to (isolated in Debug).
+    public static func resolveDownloadFolder(in defaults: UserDefaults) -> URL {
         // Under the XCTest host, never resolve the user's real Downloads
         // folder — accessing it pops a TCC "access your Downloads folder"
         // prompt that can't be granted unattended. A throwaway temp dir
@@ -49,7 +54,6 @@ public enum FilesFeature: HeidrunFeature {
             return FileManager.default.temporaryDirectory
                 .appendingPathComponent("heidrun-tests-downloads", isDirectory: true)
         }
-        let defaults = UserDefaults.standard
         guard let data = defaults.data(forKey: downloadFolderBookmarkKey) else {
             return FilesViewModel.defaultDownloadFolder()
         }

@@ -192,7 +192,7 @@ final class HostState {
                     // connect from a file-backed doc, URL launches): bookmark
                     // fields holding `nil`/`0` mean "use Settings → Identity
                     // defaults" so the user's emoji doesn't silently vanish.
-                    let defaults = UserDefaults.standard
+                    let defaults = AppDataEnvironment.defaults
                     let storedEmoji = defaults.string(forKey: AppStorageKeys.defaultEmoji) ?? ""
                     let resolvedEmoji = settings.emoji ?? (storedEmoji.isEmpty ? nil : storedEmoji)
                     let resolvedIcon: UInt16
@@ -393,7 +393,7 @@ final class HostState {
 
         let settings = Self.partialResumeSettings(
             for: request,
-            defaults: UserDefaults.standard
+            defaults: AppDataEnvironment.defaults
         )
         lastAttemptedSettings = settings
         pendingPostConnectResume = request

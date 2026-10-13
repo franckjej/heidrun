@@ -29,7 +29,7 @@ struct ConnectionForm: View {
     ) {
         self.onConnect = onConnect
         self.initialSettings = initialSettings
-        let defaults = UserDefaults.standard
+        let defaults = AppDataEnvironment.defaults
         let storedNickname = defaults.string(forKey: AppStorageKeys.defaultNickname)
             ?? NSFullUserName()
         let storedPort = (defaults.object(forKey: AppStorageKeys.defaultPort) as? Int) ?? 5500

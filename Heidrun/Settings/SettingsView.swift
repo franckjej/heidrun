@@ -737,7 +737,7 @@ struct SettingsView: View {
                 includingResourceValuesForKeys: nil,
                 relativeTo: nil
             )
-            UserDefaults.standard.set(bookmark, forKey: AppStorageKeys.downloadFolderBookmark)
+            AppDataEnvironment.defaults.set(bookmark, forKey: AppStorageKeys.downloadFolderBookmark)
             downloadFolderPath = url.path
         } catch {
             downloadFolderPath = url.path
@@ -745,7 +745,7 @@ struct SettingsView: View {
     }
 
     static func resolveDownloadFolder() -> String {
-        if let data = UserDefaults.standard.data(forKey: AppStorageKeys.downloadFolderBookmark) {
+        if let data = AppDataEnvironment.defaults.data(forKey: AppStorageKeys.downloadFolderBookmark) {
             var stale = false
             if let url = try? URL(
                 resolvingBookmarkData: data,

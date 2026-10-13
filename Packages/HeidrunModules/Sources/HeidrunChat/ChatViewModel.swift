@@ -125,6 +125,9 @@ public final class ChatViewModel {
     /// (e.g. `UserListViewModel`) is already fetching the same data.
     private var pendingRosterSeed: [User]?
 
+    /// Suite holding the app's Settings (isolated in Debug).
+    private let defaults: UserDefaults
+
     public init(
         events: AsyncStream<HotlineEvent>,
         sendChat: @escaping @Sendable (String, ChatID?, Bool) async throws -> Void,
@@ -132,8 +135,10 @@ public final class ChatViewModel {
         resolveServerName: @escaping @Sendable () async -> String = { "" },
         currentRoster: @escaping @Sendable () async -> [User] = { [] },
         resolvePublicSubject: @escaping @Sendable () async -> String = { "" },
-        chatScope: ChatID? = nil
+        chatScope: ChatID? = nil,
+        defaults: UserDefaults = .standard
     ) {
+        self.defaults = defaults
         self.events = events
         self.sendChat = sendChat
         self.changeSubject = changeSubject
@@ -143,7 +148,11 @@ public final class ChatViewModel {
         self.chatScope = chatScope
     }
 
-    public convenience init(client: any HotlineClient, chatScope: ChatID? = nil) {
+    public convenience init(
+        client: any HotlineClient,
+        chatScope: ChatID? = nil,
+        defaults: UserDefaults = .standard
+    ) {
         self.init(
             events: client.events,
             sendChat: { [client] message, chat, isAction in
@@ -166,7 +175,8 @@ public final class ChatViewModel {
             resolvePublicSubject: { [client] in
                 await client.connectionInfo.publicChatSubject
             },
-            chatScope: chatScope
+            chatScope: chatScope,
+            defaults: defaults
         )
     }
 
@@ -317,7 +327,7 @@ public final class ChatViewModel {
         // stream and this intent makes that update scroll into view.
         transcriptScroll.followsBottom = true
         try await sendChat(text, chatScope, false)
-        if Self.inputHistoryEnabled {
+        if inputHistoryEnabled {
             inputHistory.record(text)
         }
         draft = ""
@@ -332,8 +342,8 @@ public final class ChatViewModel {
 
     /// Whether the user has the in-memory recall feature enabled (default
     /// on). Read live so a Settings toggle takes effect immediately.
-    private static var inputHistoryEnabled: Bool {
-        UserDefaults.standard.object(forKey: inputHistoryEnabledKey) as? Bool ?? true
+    private var inputHistoryEnabled: Bool {
+        defaults.object(forKey: Self.inputHistoryEnabledKey) as? Bool ?? true
     }
 
     /// Wipe the in-memory history — used when the user turns the feature

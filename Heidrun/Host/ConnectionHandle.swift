@@ -139,7 +139,7 @@ final class ConnectionHandle: Identifiable {
         self.errorPresenter = presenter
         let userListVM = UserListViewModel(client: client)
         self.userListVM = userListVM
-        self.chatVM = ChatViewModel(client: client)
+        self.chatVM = ChatViewModel(client: client, defaults: AppDataEnvironment.defaults)
         // Captured-on-init so the transfer-completion closure and every
         // coordinator post carry a stable identifier the notification
         // click handler can match against `id.uuidString`.
@@ -149,7 +149,7 @@ final class ConnectionHandle: Identifiable {
         )
         self.filesVM = FilesViewModel(
             client: client,
-            downloadFolderURL: FilesFeature.resolveDownloadFolder,
+            downloadFolderURL: { FilesFeature.resolveDownloadFolder(in: AppDataEnvironment.defaults) },
             onTransferFinished: { transferState in
                 guard case .completed = transferState.status else { return }
                 SoundPlayer.shared.play(.fileDone)

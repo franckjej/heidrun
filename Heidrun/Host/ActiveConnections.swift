@@ -8,9 +8,17 @@ import HeidrunCore
 @MainActor
 @Observable
 final class ActiveConnections {
-    static let shared = ActiveConnections()
+    static let shared = ActiveConnections(persistsSnapshot: true)
 
     private(set) var connections: [ConnectionHandle] = []
+
+    /// Only `.shared` writes the next-launch snapshot; scratch test
+    /// instances must not touch the user's defaults.
+    private let persistsSnapshot: Bool
+
+    init(persistsSnapshot: Bool = false) {
+        self.persistsSnapshot = persistsSnapshot
+    }
 
     func register(_ handle: ConnectionHandle) {
         guard !connections.contains(where: { $0.id == handle.id }) else { return }
@@ -29,17 +37,18 @@ final class ActiveConnections {
     /// disconnect and quit doesn't leave a disconnected server on the
     /// next-launch list.
     func persistLiveSnapshot() {
-        let shouldReopen = (UserDefaults.standard.object(
+        guard persistsSnapshot else { return }
+        let shouldReopen = (AppDataEnvironment.defaults.object(
             forKey: AppStorageKeys.reopenConnectionsOnLaunch
         ) as? Bool) ?? true
         guard shouldReopen else {
-            SessionRestorationStore().clear()
+            SessionRestorationStore(defaults: AppDataEnvironment.defaults).clear()
             return
         }
         let liveSettings = connections
             .filter { $0.isLive }
             .map { $0.settings }
-        SessionRestorationStore().save(liveSettings)
+        SessionRestorationStore(defaults: AppDataEnvironment.defaults).save(liveSettings)
     }
 
     /// Fans TX 304 to every live connection. Reads each server's current
