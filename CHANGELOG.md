@@ -17,6 +17,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - The message input in Messages no longer touches the transcript divider; Chat uses the same gap.
 - Closing a reopened connection no longer asks to save an “Untitled” document.
 - Reopening connections at launch no longer leaves an extra tab stuck on “Connecting…”.
+- Reopened connections open as tabs, even while Touch ID is waiting.
 
 ## [1.6.3] — 2026-10-10
 
