@@ -5,13 +5,13 @@ import CommonTools
 
 /// News surface that adapts to the server's capabilities.
 ///
-/// On appear we ask the client for its `connectionInfo`, derive a
-/// `NewsCapability`, and show exactly one UI:
-///   * `.plain` — single bulletin-board view (Hotline < 1.5 + WC servers).
-///   * `.threaded` — hierarchical browser (Hotline 1.5+).
+/// On appear we ask the client for its `connectionInfo` and derive a
+/// `NewsCapability`:
+///   * `.plain` — bulletin board only (Hotline < 1.5, versionless servers).
+///   * `.threaded` — hierarchical browser (Hotline 1.5+), with a
+///     Board/Threaded switch to the plain board, as in legacy Heidrun.
 ///
-/// We only fetch the flavour the server actually advertises, matching the
-/// rule "load only the one the server runs".
+/// The board on a threaded server is fetched on first switch to it.
 public struct NewsView: View {
     @State private var plain: PlainNewsViewModel
     @State private var threaded: ThreadedNewsViewModel
@@ -78,11 +78,26 @@ public struct NewsView: View {
                 PlainNewsScreen(viewModel: plain)
                     .padding(.bottom, .xlarge)
             case .threaded:
-                ThreadedNewsScreen(viewModel: threaded, ownNickname: ownNickname)
-                    .padding(.bottom, .xlarge)
+                switch threaded.surface {
+                case .board:
+                    PlainNewsScreen(viewModel: plain, surface: $threaded.surface)
+                        .padding(.bottom, .xlarge)
+                case .threaded:
+                    ThreadedNewsScreen(viewModel: threaded, ownNickname: ownNickname, surface: $threaded.surface)
+                        .padding(.bottom, .xlarge)
+                }
             }
         }
         .task { await bootstrap() }
+        .task(id: threaded.surface) { await loadBoardIfNeeded() }
+    }
+
+    /// First switch to the board on a threaded server fetches it; later
+    /// posts arrive live via the connection-scoped `.newsPosted` loop.
+    private func loadBoardIfNeeded() async {
+        guard capability == .threaded, threaded.surface == .board,
+              plain.feed.isEmpty, !plain.isLoading else { return }
+        await plain.refresh()
     }
 
     /// Detect capability, then autofetch only the flavour the server runs.
@@ -105,10 +120,30 @@ public struct NewsView: View {
     }
 }
 
+// MARK: - Board/Threaded switch
+
+private struct NewsSurfacePicker: View {
+    @Binding var selection: NewsSurface
+
+    var body: some View {
+        Picker(String(localized: "News view", bundle: .module), selection: $selection) {
+            Text("Board", bundle: .module).tag(NewsSurface.board)
+            Text("Threaded", bundle: .module).tag(NewsSurface.threaded)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .controlSize(.small)
+        .fixedSize()
+        .help(String(localized: "Switch between the plain news board and threaded news", bundle: .module))
+    }
+}
+
 // MARK: - Plain news
 
 private struct PlainNewsScreen: View {
     @Bindable var viewModel: PlainNewsViewModel
+    /// Set on threaded servers only; shows the Board/Threaded switch.
+    var surface: Binding<NewsSurface>?
 
     private var posts: [String] {
         viewModel.feed
@@ -133,6 +168,10 @@ private struct PlainNewsScreen: View {
 
     private var header: some View {
         HStack(spacing: Spacing.xxsmall.rawValue) {
+            if let surface {
+                NewsSurfacePicker(selection: surface)
+                Divider().frame(height: 16)
+            }
             Image(systemName: "newspaper")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -236,6 +275,7 @@ private struct PlainNewsScreen: View {
 private struct ThreadedNewsScreen: View {
     @Bindable var viewModel: ThreadedNewsViewModel
     let ownNickname: String
+    @Binding var surface: NewsSurface
     @State private var composing = false
     @State private var creatingBundle = false
     @State private var deleteTarget: NewsBundle?
@@ -409,6 +449,9 @@ private struct ThreadedNewsScreen: View {
 
     private var breadcrumb: some View {
         HStack(alignment: .center, spacing: Spacing.xxsmall.rawValue) {
+            NewsSurfacePicker(selection: $surface)
+            Divider().frame(height: 16)
+
             ActionButton(
                 title: "Back",
                 systemImage: "chevron.left",

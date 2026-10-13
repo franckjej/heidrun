@@ -119,6 +119,22 @@
         }
       }
     },
+    "Board" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinnwand"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "掲示板"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "de" : {
@@ -601,6 +617,22 @@
         }
       }
     },
+    "News view" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "News-Ansicht"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ニュースの表示"
+          }
+        }
+      }
+    },
     "No Category Selected" : {
       "localizations" : {
         "de" : {
@@ -971,6 +1003,22 @@
         }
       }
     },
+    "Switch between the plain news board and threaded news" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zwischen News-Pinnwand und News mit Threads wechseln"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ニュース掲示板とスレッド形式のニュースを切り替え"
+          }
+        }
+      }
+    },
     "This category is empty. Use the pencil button above to start a thread." : {
       "localizations" : {
         "de" : {
@@ -989,6 +1037,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "このカテゴリは空です。上の鉛筆ボタンでスレッドを開始してください。"
+          }
+        }
+      }
+    },
+    "Threaded" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Threads"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スレッド"
           }
         }
       }

@@ -2,6 +2,14 @@ import Foundation
 import Observation
 import HeidrunCore
 
+/// News surface picked by the Board/Threaded switch on threaded servers.
+public enum NewsSurface: Sendable, Hashable {
+    /// Plain bulletin board (TX 101 / 103).
+    case board
+    /// Categories → bundles → threads.
+    case threaded
+}
+
 public enum CopyScope: Sendable {
     /// Selected thread's first element only (subject + author + date + body).
     case post
@@ -17,6 +25,11 @@ public enum CopyScope: Sendable {
 @Observable
 @MainActor
 public final class ThreadedNewsViewModel {
+    /// Which news surface a 1.5+ server shows: legacy Heidrun offered the
+    /// plain board next to threaded news there. Lives here (hoisted on the
+    /// connection) so the choice survives feature switches.
+    public var surface: NewsSurface = .threaded
+
     // MARK: - Left pane
 
     /// Selecting a category KEEPS `currentPath` where it is so the user
