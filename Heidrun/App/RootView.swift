@@ -31,6 +31,8 @@ enum URLDispatchGuard {
 @MainActor
 final class WeakWindowHolder {
     weak var window: NSWindow?
+    /// Set when this window drew a pending restore entry (`peek()`).
+    var showedPendingRestore = false
 }
 
 struct RootView: View {
@@ -107,6 +109,7 @@ struct RootView: View {
                 return .connecting(document.settings)
             }
             if let pendingSettings = SessionRestorationQueue.shared.peek() {
+                windowHolder.showedPendingRestore = true
                 return .connecting(pendingSettings)
             }
         }
@@ -191,6 +194,11 @@ struct RootView: View {
             if let window {
                 window.toolbarStyle = .unified
                 ToolbarSeparatorSuppressor.install(on: window)
+                // Every phase, so form / connecting windows get the
+                // untitled-undo isolation too.
+                let closeGuard = state.closeGuard ?? HostWindowCloseGuard(state: state)
+                state.closeGuard = closeGuard
+                closeGuard.install(on: window)
             }
             // Store the window WEAKLY via windowHolder. Mutating a property
             // on the holder (not reassigning the @State) is not a SwiftUI
@@ -423,7 +431,12 @@ struct RootView: View {
     /// one-at-a-time for deterministic FIFO order.
     @MainActor
     private func pumpSessionRestoration() async {
-        guard let settings = SessionRestorationQueue.shared.dequeue() else { return }
+        guard let settings = SessionRestorationQueue.shared.dequeue() else {
+            // A second launch window drew the queue head, but other windows
+            // claimed every entry: close instead of a stuck "Connecting…".
+            if windowHolder.showedPendingRestore { windowHolder.window?.close() }
+            return
+        }
         // Skip if the user has already started typing into this window —
         // restored sessions shouldn't hijack in-progress edits.
         guard case .disconnected = state.phase, state.lastAttemptedSettings == nil else {

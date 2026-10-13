@@ -26,6 +26,29 @@ final class HostWindowCloseGuard: NSObject, NSWindowDelegate {
         guard window.delegate !== self else { return }
         priorDelegate = window.delegate
         window.delegate = self
+        // Edits typed into the connection form before connecting.
+        Self.untitledDocument(of: window)?.updateChangeCount(.changeCleared)
+    }
+
+    /// App-lifetime: a short-lived NSUndoManager leaks itself.
+    private static let untitledUndoManager = UndoManager()
+
+    /// Untitled host windows (restored sessions, URL / tracker connects)
+    /// are launch vehicles, not documents. Keep typing undos in text fields
+    /// off the document so closing doesn't ask to save "Untitled".
+    func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? {
+        if Self.untitledDocument(of: window) != nil { return Self.untitledUndoManager }
+        if let priorDelegate,
+           priorDelegate.responds(to: #selector(NSWindowDelegate.windowWillReturnUndoManager(_:))) {
+            return priorDelegate.windowWillReturnUndoManager?(window)
+        }
+        return (window.windowController?.document as? NSDocument)?.undoManager
+    }
+
+    private static func untitledDocument(of window: NSWindow) -> NSDocument? {
+        guard let document = window.windowController?.document as? NSDocument,
+              document.fileURL == nil else { return nil }
+        return document
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {

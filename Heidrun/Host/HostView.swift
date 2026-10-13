@@ -95,13 +95,8 @@ struct HostView: View {
             // coordinator past window close.
             // Park the window so the TaskManager can front it.
             state?.currentHandle?.window = window
-            if let state, let window {
-                let guardForWindow = state.closeGuard ?? HostWindowCloseGuard(state: state)
-                state.closeGuard = guardForWindow
-                guardForWindow.install(on: window)
-            }
-            // Toolbar-hairline suppression is at RootView level so it
-            // covers the connecting / failed phases too.
+            // Close guard + toolbar-hairline suppression are installed at
+            // RootView level so they cover the connecting / failed phases too.
         })
         .onAppear { [state] in
             if selectedIdentifier == nil {
