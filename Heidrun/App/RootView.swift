@@ -33,6 +33,8 @@ final class WeakWindowHolder {
     weak var window: NSWindow?
     /// Set when this window drew a pending restore entry (`peek()`).
     var showedPendingRestore = false
+    /// Restore claimed before the window attached; join its tab group then.
+    var needsRestoreTabJoin = false
 }
 
 struct RootView: View {
@@ -204,6 +206,10 @@ struct RootView: View {
             // on the holder (not reassigning the @State) is not a SwiftUI
             // state write, so it needs no deferral and forms no retain cycle.
             windowHolder.window = window
+            if let window, windowHolder.needsRestoreTabJoin {
+                windowHolder.needsRestoreTabJoin = false
+                SessionRestorationQueue.shared.joinRestoreTabGroup(window)
+            }
         })
         .onChange(of: phaseFailureMessage, initial: true) { _, newMessage in
             failureMessage = newMessage
@@ -441,6 +447,11 @@ struct RootView: View {
         // restored sessions shouldn't hijack in-progress edits.
         guard case .disconnected = state.phase, state.lastAttemptedSettings == nil else {
             return
+        }
+        if let window = windowHolder.window {
+            SessionRestorationQueue.shared.joinRestoreTabGroup(window)
+        } else {
+            windowHolder.needsRestoreTabJoin = true
         }
         let keychainKey = KeychainPasswordStore.Key.canonical(
             address: settings.address,

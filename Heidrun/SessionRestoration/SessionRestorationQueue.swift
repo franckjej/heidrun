@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import HeidrunCore
 
 /// In-memory queue of connections each freshly-mounted `RootView` pumps
@@ -26,6 +26,30 @@ final class SessionRestorationQueue {
 
     func enqueue(_ settings: ConnectionSettings) {
         pending.append(settings)
+    }
+
+    /// First restored window; later restore windows tab into its group.
+    private weak var anchorWindow: NSWindow?
+
+    /// AppKit only auto-tabs a new window into the key window's group, and
+    /// there's no key window while Touch ID unlocks a saved password — so
+    /// restores came up as separate windows. Tab them explicitly, honouring
+    /// the system "Prefer tabs" setting.
+    func joinRestoreTabGroup(_ window: NSWindow) {
+        guard let anchorWindow, anchorWindow !== window else {
+            anchorWindow = window
+            return
+        }
+        let prefersTabs = switch NSWindow.userTabbingPreference {
+        case .always:
+            true
+        case .inFullScreen:
+            anchorWindow.styleMask.contains(.fullScreen)
+        default:
+            false
+        }
+        guard prefersTabs, anchorWindow.tabbedWindows?.contains(window) != true else { return }
+        anchorWindow.addTabbedWindow(window, ordered: .above)
     }
 
     func dequeue() -> ConnectionSettings? {
