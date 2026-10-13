@@ -43,9 +43,7 @@ struct NewPostSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .focused($titleFocused)
 
-            TextEditor(text: $postBody)
-                .font(.body)
-                .frame(minHeight: 160)
+            IsolatedTextEditor(text: $postBody, minHeight: 160)
                 .padding(.xxsmall)
                 .background(
                     RoundedRectangle(cornerRadius: .cornerHigh, style: .continuous)

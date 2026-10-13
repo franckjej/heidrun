@@ -198,10 +198,12 @@ struct FileInfoSheet: View {
                             .labelStyle(.titleAndIcon)
                     }
                 }
-                TextEditor(text: $commentDraft)
-                    .font(.callout)
-                    .frame(minHeight: 90, maxHeight: 160)
-                    .scrollContentBackground(.hidden)
+                IsolatedTextEditor(
+                    text: $commentDraft,
+                    font: .preferredFont(forTextStyle: .callout),
+                    minHeight: 90,
+                    maxHeight: 160
+                )
                     .padding(.xxsmall)
                     .background(
                         RoundedRectangle(cornerRadius: .cornerHigh, style: .continuous)

@@ -28,9 +28,12 @@ public struct IMSendSheet: View {
             Text("Send message to \(recipient.nickname)", bundle: .module)
                 .font(.headline)
 
-            TextEditor(text: $messageBody)
-                .font(.body.monospaced())
-                .frame(minHeight: 120)
+            IsolatedTextEditor(
+                text: $messageBody,
+                font: .monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular),
+                minHeight: 120
+            )
+            .background(.background)
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(.separator)

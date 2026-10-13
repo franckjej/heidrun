@@ -223,10 +223,10 @@ private struct PlainNewsScreen: View {
         VStack(alignment: .leading, spacing: Spacing.xsmall.rawValue) {
             HStack(alignment: .top, spacing: Spacing.xsmall.rawValue) {
                 ZStack(alignment: .topLeading) {
-                    TextEditor(text: $viewModel.draft)
-                        .font(.body)
-                        .frame(minHeight: 64, maxHeight: 160)
-                        .scrollContentBackground(.hidden)
+                    // Isolated: a plain TextEditor registers typing undos on
+                    // the document, which then asks to save on close.
+                    IsolatedTextEditor(text: $viewModel.draft, minHeight: 0)
+                        .frame(maxHeight: .infinity)
 
                     if viewModel.draft.isEmpty {
                         Text("Share an update with the server…", bundle: .module)
@@ -240,6 +240,7 @@ private struct PlainNewsScreen: View {
                     }
                 }
                 .padding(.xxsmall)
+                .frame(height: 90)
                 .background(.background.secondary, in: RoundedRectangle(cornerRadius: .cornerHigh, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: .cornerHigh, style: .continuous)
@@ -255,7 +256,7 @@ private struct PlainNewsScreen: View {
                 .controlSize(.large)
                 .padding(.horizontal, .small)
                 .keyboardShortcut(.return, modifiers: .command)
-                .disabled(isDraftEmpty || !viewModel.permits(.postNews))
+                .disabled(!canPost)
                 .help(viewModel.permits(.postNews)
                     ? String(localized: "Post draft (⌘↩)", bundle: .module)
                     : String(localized: "Your account isn't allowed to post news", bundle: .module))
@@ -265,8 +266,9 @@ private struct PlainNewsScreen: View {
         .padding(.horizontal, .small)
     }
 
-    private var isDraftEmpty: Bool {
-        viewModel.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    private var canPost: Bool {
+        !viewModel.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && viewModel.permits(.postNews)
     }
 }
 
