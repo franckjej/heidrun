@@ -73,7 +73,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@はゲストとして接続しているため、編集できるアカウントはありません。"
+            "value" : "%@ はゲストとして接続しているため、編集できるアカウントはありません。"
           }
         }
       }
@@ -129,7 +129,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld件のブックマークが見つかりました。"
+            "value" : "%lld 件のブックマークが見つかりました。"
           }
         }
       }
@@ -163,7 +163,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld件の接続"
+            "value" : "%lld 件の接続"
           }
         }
       }
@@ -315,7 +315,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "「ウインドウ」→「プロトコルコンソール」の項目を追加し、開いている接続との間で送受信されるすべてのHotlineトランザクションを表示します。不明なトランザクションIDは赤で表示され、非標準のサーバ方言を見つけるのに役立ちます。この設定を変更した後に開いた接続から、新しい状態が適用されます。"
+            "value" : "「ウインドウ」→「プロトコルコンソール」の項目を追加し、開いている接続との間で送受信されるすべての Hotline トランザクションを表示します。不明なトランザクション ID は赤で表示され、非標準のサーバ方言を見つけるのに役立ちます。この設定を変更した後に開いた接続から、新しい状態が適用されます。"
           }
         }
       }
@@ -359,7 +359,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザーリスト・ファイルリスト・チャット記録などの文字コンテンツに影響します。設定ウインドウ自体はmacOSの標準サイズのままです。"
+            "value" : "ユーザリスト・ファイルリスト・チャット記録などの文字コンテンツに影響します。設定ウインドウ自体は macOS の標準サイズのままです。"
           }
         }
       }
@@ -391,7 +391,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "すべてのサーバー"
+            "value" : "すべてのサーバ"
           }
         }
       }
@@ -483,7 +483,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ウィンドウを閉じる、または Heidrun を終了することでサーバーから切断される場合に確認します。"
+            "value" : "ウインドウを閉じる、または Heidrun を終了することでサーバから切断される場合に確認します。"
           }
         }
       }
@@ -655,7 +655,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "新しいアクティビティでDockアイコンをバウンス"
+            "value" : "新しいアクティビティで Dock アイコンをバウンス"
           }
         }
       }
@@ -677,7 +677,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ウィンドウを前面に"
+            "value" : "ウインドウを前面に表示"
           }
         }
       }
@@ -959,7 +959,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "保存された最近のサーバーを消去しますか？"
+            "value" : "保存された最近のサーバを消去しますか？"
           }
         }
       }
@@ -1039,7 +1039,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "このウィンドウを閉じると、%@ でのセッションが終了します。"
+            "value" : "このウインドウを閉じると、%@ でのセッションが終了します。"
           }
         }
       }
@@ -1121,7 +1121,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーの TLS 兄弟ポート経由で接続します（チャット、ファイル一覧、ダウンロードを暗号化）。"
+            "value" : "サーバの TLS 用ポート経由で接続します（チャット、ファイル一覧、ダウンロードを暗号化）。"
           }
         }
       }
@@ -1143,7 +1143,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hotline サーバーに接続"
+            "value" : "Hotline サーバに接続"
           }
         }
       }
@@ -1191,7 +1191,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーに接続しました"
+            "value" : "サーバに接続しました"
           }
         }
       }
@@ -1347,7 +1347,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "CSVをエクスポートできませんでした"
+            "value" : "CSV を書き出せませんでした"
           }
         }
       }
@@ -1363,7 +1363,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ブックマークをエクスポートできませんでした"
+            "value" : "ブックマークを書き出せませんでした"
           }
         }
       }
@@ -1379,7 +1379,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ブックマークをインポートできませんでした"
+            "value" : "ブックマークを読み込めませんでした"
           }
         }
       }
@@ -1395,7 +1395,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@のアカウントを照会できませんでした。アカウントを編集する権限がない可能性があります。"
+            "value" : "%@ のアカウントを照会できませんでした。アカウントを編集する権限がない可能性があります。"
           }
         }
       }
@@ -1433,7 +1433,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "チャット、プライベートメッセージ、ニュース投稿、ログイン / ログアウトの効果音。"
+            "value" : "チャット、プライベートメッセージ、ニュース投稿、ログイン・ログアウトの効果音。"
           }
         }
       }
@@ -1531,7 +1531,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld件のブックマークを削除しますか？"
+            "value" : "%lld 件のブックマークを削除しますか？"
           }
         }
       }
@@ -1697,7 +1697,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーから切断されました"
+            "value" : "サーバから切断されました"
           }
         }
       }
@@ -1799,7 +1799,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "各サーバーの保存済みパスワードは、アプリ起動ごとに一度 Touch ID で解除されます — 自動再接続では解除済みの値が再利用されます。"
+            "value" : "各サーバの保存済みパスワードは、アプリの起動ごとに一度 Touch ID でロック解除されます。自動再接続では、解除済みのパスワードを再利用します。"
           }
         }
       }
@@ -1959,7 +1959,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ブックマークをエクスポート"
+            "value" : "ブックマークを書き出す"
           }
         }
       }
@@ -1975,7 +1975,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ブックマークをCSVとしてエクスポート"
+            "value" : "ブックマークを CSV として書き出す"
           }
         }
       }
@@ -1991,7 +1991,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@の保存済みパスワードをエクスポート"
+            "value" : "%@ の保存済みパスワードを書き出す"
           }
         }
       }
@@ -2099,7 +2099,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hotline サーバーからダウンロードしたファイルはここに保存されます。"
+            "value" : "Hotline サーバからダウンロードしたファイルはここに保存されます。"
           }
         }
       }
@@ -2363,7 +2363,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ブックマークをインポート"
+            "value" : "ブックマークを読み込む"
           }
         }
       }
@@ -2487,7 +2487,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバー一覧を読み込み中…"
+            "value" : "サーバ一覧を読み込み中…"
           }
         }
       }
@@ -2525,7 +2525,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "macOSのサイドバーアイコンのサイズに合わせる"
+            "value" : "macOS のサイドバーアイコンのサイズに合わせる"
           }
         }
       }
@@ -2665,7 +2665,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最近のサーバーなし"
+            "value" : "最近のサーバなし"
           }
         }
       }
@@ -2681,7 +2681,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーなし"
+            "value" : "サーバなし"
           }
         }
       }
@@ -2731,7 +2731,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "有効な%lld件のトラッカーからサーバが報告されませんでした。"
+            "value" : "有効な %lld 件のトラッカーからサーバが報告されませんでした。"
           }
         }
       }
@@ -2866,7 +2866,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "セッション中に接続が切れた場合のみ再試行します。サーバーからのキックやログイン失敗は再試行されません。"
+            "value" : "セッション中に接続が切れた場合のみ再試行します。サーバからのキックやログイン失敗は再試行されません。"
           }
         }
       }
@@ -2898,7 +2898,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "新しい接続ウィンドウを開く"
+            "value" : "新しい接続ウインドウを開く"
           }
         }
       }
@@ -3022,7 +3022,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "固定された証明書：%@…"
+            "value" : "固定された証明書: %@…"
           }
         }
       }
@@ -3270,7 +3270,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最近のサーバー"
+            "value" : "最近のサーバ"
           }
         }
       }
@@ -3346,7 +3346,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "再接続中 — %lld 回中 %lld 回目"
+            "value" : "再接続中（%lld / %lld 回目）"
           }
         }
       }
@@ -3406,7 +3406,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最近のサーバーを記憶"
+            "value" : "最近のサーバを記憶"
           }
         }
       }
@@ -3770,7 +3770,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Finder に表示"
+            "value" : "Finder で表示"
           }
         }
       }
@@ -3932,7 +3932,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバー"
+            "value" : "サーバ"
           }
         }
       }
@@ -3948,7 +3948,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバー利用規約"
+            "value" : "サーバ利用規約"
           }
         }
       }
@@ -3964,7 +3964,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーバナー"
+            "value" : "サーバのバナー"
           }
         }
       }
@@ -3980,7 +3980,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーブロードキャスト"
+            "value" : "サーバからのブロードキャスト"
           }
         }
       }
@@ -3996,7 +3996,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーのデフォルト"
+            "value" : "サーバのデフォルト"
           }
         }
       }
@@ -4028,7 +4028,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバー"
+            "value" : "サーバ"
           }
         }
       }
@@ -4044,7 +4044,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "終了時に接続していたサーバーは、次回 Heidrun 起動時に再度開かれます — サーバーごとに 1 つのウィンドウ。"
+            "value" : "終了時に接続していたサーバは、次回 Heidrun の起動時に、サーバごとに 1 つのウインドウで再度開かれます。"
           }
         }
       }
@@ -4158,7 +4158,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dockアイコンに未読数を表示"
+            "value" : "Dock アイコンに未読数を表示"
           }
         }
       }
@@ -4174,7 +4174,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サインインしてチャット、ファイル閲覧、ニュースの閲覧ができます。"
+            "value" : "ログインすると、チャット、ファイルの閲覧、ニュースの閲覧ができます。"
           }
         }
       }
@@ -4470,7 +4470,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "macOSの標準サイズ"
+            "value" : "macOS の標準サイズ"
           }
         }
       }
@@ -4492,7 +4492,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーから切断されます。サーバー管理者権限が必要な場合があります。"
+            "value" : "サーバから切断されます。サーバ管理者権限が必要な場合があります。"
           }
         }
       }
@@ -4524,7 +4524,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "このサーバーはすでにブックマークとして保存されています。"
+            "value" : "このサーバはすでにブックマークとして保存されています。"
           }
         }
       }
@@ -4734,7 +4734,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバーを使用"
+            "value" : "サーバを使用"
           }
         }
       }
@@ -4788,7 +4788,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザー"
+            "value" : "ユーザ"
           }
         }
       }
@@ -4836,7 +4836,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "接続中のウィンドウを閉じる、または終了する前に警告"
+            "value" : "接続中のウインドウを閉じる、または終了する前に警告"
           }
         }
       }
@@ -4852,7 +4852,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld 台のサーバーに接続しています。終了するとすべての接続が切断されます。"
+            "value" : "%lld 台のサーバに接続しています。終了するとすべての接続が切断されます。"
           }
         }
       }

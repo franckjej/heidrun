@@ -155,7 +155,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ログインを検索するか、+ を押して作成します。"
+            "value" : "ログインを検索するか、+ をクリックして作成します。"
           }
         }
       }
@@ -235,7 +235,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "モデレーター"
+            "value" : "モデレータ"
           }
         }
       }
@@ -391,7 +391,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サーバー"
+            "value" : "サーバ"
           }
         }
       }
@@ -407,7 +407,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザー"
+            "value" : "ユーザ"
           }
         }
       }
@@ -423,7 +423,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザー"
+            "value" : "ユーザ"
           }
         }
       }

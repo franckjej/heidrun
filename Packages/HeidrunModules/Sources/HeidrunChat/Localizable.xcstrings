@@ -136,7 +136,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザーリストを取得できませんでした: %@"
+            "value" : "ユーザリストを取得できませんでした: %@"
           }
         }
       }
@@ -174,7 +174,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザーを切断"
+            "value" : "ユーザを切断"
           }
         }
       }
@@ -611,7 +611,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ユーザー"
+            "value" : "ユーザ"
           }
         }
       }
@@ -643,7 +643,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "お使いのアカウントにはユーザーを切断する権限がありません"
+            "value" : "お使いのアカウントにはユーザを切断する権限がありません"
           }
         }
       }
