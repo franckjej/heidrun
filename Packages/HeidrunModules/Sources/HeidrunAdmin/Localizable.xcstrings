@@ -149,7 +149,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Suchen Sie ein Login oder tippen Sie auf +, um eins zu erstellen."
+            "value" : "Suchen Sie ein Login oder klicken Sie auf +, um eines anzulegen."
           }
         },
         "ja" : {
@@ -261,7 +261,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nachrichten"
+            "value" : "News"
           }
         },
         "ja" : {
@@ -277,7 +277,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spitzname"
+            "value" : "Nickname"
           }
         },
         "en" : {

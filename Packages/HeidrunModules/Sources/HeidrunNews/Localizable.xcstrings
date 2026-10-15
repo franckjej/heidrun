@@ -482,7 +482,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nachrichten werden geladen…"
+            "value" : "News werden geladen…"
           }
         },
         "ja" : {
@@ -530,7 +530,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Neues Bündel oder Kategorie…"
+            "value" : "Neues Bündel oder neue Kategorie…"
           }
         },
         "ja" : {
@@ -600,7 +600,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nachrichten"
+            "value" : "News"
           }
         },
         "en" : {
@@ -654,7 +654,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Noch keine Nachrichten"
+            "value" : "Noch keine News"
           }
         },
         "ja" : {
@@ -1084,7 +1084,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ihr Konto darf keine Nachrichten veröffentlichen."
+            "value" : "Ihr Konto darf keine News veröffentlichen."
           }
         },
         "ja" : {

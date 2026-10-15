@@ -108,7 +108,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spitzname kopieren"
+            "value" : "Nickname kopieren"
           }
         },
         "en" : {
@@ -621,7 +621,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keine Berechtigung zu Kontoverwaltung"
+            "value" : "Keine Berechtigung zur Kontoverwaltung"
           }
         },
         "ja" : {
@@ -637,7 +637,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Keine Berechtigung zu Benutzertrennung"
+            "value" : "Keine Berechtigung zum Trennen von Benutzern"
           }
         },
         "ja" : {

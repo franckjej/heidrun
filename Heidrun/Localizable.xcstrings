@@ -173,7 +173,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld Zeitüberschreitung(en)"
+            "value" : "%lld Timeouts"
           }
         },
         "ja" : {
@@ -325,7 +325,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fügt eine Systemzeile im öffentlichen Chat ein, wenn jemand verbunden oder getrennt wird."
+            "value" : "Fügt eine Systemzeile im öffentlichen Chat ein, wenn sich jemand an- oder abmeldet."
           }
         },
         "en" : {
@@ -525,7 +525,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Automatisch Scrollen"
+            "value" : "Automatisch scrollen"
           }
         },
         "ja" : {
@@ -665,7 +665,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fenster nach vorne"
+            "value" : "Fenster in den Vordergrund"
           }
         },
         "en" : {
@@ -969,7 +969,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lösche den vertrauten Zertifikate; Beim nächsten Verbindungsaufbau kann das Zertifikat angenommen und das Lesezeichen gespeichert werden."
+            "value" : "Vertrautes Zertifikat entfernen. Beim nächsten Verbindungsaufbau wird erneut nachgefragt. Lesezeichen speichern, damit die Änderung erhalten bleibt."
           }
         },
         "ja" : {
@@ -1389,7 +1389,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@s Konto konnte nicht abgerufen werden – möglicherweise fehlt Ihnen die Berechtigung, Konten zu bearbeiten."
+            "value" : "Das Konto von %@ konnte nicht abgerufen werden – möglicherweise fehlt Ihnen die Berechtigung, Konten zu bearbeiten."
           }
         },
         "ja" : {
@@ -1421,7 +1421,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Töne für Chat-Zeilen, private Nachrichten, News-Beiträge und An- / Abmeldung."
+            "value" : "Töne für Chat-Zeilen, private Nachrichten, News-Beiträge und An- und Abmeldungen."
           }
         },
         "en" : {
@@ -1573,7 +1573,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Löschen"
+            "value" : "Löschen…"
           }
         },
         "ja" : {
@@ -1793,7 +1793,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Das gespeicherte Passwort jedes Servers wird einmal pro App-Start mit Touch ID entsperrt — automatische Wiederverbindungen verwenden den entsperrten Wert erneut."
+            "value" : "Das gespeicherte Passwort jedes Servers wird einmal pro App-Start mit Touch ID entsperrt. Automatische Wiederverbindungen nutzen das bereits entsperrte Passwort."
           }
         },
         "ja" : {
@@ -2017,7 +2017,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Exportieren …"
+            "value" : "Exportieren…"
           }
         },
         "ja" : {
@@ -2459,7 +2459,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Größerer Textkörper"
+            "value" : "Text vergrößern"
           }
         },
         "en" : {
@@ -2621,7 +2621,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Spitzname"
+            "value" : "Nickname"
           }
         },
         "en" : {
@@ -2707,7 +2707,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Über deine %lld aktivierten Tracker wurden keine Server gemeldet."
+            "value" : "Für die %lld aktivierten Tracker wurden keine Server gemeldet."
           }
         },
         "en" : {
@@ -3114,7 +3114,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Drücke ↑ im Chat-Eingabefeld, um frühere Nachrichten abzurufen — plus ein Menü mit letzten Nachrichten neben der Senden-Schaltfläche. Wird nur im Speicher gehalten und beim Trennen gelöscht."
+            "value" : "Drücke ↑ im Chat-Eingabefeld, um frühere Nachrichten abzurufen – plus ein Menü mit letzten Nachrichten neben der Senden-Schaltfläche. Wird nur im Speicher gehalten und beim Trennen gelöscht."
           }
         },
         "ja" : {
@@ -3318,7 +3318,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wiederverbindungsverhalten"
+            "value" : "Verhalten bei Verbindungsabbruch"
           }
         },
         "ja" : {
@@ -3334,7 +3334,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erneuter Verbindungsversuch — Versuch %lld von %lld"
+            "value" : "Erneut verbinden – Versuch %lld von %lld"
           }
         },
         "en" : {
@@ -4038,7 +4038,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Server, mit denen Sie beim Beenden verbunden waren, werden beim nächsten Start von Heidrun wieder geöffnet — ein Fenster pro Server."
+            "value" : "Server, mit denen Sie beim Beenden verbunden waren, werden beim nächsten Start von Heidrun wieder geöffnet – ein Fenster pro Server."
           }
         },
         "ja" : {
@@ -4076,7 +4076,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "An- / Abmeldungen anzeigen"
+            "value" : "An- und Abmeldungen anzeigen"
           }
         },
         "en" : {
@@ -4184,7 +4184,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kleinerer Textkörper"
+            "value" : "Text verkleinern"
           }
         },
         "en" : {

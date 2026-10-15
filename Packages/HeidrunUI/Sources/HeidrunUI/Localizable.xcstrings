@@ -101,7 +101,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vertrauen und Verbind aufbauen"
+            "value" : "Vertrauen und verbinden"
           }
         },
         "ja" : {
@@ -133,7 +133,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zertifikat nicht vertrauen"
+            "value" : "Nicht vertrauenswürdiges Zertifikat"
           }
         },
         "ja" : {
