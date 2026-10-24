@@ -17,7 +17,7 @@ struct HostToolbar: ToolbarContent {
             TransfersToolbarButton(transferCount: transferCount)
 
             Button(role: .destructive) {
-                state.disconnect()
+                state.disconnectByUser()
             } label: {
                 Image(systemName: "power")
                     .padding(.horizontal, .tiny)

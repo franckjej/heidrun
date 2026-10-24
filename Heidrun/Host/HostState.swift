@@ -66,6 +66,9 @@ final class HostState {
     /// `.connected` so a later disconnect on a long session uses the form.
     @ObservationIgnored var isQueueSpawned: Bool = false
 
+    /// Set by `RootView`: closes this host window.
+    @ObservationIgnored var closeWindow: (() -> Void)?
+
     init(
         connections: ActiveConnections = .shared,
         connector: @escaping Connector = HostState.defaultConnector,
@@ -273,6 +276,13 @@ final class HostState {
                 }
             }
         }
+    }
+
+    /// Toolbar / menu Disconnect: close the window while other connections
+    /// remain; only the last one falls back to the connection form.
+    func disconnectByUser() {
+        disconnect()
+        if !connections.connections.isEmpty { closeWindow?() }
     }
 
     func disconnect() {

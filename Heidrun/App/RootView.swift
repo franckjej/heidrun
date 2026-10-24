@@ -215,6 +215,7 @@ struct RootView: View {
             failureMessage = newMessage
         }
         .task {
+            state.closeWindow = { [windowHolder] in windowHolder.window?.close() }
             state.persistTrustedCertificate = { address, port, login, sha256 in
                 BookmarkRegistry.shared.updatePinnedCertificate(
                     address: address,

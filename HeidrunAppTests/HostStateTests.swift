@@ -63,6 +63,29 @@ struct HostStateTests {
         }
     }
 
+    @Test("disconnectByUser closes the window while another connection remains")
+    func disconnectByUserClosesWindowWithOtherConnections() async {
+        let connections = ActiveConnections()
+        let first = makeTestHostState(connector: { _, _, _ in FakeHotlineClient() }, connections: connections)
+        let second = makeTestHostState(connector: { _, _, _ in FakeHotlineClient() }, connections: connections)
+        var closedWindows: [String] = []
+        first.closeWindow = { closedWindows.append("first") }
+        second.closeWindow = { closedWindows.append("second") }
+        for state in [first, second] {
+            state.connect(settings: makeSettings())
+            await state.acknowledgeAgreementWhenReady()
+            await state.waitForSettling()
+        }
+
+        first.disconnectByUser()
+        #expect(closedWindows == ["first"])
+
+        // Last connection: stays open on the form.
+        second.disconnectByUser()
+        #expect(closedWindows == ["first"])
+        #expect({ if case .disconnected = second.phase { true } else { false } }())
+    }
+
     @Test("connector failure transitions to .failed")
     func connectorFailureTransitionsToFailed() async {
         struct Boom: Error {}

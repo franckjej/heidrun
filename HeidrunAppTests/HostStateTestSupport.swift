@@ -143,13 +143,14 @@ final class FakeHotlineClient: HotlineClient, @unchecked Sendable {
 @MainActor
 func makeTestHostState(
     connector: HostState.Connector? = nil,
-    autoReconnectCoordinator: AutoReconnectCoordinator = AutoReconnectCoordinator()
+    autoReconnectCoordinator: AutoReconnectCoordinator = AutoReconnectCoordinator(),
+    connections: ActiveConnections = ActiveConnections()
 ) -> HostState {
     let resolvedConnector: HostState.Connector = connector ?? { settings, _, _ in
         try await HotlineNetworkClient.connect(settings: settings)
     }
     return HostState(
-        connections: ActiveConnections(),
+        connections: connections,
         connector: resolvedConnector,
         autoReconnectCoordinator: autoReconnectCoordinator
     )

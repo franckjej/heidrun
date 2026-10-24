@@ -346,7 +346,7 @@ private struct FocusedConnectionCommands: View {
         .keyboardShortcut("r", modifiers: [.command])
         .disabled(state?.lastAttemptedSettings == nil)
         Button {
-            state?.disconnect()
+            state?.disconnectByUser()
         } label: {
             Label("Disconnect", systemImage: "power")
         }
