@@ -7,6 +7,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - **⌥⌘W closes all other windows and tabs** (File → Close Others), also ones showing the server agreement.
+- **Disconnect closes the window** while other connections stay open; only the last one returns to the connection form.
 
 ## [1.6.4] — 2026-10-13
 
