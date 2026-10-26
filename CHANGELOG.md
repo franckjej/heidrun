@@ -5,6 +5,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-10-26
+
 ### Added
 - **News auto-download:** threaded servers load board and threaded news on first open and show the one with content (threaded when both have content); progress and Cancel in the Task Manager.
 - **Settings → News:** turn auto-download off and pick the default news view (Automatic, Threaded or Board).
