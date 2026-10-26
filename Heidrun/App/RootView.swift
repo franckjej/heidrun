@@ -175,7 +175,7 @@ struct RootView: View {
                 HostView(client: client, features: features, state: state)
             }
         }
-        .focusedValue(\.hostState, state)
+        .focusedSceneValue(\.hostState, state)
         // Attention changes don't re-run the WindowAccessor closure, so
         // re-stamp the title from a tracked read here.
         .onChange(of: preferredWindowTitle, restampWindowTitle)

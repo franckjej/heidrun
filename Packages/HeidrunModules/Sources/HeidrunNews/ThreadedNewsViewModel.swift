@@ -3,7 +3,7 @@ import Observation
 import HeidrunCore
 
 /// News surface picked by the Board/Threaded switch on threaded servers.
-public enum NewsSurface: Sendable, Hashable {
+public enum NewsSurface: String, Sendable, Hashable {
     /// Plain bulletin board (TX 101 / 103).
     case board
     /// Categories → bundles → threads.

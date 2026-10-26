@@ -19,7 +19,10 @@ public struct NewsView: View {
     @AppStorage(NewsDefaultSurface.storageKey) private var defaultSurface: NewsDefaultSurface = .automatic
     @AppStorage(NewsDefaultSurface.autoDownloadStorageKey) private var autoDownloadBoth: Bool = true
 
+    @State private var serverKey: String?
+
     private let resolveCapability: @Sendable () async -> NewsCapability
+    private let resolveServerKey: @Sendable () async -> String?
     private let ownNickname: String
 
     /// Production initialiser: derives the capability from the live client.
@@ -29,6 +32,10 @@ public struct NewsView: View {
         self.ownNickname = ownNickname
         self.resolveCapability = {
             NewsCapability(serverVersion: await client.connectionInfo.serverVersion)
+        }
+        self.resolveServerKey = {
+            let settings = await client.connectionInfo.settings
+            return NewsSurfaceMemory.serverKey(address: settings.address, port: settings.port)
         }
     }
 
@@ -45,6 +52,7 @@ public struct NewsView: View {
         self._capability = State(initialValue: capability)
         self.ownNickname = ownNickname
         self.resolveCapability = { capability }
+        self.resolveServerKey = { nil }
     }
 
     /// Hosted initialiser: inject view-models persisted on the connection
@@ -67,6 +75,10 @@ public struct NewsView: View {
         self.resolveCapability = {
             NewsCapability(serverVersion: await client.connectionInfo.serverVersion)
         }
+        self.resolveServerKey = {
+            let settings = await client.connectionInfo.settings
+            return NewsSurfaceMemory.serverKey(address: settings.address, port: settings.port)
+        }
     }
 
     public var body: some View {
@@ -82,16 +94,20 @@ public struct NewsView: View {
             case .threaded:
                 switch threaded.surface {
                 case .board:
-                    PlainNewsScreen(viewModel: plain, surface: $threaded.surface)
+                    PlainNewsScreen(viewModel: plain, surface: surfaceSelection)
                         .padding(.bottom, .xlarge)
                 case .threaded:
-                    ThreadedNewsScreen(viewModel: threaded, ownNickname: ownNickname, surface: $threaded.surface)
+                    ThreadedNewsScreen(viewModel: threaded, ownNickname: ownNickname, surface: surfaceSelection)
                         .padding(.bottom, .xlarge)
                 }
             }
         }
         .task { await bootstrap() }
         .task(id: threaded.surface) { await loadBoardIfNeeded() }
+    }
+
+    private var surfaceSelection: Binding<NewsSurface> {
+        NewsSurfaceMemory.selection(of: threaded, serverKey: serverKey)
     }
 
     /// First switch to the board on a threaded server fetches it; later
@@ -117,33 +133,17 @@ public struct NewsView: View {
             plain.start()
             await plain.refresh()
         case .threaded:
+            serverKey = await resolveServerKey()
+            let remembered = serverKey.flatMap { NewsSurfaceMemory.surface(for: $0) }
             NewsInitialLoad.start(
                 plain: plain,
                 threaded: threaded,
-                preference: defaultSurface,
+                preference: defaultSurface.overridden(by: remembered),
                 downloadsBoth: autoDownloadBoth
             )
         case .none:
             break
         }
-    }
-}
-
-// MARK: - Board/Threaded switch
-
-private struct NewsSurfacePicker: View {
-    @Binding var selection: NewsSurface
-
-    var body: some View {
-        Picker(String(localized: "News view", bundle: .module), selection: $selection) {
-            Text("Board", bundle: .module).tag(NewsSurface.board)
-            Text("Threaded", bundle: .module).tag(NewsSurface.threaded)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
-        .controlSize(.small)
-        .fixedSize()
-        .help(String(localized: "Switch between the plain news board and threaded news", bundle: .module))
     }
 }
 

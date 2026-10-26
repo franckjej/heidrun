@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Lets app-level commands act on whichever window is frontmost.
-/// RootView publishes its HostState via `.focusedValue(\.hostState, state)`;
+/// RootView publishes its HostState via `.focusedSceneValue(\.hostState, state)`;
 /// Commands read it via `@FocusedValue(\.hostState)`.
 ///
 /// The value is stored in a WEAK box: SwiftUI's `FocusedValues` store is

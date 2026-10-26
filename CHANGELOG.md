@@ -5,6 +5,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.7.1] — 2026-10-26
+
+### Fixed
+- **News remembers Board or Threaded per server** across reconnects and bookmark autoconnects.
+- The Connection menu no longer goes inactive after switching the news view.
+
 ## [1.7.0] — 2026-10-26
 
 ### Added
