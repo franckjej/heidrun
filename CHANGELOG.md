@@ -10,6 +10,7 @@ project adheres to [Semantic Versioning](https://semver.org/).
 - **Settings → News:** turn auto-download off and pick the default news view (Automatic, Threaded or Board).
 
 ### Changed
+- **Softer sound effects:** the classic sounds are denoised, filtered, faded and level-matched.
 - **⌥⌘W closes all other windows and tabs** (File → Close Others), also ones showing the server agreement.
 - **Disconnect closes the window** while other connections stay open; only the last one returns to the connection form.
 
