@@ -536,6 +536,38 @@
         }
       }
     },
+    "Automatic" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動"
+          }
+        }
+      }
+    },
+    "Automatic opens threaded news, or the board when threaded news is empty." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„Automatisch“ öffnet die News mit Threads – oder die Pinnwand, wenn es dort keine Threads gibt."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「自動」ではスレッド形式のニュースを開きます。スレッド形式のニュースが空の場合は掲示板を開きます。"
+          }
+        }
+      }
+    },
     "Automatically reconnect after an unexpected disconnect" : {
       "localizations" : {
         "de" : {
@@ -586,6 +618,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "大きい文字、行間にゆとり"
+          }
+        }
+      }
+    },
+    "Board" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinnwand"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "掲示板"
           }
         }
       }
@@ -1470,6 +1518,22 @@
         }
       }
     },
+    "Default news view" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardansicht für News"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ニュースのデフォルト表示"
+          }
+        }
+      }
+    },
     "Default port" : {
       "localizations" : {
         "de" : {
@@ -1714,6 +1778,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完了"
+          }
+        }
+      }
+    },
+    "Download board and threaded news automatically" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pinnwand und News mit Threads automatisch laden"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "掲示板とスレッド形式のニュースを自動的にダウンロードする"
           }
         }
       }
@@ -2062,6 +2142,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "読み込み失敗"
+          }
+        }
+      }
+    },
+    "Fetches both when you first open News on a server that has threaded news. Progress shows in the Task Manager." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lädt beides beim ersten Öffnen von News auf einem Server mit Threads. Der Fortschritt erscheint im Task-Manager."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スレッド形式のニュースがあるサーバで初めてニュースを開いたときに、両方をダウンロードします。進行状況はタスクマネージャに表示されます。"
           }
         }
       }
@@ -2596,6 +2692,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "新規ブックマーク"
+          }
+        }
+      }
+    },
+    "News" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "News"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ニュース"
           }
         }
       }
@@ -4541,6 +4653,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "選択したブックマークがリストから削除されます。保存済みパスワードはキーチェーンに残ります。"
+          }
+        }
+      }
+    },
+    "Threaded" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Threads"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スレッド"
+          }
+        }
+      }
+    },
+    "Threaded servers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server mit Threads"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スレッド形式に対応したサーバ"
           }
         }
       }

@@ -2,9 +2,10 @@ import SwiftUI
 import AppKit
 import CommonTools
 import HeidrunUI
+import HeidrunNews
 import UserNotifications
 
-/// macOS preferences pane reached via `App → Settings…` (⌘,). Eight tabs;
+/// macOS preferences pane reached via `App → Settings…` (⌘,). Nine tabs;
 /// every value persists via `@AppStorage`.
 ///
 /// Visual contract shared across tabs: `tabBody(...)` wraps content in a
@@ -26,6 +27,8 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.showChatTimestamps) private var showChatTimestamps: Bool = false
     @AppStorage(AppStorageKeys.showChatJoinLeave) private var showChatJoinLeave: Bool = true
     @AppStorage(AppStorageKeys.chatInputHistoryEnabled) private var chatInputHistoryEnabled: Bool = true
+    @AppStorage(AppStorageKeys.newsAutoDownloadBoth) private var newsAutoDownloadBoth: Bool = true
+    @AppStorage(AppStorageKeys.newsDefaultSurface) private var newsDefaultSurface: NewsDefaultSurface = .automatic
     @AppStorage(AppStorageKeys.notificationsEnabled) private var notificationsEnabled: Bool = true
     @AppStorage(AppStorageKeys.notifyConnected) private var notifyConnected: Bool = true
     @AppStorage(AppStorageKeys.notifyDisconnected) private var notifyDisconnected: Bool = true
@@ -77,6 +80,9 @@ struct SettingsView: View {
 
             chatTab
                 .tabItem { Label("Chat", systemImage: "bubble.left") }
+
+            newsTab
+                .tabItem { Label("News", systemImage: "newspaper") }
 
             soundsTab
                 .tabItem { Label("Sounds", systemImage: "speaker.wave.2") }
@@ -359,6 +365,33 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             } label: {
                 Label("Input history", systemImage: "clock.arrow.circlepath")
+                    .font(.headline)
+            }
+        }
+    }
+
+    private var newsTab: some View {
+        tabBody {
+            GroupBox {
+                VStack(alignment: .leading, spacing: rowSpacing.rawValue) {
+                    Toggle("Download board and threaded news automatically", isOn: $newsAutoDownloadBoth)
+                    caption("Fetches both when you first open News on a server that has threaded news. Progress shows in the Task Manager.")
+                    labeledRow("Default news view", alignment: .leading, labelWidth: nil) {
+                        Picker("", selection: $newsDefaultSurface) {
+                            Text("Automatic").tag(NewsDefaultSurface.automatic)
+                            Text("Threaded").tag(NewsDefaultSurface.threaded)
+                            Text("Board").tag(NewsDefaultSurface.board)
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                        Spacer(minLength: 0)
+                    }
+                    caption("Automatic opens threaded news, or the board when threaded news is empty.")
+                }
+                .padding(insidePadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } label: {
+                Label("Threaded servers", systemImage: "newspaper")
                     .font(.headline)
             }
         }

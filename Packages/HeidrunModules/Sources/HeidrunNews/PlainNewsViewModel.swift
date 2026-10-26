@@ -127,6 +127,22 @@ public final class PlainNewsViewModel {
         }
     }
 
+    /// First-open fetch: returns at once when cancelled (rethrown, not
+    /// presented). Returns whether the board is empty.
+    func loadForDownload() async throws -> Bool {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            feed = try await cancellableFetch(fetchFeed)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            present(error)
+            throw error
+        }
+        return feed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     /// Post the current draft. Whitespace-only drafts are a no-op so an
     /// accidental Return doesn't post an empty banner.
     public func postDraft() async {

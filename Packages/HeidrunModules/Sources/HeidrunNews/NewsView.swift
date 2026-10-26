@@ -16,6 +16,8 @@ public struct NewsView: View {
     @State private var plain: PlainNewsViewModel
     @State private var threaded: ThreadedNewsViewModel
     @State private var capability: NewsCapability?
+    @AppStorage(NewsDefaultSurface.storageKey) private var defaultSurface: NewsDefaultSurface = .automatic
+    @AppStorage(NewsDefaultSurface.autoDownloadStorageKey) private var autoDownloadBoth: Bool = true
 
     private let resolveCapability: @Sendable () async -> NewsCapability
     private let ownNickname: String
@@ -96,14 +98,16 @@ public struct NewsView: View {
     /// posts arrive live via the connection-scoped `.newsPosted` loop.
     private func loadBoardIfNeeded() async {
         guard capability == .threaded, threaded.surface == .board,
-              plain.feed.isEmpty, !plain.isLoading else { return }
+              plain.feed.isEmpty, !plain.isLoading,
+              threaded.download?.isFetching(.board) != true else { return }
         await plain.refresh()
     }
 
-    /// Detect capability, then autofetch only the flavour the server runs.
-    /// Plain-news `.newsPosted` observation is owned at connection scope, so
-    /// `start()` here is an idempotent no-op for the hoisted VM (only the
-    /// standalone `NewsView(client:)` path does work). Threaded servers don't push.
+    /// Detect capability, then autofetch. Plain-news `.newsPosted`
+    /// observation is owned at connection scope, so `start()` here is an
+    /// idempotent no-op for the hoisted VM (only the standalone
+    /// `NewsView(client:)` path does work). Threaded servers run the
+    /// once-per-connection `NewsInitialLoad`.
     private func bootstrap() async {
         if capability == nil {
             capability = await resolveCapability()
@@ -113,7 +117,12 @@ public struct NewsView: View {
             plain.start()
             await plain.refresh()
         case .threaded:
-            await threaded.refresh()
+            NewsInitialLoad.start(
+                plain: plain,
+                threaded: threaded,
+                preference: defaultSurface,
+                downloadsBoth: autoDownloadBoth
+            )
         case .none:
             break
         }

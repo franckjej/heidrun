@@ -2,10 +2,12 @@ import SwiftUI
 import AppKit
 import HeidrunCore
 import HeidrunFiles
+import HeidrunNews
 import CommonTools
 
 /// Activity-Monitor-style window: live server connections (top) + every
-/// in-flight or recently-finished transfer across them (bottom). Driven
+/// in-flight or recently-finished transfer and news download across
+/// them (bottom). Driven
 /// entirely by `ActiveConnections`; each row reflects observable state on
 /// a `ConnectionHandle` — no extra polling.
 struct TaskManagerView: View {
@@ -61,8 +63,9 @@ struct TaskManagerView: View {
     private func currentTransferCounts() -> [ConnectionHandle.ID: Int] {
         var counts: [ConnectionHandle.ID: Int] = [:]
         for handle in connections.connections {
+            let newsRunning = handle.newsThreadedVM.download?.status == .running
             counts[handle.id] = handle.filesVM.transfers.values
-                .reduce(into: 0) { acc, state in
+                .reduce(into: newsRunning ? 1 : 0) { acc, state in
                     if state.status == .running { acc += 1 }
                 }
         }
@@ -70,7 +73,7 @@ struct TaskManagerView: View {
     }
 
     private func structuralKey(of rows: [AggregatedTransfer]) -> [String] {
-        rows.map { "\($0.id):\($0.state.status)" }
+        rows.map { "\($0.id):\($0.statusKey)" }
     }
 
     // MARK: - Connections pane
@@ -254,11 +257,23 @@ struct TaskManagerView: View {
                     // straight from the column builder subscribed the
                     // body to `filesVM` and killed row selection.
                     TableColumn("FileItem") { row in
-                        TransferFileCell(row: row)
+                        switch row.kind {
+                        case .file:
+                            if let fileRow = row.fileRow { TransferFileCell(row: fileRow) }
+                        case .news(let download):
+                            NewsDownloadNameCell(download: download)
+                        }
                     }
 
                     TableColumn("Progress") { row in
-                        TransferProgressCell(row: row)
+                        Group {
+                            switch row.kind {
+                            case .file:
+                                if let fileRow = row.fileRow { TransferProgressCell(row: fileRow) }
+                            case .news(let download):
+                                NewsDownloadProgressCell(download: download)
+                            }
+                        }
                             // NSProgressIndicator under SwiftUI's
                             // `ProgressView` swallows clicks — disable
                             // hit testing so they fall through to row
@@ -268,21 +283,41 @@ struct TaskManagerView: View {
                     .width(min: 140, ideal: 180)
 
                     TableColumn("Speed") { row in
-                        TransferSpeedCell(row: row)
+                        Group {
+                            switch row.kind {
+                            case .file:
+                                if let fileRow = row.fileRow { TransferSpeedCell(row: fileRow) }
+                            case .news:
+                                Text(verbatim: "—")
+                                    .font(.caption.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .width(min: 80, ideal: 90, max: 110)
 
                     TableColumn("Status") { row in
-                        TransferStatusCell(row: row)
+                        switch row.kind {
+                        case .file:
+                            if let fileRow = row.fileRow { TransferStatusCell(row: fileRow) }
+                        case .news(let download):
+                            NewsDownloadStatusCell(download: download)
+                        }
                     }
                     .width(min: 90, ideal: 100, max: 120)
 
                     TableColumn("") { row in
-                        TransferActionsCell(
-                            row: row,
-                            onRemove: { removeTransfer(row) }
-                        )
+                        Group {
+                            switch row.kind {
+                            case .file:
+                                if let fileRow = row.fileRow {
+                                    TransferActionsCell(row: fileRow, onRemove: { removeTransfer(row) })
+                                }
+                            case .news(let download):
+                                NewsDownloadActionsCell(download: download, onRemove: { removeTransfer(row) })
+                            }
+                        }
                         .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .width(min: 100, ideal: 110, max: 130)
@@ -330,62 +365,24 @@ struct TaskManagerView: View {
         }
     }
 
-    // MARK: - Action buttons
+    // MARK: - Context menu
 
     @ViewBuilder
-    private func actionButtons(_ row: AggregatedTransfer) -> some View {
-        let state = liveState(for: row)
-        HStack(spacing: 4) {
-            switch state.status {
-            case .running:
-                Button {
-                    Task { await row.handle.filesVM.cancel(state.handle) }
-                } label: {
-                    Image(systemName: "xmark.circle")
-                }
-                .buttonStyle(.borderless)
-                .help("Cancel")
-            case .failed:
-                if state.direction == .download, state.sourceFile != nil {
-                    Button {
-                        Task { await row.handle.filesVM.resume(state) }
-                    } label: {
-                        Image(systemName: "arrow.clockwise.circle")
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Resume")
-                }
-                Button {
-                    removeTransfer(row)
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .help("Remove")
-            case .completed:
-                if let url = state.destination {
-                    Button {
-                        NSWorkspace.shared.activateFileViewerSelecting([url])
-                    } label: {
-                        Image(systemName: "folder")
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Show in Finder")
-                }
-                Button {
-                    removeTransfer(row)
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .help("Remove")
+    private func contextMenu(for row: AggregatedTransfer) -> some View {
+        switch row.kind {
+        case .file:
+            if let fileRow = row.fileRow { fileContextMenu(for: row, state: liveState(for: fileRow)) }
+        case .news(let download):
+            if download.status == .running {
+                Button("Cancel") { download.cancel() }
+            } else {
+                Button("Remove from List") { removeTransfer(row) }
             }
         }
     }
 
     @ViewBuilder
-    private func contextMenu(for row: AggregatedTransfer) -> some View {
-        let state = liveState(for: row)
+    private func fileContextMenu(for row: AggregatedTransfer, state: FilesViewModel.TransferState) -> some View {
         switch state.status {
         case .running:
             Button("Cancel") {
@@ -464,27 +461,29 @@ struct TaskManagerView: View {
     // MARK: - Aggregation
 
     private var aggregated: [AggregatedTransfer] {
-        connections.connections.flatMap { handle in
-            handle.filesVM.transfers.values.map { state in
-                AggregatedTransfer(handle: handle, state: state)
+        connections.connections
+            .sorted { lhs, rhs in
+                lhs.displayName.localizedCaseInsensitiveCompare(rhs.displayName) == .orderedAscending
             }
-        }
-        .sorted { lhs, rhs in
-            if lhs.handle.id == rhs.handle.id {
-                return lhs.state.handle.transferID < rhs.state.handle.transferID
+            .flatMap { handle in
+                var rows = handle.filesVM.transfers.values
+                    .sorted { $0.handle.transferID < $1.handle.transferID }
+                    .map { state in AggregatedTransfer(handle: handle, state: state) }
+                if let download = handle.newsThreadedVM.download {
+                    rows.insert(AggregatedTransfer(handle: handle, download: download), at: 0)
+                }
+                return rows
             }
-            return lhs.handle.displayName.localizedCaseInsensitiveCompare(rhs.handle.displayName) == .orderedAscending
-        }
     }
 
     /// Reads the SNAPSHOT's captured status, not live state — toolbar
     /// enable/disable checks must not subscribe the body to `filesVM`.
     private var hasRunningRows: Bool {
-        aggregatedSnapshot.contains { $0.state.status == .running }
+        aggregatedSnapshot.contains(where: \.isRunning)
     }
 
     private var hasFinishedRows: Bool {
-        aggregatedSnapshot.contains { $0.state.status != .running }
+        aggregatedSnapshot.contains { !$0.isRunning }
     }
 
     private func activeCount(_ handle: ConnectionHandle) -> Int {
@@ -501,7 +500,7 @@ struct TaskManagerView: View {
     /// (not the captured `row.state`) so the snapshot stays structurally
     /// stable while visuals tick. Falls back to the snapshot state for
     /// the brief window between a VM removal and our next refresh.
-    private func liveState(for row: AggregatedTransfer) -> FilesViewModel.TransferState {
+    private func liveState(for row: FileTransferRow) -> FilesViewModel.TransferState {
         row.handle.filesVM.transfers[row.state.handle.transferID] ?? row.state
     }
 
@@ -514,12 +513,18 @@ struct TaskManagerView: View {
     }
 
     private func removeTransfer(_ row: AggregatedTransfer) {
-        row.handle.filesVM.clearFinishedTransfers()
+        switch row.kind {
+        case .file:
+            row.handle.filesVM.clearFinishedTransfers()
+        case .news:
+            row.handle.newsThreadedVM.clearFinishedDownload()
+        }
     }
 
     private func clearFinishedEverywhere() {
         for handle in connections.connections {
             handle.filesVM.clearFinishedTransfers()
+            handle.newsThreadedVM.clearFinishedDownload()
         }
     }
 
@@ -528,6 +533,7 @@ struct TaskManagerView: View {
             for state in handle.filesVM.transfers.values where state.status == .running {
                 Task { await handle.filesVM.cancel(state.handle) }
             }
+            handle.newsThreadedVM.download?.cancel()
         }
     }
 

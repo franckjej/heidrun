@@ -30,6 +30,18 @@ public final class ThreadedNewsViewModel {
     /// connection) so the choice survives feature switches.
     public var surface: NewsSurface = .threaded
 
+    /// First-open fetch progress (Task Manager row); `nil` once cleared.
+    public internal(set) var download: NewsDownload?
+
+    /// Set once the first-open load has started on this connection.
+    @ObservationIgnored var didStartInitialLoad = false
+
+    /// Drops a finished `download` row.
+    public func clearFinishedDownload() {
+        guard let download, download.status != .running else { return }
+        self.download = nil
+    }
+
     // MARK: - Left pane
 
     /// Selecting a category KEEPS `currentPath` where it is so the user
@@ -258,6 +270,26 @@ public final class ThreadedNewsViewModel {
             guard currentPath == path else { return }
             present(error)
             bundles = []
+        }
+    }
+
+    /// First-open fetch of the current folder: returns at once when
+    /// cancelled (rethrown, not presented). Returns whether it's empty.
+    func loadBundlesForDownload() async throws -> Bool {
+        let path = currentPath
+        let fetch = fetchBundles
+        isLoadingBundles = true
+        defer { isLoadingBundles = false }
+        do {
+            let listing = try await cancellableFetch { try await fetch(path) }
+            bundlesCache[path] = listing
+            if currentPath == path { bundles = listing }
+            return listing.isEmpty
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            present(error)
+            throw error
         }
     }
 

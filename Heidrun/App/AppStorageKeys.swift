@@ -23,6 +23,13 @@ enum AppStorageKeys {
     /// the recent-messages menu). On by default; clears on disconnect.
     static let chatInputHistoryEnabled = "Heidrun.chatInputHistoryEnabled"
 
+    /// Fetch board + threaded news on first News open (1.5+ servers).
+    /// Default on. Mirrored as `NewsDefaultSurface.autoDownloadStorageKey`.
+    static let newsAutoDownloadBoth = "Heidrun.newsAutoDownloadBoth"
+
+    /// `NewsDefaultSurface` raw value. Default `automatic`.
+    static let newsDefaultSurface = "Heidrun.newsDefaultSurface"
+
     /// When off, an unexpected disconnect goes to `.failed` (unless a
     /// matching bookmark has `autoReconnect == .alwaysOn`). Default off.
     static let autoReconnectEnabled = "Heidrun.autoReconnectEnabled"

@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import HeidrunCore
 import HeidrunFiles
+import HeidrunNews
 import CommonTools
 
 /// Per-cell View structs for the transfers table. Each owns its own
@@ -15,7 +16,7 @@ import CommonTools
 /// from `aggregatedSnapshot`.
 
 @MainActor
-private func cellLiveState(_ row: AggregatedTransfer) -> FilesViewModel.TransferState {
+private func cellLiveState(_ row: FileTransferRow) -> FilesViewModel.TransferState {
     row.handle.filesVM.transfers[row.state.handle.transferID] ?? row.state
 }
 
@@ -104,7 +105,7 @@ struct TransferSpeedsFooter: View {
 }
 
 struct TransferFileCell: View {
-    let row: AggregatedTransfer
+    let row: FileTransferRow
     var body: some View {
         let state = cellLiveState(row)
         HStack(spacing: Spacing.xsmall.rawValue) {
@@ -122,7 +123,7 @@ struct TransferFileCell: View {
 }
 
 struct TransferProgressCell: View {
-    let row: AggregatedTransfer
+    let row: FileTransferRow
     var body: some View {
         let state = cellLiveState(row)
         VStack(alignment: .leading, spacing: Spacing.tiny.rawValue) {
@@ -138,7 +139,7 @@ struct TransferProgressCell: View {
 }
 
 struct TransferSpeedCell: View {
-    let row: AggregatedTransfer
+    let row: FileTransferRow
     var body: some View {
         let state = cellLiveState(row)
         Text(state.status == .running ? cellFormatSpeed(state.speedBytesPerSec) : "—")
@@ -148,7 +149,7 @@ struct TransferSpeedCell: View {
 }
 
 struct TransferStatusCell: View {
-    let row: AggregatedTransfer
+    let row: FileTransferRow
     var body: some View {
         let state = cellLiveState(row)
         switch state.status {
@@ -166,8 +167,18 @@ struct TransferStatusCell: View {
         }
     }
 
-    @ViewBuilder
     private func statusPill(_ title: LocalizedStringKey, systemImage: String, tint: Color) -> some View {
+        TransferStatusPill(title: title, systemImage: systemImage, tint: tint)
+    }
+}
+
+/// Running / Done / Failed capsule shared by file and news rows.
+struct TransferStatusPill: View {
+    let title: LocalizedStringKey
+    let systemImage: String
+    let tint: Color
+
+    var body: some View {
         Label(title, systemImage: systemImage)
             .labelStyle(.titleAndIcon)
             .font(.caption2.weight(.medium))
@@ -201,7 +212,7 @@ private func transferTint(for state: FilesViewModel.TransferState) -> Color {
 }
 
 struct TransferActionsCell: View {
-    let row: AggregatedTransfer
+    let row: FileTransferRow
     let onRemove: () -> Void
     var body: some View {
         let state = cellLiveState(row)
@@ -254,30 +265,67 @@ struct TransferActionsCell: View {
     }
 }
 
-/// Flat row identity for the transfers table — pairs a `ConnectionHandle`
-/// with one of its in-flight transfer states so the table can render
-/// rows from multiple connections at once.
+/// One transfers-table row: a file transfer or a connection's
+/// first-open news download.
 struct AggregatedTransfer: Identifiable, Hashable {
+    enum Kind {
+        case file(FilesViewModel.TransferState)
+        case news(NewsDownload)
+    }
+
     let handle: ConnectionHandle
-    let state: FilesViewModel.TransferState
+    let kind: Kind
+    /// Status captured at snapshot time, so toolbar checks don't
+    /// subscribe the body to live state.
+    let isRunning: Bool
+    let statusKey: String
 
-    var id: String { "\(handle.id)/\(state.id)" }
+    init(handle: ConnectionHandle, state: FilesViewModel.TransferState) {
+        self.handle = handle
+        self.kind = .file(state)
+        self.isRunning = state.status == .running
+        self.statusKey = "\(state.status)"
+    }
 
-    /// Identity-only equality: two snapshots of the same transfer are
-    /// "equal" even if `bytesWritten`/`speed`/`status` differ. This
-    /// keeps `aggregatedSnapshot` from churning every 100ms during an
-    /// active transfer, which in turn keeps SwiftUI from reloading
-    /// the underlying `NSTableView` and clearing the user's selection.
-    /// Cells read the live, ever-changing state through
-    /// `liveState(for:)` so the visual stays fresh.
+    @MainActor
+    init(handle: ConnectionHandle, download: NewsDownload) {
+        self.handle = handle
+        self.kind = .news(download)
+        self.isRunning = download.status == .running
+        self.statusKey = "\(download.status)"
+    }
+
+    var id: String {
+        switch kind {
+        case .file(let state):
+            "\(handle.id)/\(state.id)"
+        case .news(let download):
+            "\(handle.id)/news/\(download.id)"
+        }
+    }
+
+    var fileRow: FileTransferRow? {
+        guard case .file(let state) = kind else { return nil }
+        return FileTransferRow(handle: handle, state: state)
+    }
+
+    /// Identity-only equality: byte/status ticks must not churn
+    /// `aggregatedSnapshot` and reload the `NSTableView` (dropping the
+    /// user's selection). Cells read live state themselves.
     static func == (lhs: AggregatedTransfer, rhs: AggregatedTransfer) -> Bool {
-        lhs.handle.id == rhs.handle.id && lhs.state.id == rhs.state.id
+        lhs.id == rhs.id
     }
 
     func hash(into hasher: inout Hasher) {
-        hasher.combine(handle.id)
-        hasher.combine(state.id)
+        hasher.combine(id)
     }
+}
+
+/// Pairs a `ConnectionHandle` with one of its file transfer states so
+/// the cells can read live state.
+struct FileTransferRow {
+    let handle: ConnectionHandle
+    let state: FilesViewModel.TransferState
 }
 
 // MARK: - Connection uptime cells
@@ -316,5 +364,92 @@ struct ConnectionDurationCell: View {
             .monospacedDigit()
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+}
+
+// MARK: - News download cells
+
+struct NewsDownloadNameCell: View {
+    let download: NewsDownload
+    var body: some View {
+        HStack(spacing: Spacing.xsmall.rawValue) {
+            Image(systemName: "newspaper")
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(newsTint(for: download.status))
+                .font(.title3)
+            Text("News")
+                .lineLimit(1)
+        }
+    }
+}
+
+struct NewsDownloadProgressCell: View {
+    let download: NewsDownload
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.tiny.rawValue) {
+            if let fraction = download.fraction {
+                ProgressView(value: fraction)
+                    .progressViewStyle(.linear)
+                    .tint(newsTint(for: download.status))
+            } else {
+                ProgressView()
+                    .progressViewStyle(.linear)
+            }
+            Text(download.caption)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+struct NewsDownloadStatusCell: View {
+    let download: NewsDownload
+    var body: some View {
+        switch download.status {
+        case .running:
+            TransferStatusPill(title: "Running", systemImage: "ellipsis", tint: .accentColor)
+        case .completed:
+            TransferStatusPill(title: "Done", systemImage: "checkmark", tint: .green)
+        case .failed(let message):
+            TransferStatusPill(title: "Failed", systemImage: "exclamationmark.triangle.fill", tint: .red)
+                .help(message)
+        }
+    }
+}
+
+struct NewsDownloadActionsCell: View {
+    let download: NewsDownload
+    let onRemove: () -> Void
+    var body: some View {
+        HStack(spacing: 4) {
+            if download.status == .running {
+                Button {
+                    download.cancel()
+                } label: {
+                    Image(systemName: "xmark.circle")
+                }
+                .buttonStyle(.borderless)
+                .help("Cancel")
+            } else {
+                Button {
+                    onRemove()
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+                .help("Remove")
+            }
+        }
+    }
+}
+
+private func newsTint(for status: NewsDownload.Status) -> Color {
+    switch status {
+    case .running:
+        .accentColor
+    case .completed:
+        .green
+    case .failed:
+        .red
     }
 }
