@@ -22,12 +22,6 @@ struct TaskManagerView: View {
     /// in-flight NSTableView selection.
     @State private var aggregatedSnapshot: [AggregatedTransfer] = []
 
-    /// Sampled in `refreshLoop` instead of read directly from the body
-    /// — calling `activeCount(handle)` in column scope subscribes the
-    /// whole body to `filesVM` invalidations and rebuilds the Table on
-    /// every byte.
-    @State private var transferCountsByHandle: [ConnectionHandle.ID: Int] = [:]
-
     var body: some View {
         VSplitView {
             connectionsPane
@@ -50,26 +44,8 @@ struct TaskManagerView: View {
             if structuralKey(of: next) != structuralKey(of: aggregatedSnapshot) {
                 aggregatedSnapshot = next
             }
-            let counts = currentTransferCounts()
-            if counts != transferCountsByHandle {
-                transferCountsByHandle = counts
-            }
             try? await Task.sleep(for: .milliseconds(100))
         }
-    }
-
-    /// Runs in a sampling Task, NOT in body scope — reading `@Observable`
-    /// here doesn't subscribe the view.
-    private func currentTransferCounts() -> [ConnectionHandle.ID: Int] {
-        var counts: [ConnectionHandle.ID: Int] = [:]
-        for handle in connections.connections {
-            let newsRunning = handle.newsThreadedVM.download?.status == .running
-            counts[handle.id] = handle.filesVM.transfers.values
-                .reduce(into: newsRunning ? 1 : 0) { acc, state in
-                    if state.status == .running { acc += 1 }
-                }
-        }
-        return counts
     }
 
     private func structuralKey(of rows: [AggregatedTransfer]) -> [String] {
@@ -136,10 +112,7 @@ struct TaskManagerView: View {
                     }
                     .width(min: 60, ideal: 70, max: 90)
                     TableColumn("Transfers") { handle in
-                        Text(verbatim: "\((transferCountsByHandle[handle.id] ?? 0).formatted(.number.grouping(.never)))")
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        ConnectionTransfersCell(handle: handle)
                     }
                     .width(min: 80, ideal: 90, max: 110)
                     TableColumn("Connected Since") { handle in
@@ -484,12 +457,6 @@ struct TaskManagerView: View {
 
     private var hasFinishedRows: Bool {
         aggregatedSnapshot.contains { !$0.isRunning }
-    }
-
-    private func activeCount(_ handle: ConnectionHandle) -> Int {
-        handle.filesVM.transfers.values.reduce(into: 0) { acc, state in
-            if state.status == .running { acc += 1 }
-        }
     }
 
     private func handle(for id: ConnectionHandle.ID) -> ConnectionHandle? {

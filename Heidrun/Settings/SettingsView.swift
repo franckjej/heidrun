@@ -99,7 +99,8 @@ struct SettingsView: View {
             developerTab
                 .tabItem { Label("Developer", systemImage: "hammer") }
         }
-        .frame(width: 600, height: 560)
+        // Wide enough for all nine tabs without the overflow chevron.
+        .frame(width: 760, height: 560)
         .commandWCloseShortcut()
     }
 

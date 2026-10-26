@@ -328,6 +328,24 @@ struct FileTransferRow {
     let state: FilesViewModel.TransferState
 }
 
+// MARK: - Connection cells
+
+/// Running file transfers + news download. Own struct so the live read
+/// subscribes only this cell — a body-level `@State` count left the
+/// Table row stale until it was re-selected.
+struct ConnectionTransfersCell: View {
+    let handle: ConnectionHandle
+
+    var body: some View {
+        let fileCount = handle.filesVM.transfers.values.count { $0.status == .running }
+        let newsCount = handle.newsThreadedVM.download?.status == .running ? 1 : 0
+        Text(verbatim: (fileCount + newsCount).formatted(.number.grouping(.never)))
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+}
+
 // MARK: - Connection uptime cells
 
 /// Connect time; adds the date once the session spans midnight.
