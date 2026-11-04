@@ -18,4 +18,5 @@ struct EditingBaseline: Equatable {
     var nickname: String
     var login: String
     var autoReconnectOverride: AutoReconnectOverride
+    var menuShortcutSlot: Int?
 }

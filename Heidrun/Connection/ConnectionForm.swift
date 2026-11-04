@@ -72,6 +72,7 @@ struct ConnectionForm: View {
     @State private var password: String = ""
     @State private var rememberPassword: Bool = false
     @State private var autoReconnectOverride: AutoReconnectOverride = .inherit
+    @State private var menuShortcutSlot: Int?
     /// Per-bookmark identity overrides — hydrated from `initialSettings`,
     /// else seeded from Settings → Identity. Held as `@State` so reconnect
     /// returns the same icon/emoji that were saved, instead of silently
@@ -214,7 +215,12 @@ struct ConnectionForm: View {
             serverSection
             identitySection
             autoReconnectSection
-                .padding(.bottom, .small)
+            MenuShortcutPicker(
+                slot: $menuShortcutSlot,
+                labelColumnWidth: labelColumnWidth,
+                ownerName: shortcutOwnerName
+            )
+            .padding(.bottom, .small)
             footer
         }
         .padding(.horizontal, .small)
@@ -416,8 +422,17 @@ struct ConnectionForm: View {
             pinnedCertificateSHA256: pinnedCertificateSHA256,
             nickname: nickname,
             login: login,
-            autoReconnectOverride: autoReconnectOverride
+            autoReconnectOverride: autoReconnectOverride,
+            menuShortcutSlot: menuShortcutSlot
         )
+    }
+
+    private func shortcutOwnerName(_ slot: Int) -> String? {
+        guard let owner = bookmarks.bookmarks.first(where: {
+            $0.menuShortcutSlot == slot && $0.id != selectedBookmarkID
+        }) else { return nil }
+        let trimmedName = owner.settings.name.trimmingCharacters(in: .whitespaces)
+        return trimmedName.isEmpty ? owner.settings.address : trimmedName
     }
 
     private var selectedBookmarkDisplayName: String {
@@ -571,6 +586,7 @@ struct ConnectionForm: View {
     private func hydrate(from mark: Bookmark) {
         hydrate(from: mark.settings)
         autoReconnectOverride = mark.autoReconnect
+        menuShortcutSlot = mark.menuShortcutSlot
     }
 
     private func saveBookmark() {
@@ -592,7 +608,8 @@ struct ConnectionForm: View {
         bookmarks.update(Bookmark(
             id: identifier,
             settings: formSettings(address: trimmedAddress),
-            autoReconnect: autoReconnectOverride
+            autoReconnect: autoReconnectOverride,
+            menuShortcutSlot: menuShortcutSlot
         ))
         persistPassword(forAddress: trimmedAddress, login: login)
         editingBaseline = currentEditingBaseline()
@@ -602,7 +619,8 @@ struct ConnectionForm: View {
         let trimmedAddress = address.trimmingCharacters(in: .whitespaces)
         let mark = Bookmark(
             settings: formSettings(address: trimmedAddress),
-            autoReconnect: autoReconnectOverride
+            autoReconnect: autoReconnectOverride,
+            menuShortcutSlot: menuShortcutSlot
         )
         bookmarks.add(mark)
         sidebarSelection = [mark.id]
@@ -656,6 +674,7 @@ struct ConnectionForm: View {
         password = ""
         rememberPassword = false
         autoReconnectOverride = .inherit
+        menuShortcutSlot = nil
     }
 
     private func handleDeleteBookmarks(_ ids: Set<Bookmark.ID>) {
