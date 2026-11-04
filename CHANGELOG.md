@@ -5,6 +5,9 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Bookmark shortcuts:** assign ⌃⌘1–⌃⌘9 to a bookmark to open it from the Bookmarks menu.
+
 ## [1.7.1] — 2026-10-26
 
 ### Fixed

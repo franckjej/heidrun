@@ -15,7 +15,7 @@ You can edit any field later from the manage window. **Auto-connect at launch** 
 ## Opening a bookmark
 
 - The **Bookmarks** menu lists every saved bookmark; pick one to open a new connection window with its settings pre-filled.
-- A keyboard shortcut can be assigned per bookmark via the manage window.
+- Give a bookmark a **⌃⌘1–⌃⌘9** shortcut under *Bookmarks menu* in its connect form. Each shortcut belongs to one bookmark; assigning a taken one moves it.
 - Bookmarks also accept drag-and-drop reordering, and Heidrun preserves whatever order you set.
 
 ## Sharing & importing
