@@ -160,6 +160,9 @@ struct ConnectionForm: View {
             hydrate(from: mark)
             editingBaseline = currentEditingBaseline()
         }
+        .onChange(of: menuShortcutSlot) { _, newSlot in
+            applyMenuShortcut(newSlot)
+        }
         .alert(
             errorPresenter.current?.title ?? "",
             isPresented: Binding(
@@ -425,6 +428,17 @@ struct ConnectionForm: View {
             autoReconnectOverride: autoReconnectOverride,
             menuShortcutSlot: menuShortcutSlot
         )
+    }
+
+    /// Shortcut edits on a saved bookmark apply immediately — the menu is
+    /// app-wide, so waiting for "Save bookmark" reads as broken.
+    private func applyMenuShortcut(_ slot: Int?) {
+        guard let identifier = selectedBookmarkID,
+              var stored = bookmarks.bookmarks.first(where: { $0.id == identifier }),
+              stored.menuShortcutSlot != slot else { return }
+        stored.menuShortcutSlot = slot
+        bookmarks.update(stored)
+        editingBaseline?.menuShortcutSlot = slot
     }
 
     private func shortcutOwnerName(_ slot: Int) -> String? {
