@@ -18,6 +18,7 @@ struct BookmarksMenuContent: View {
                 Button(menuLabel(for: mark)) {
                     open(mark)
                 }
+                .keyboardShortcut(shortcut(for: mark))
             }
         }
 
@@ -93,5 +94,12 @@ struct BookmarksMenuContent: View {
     private func menuLabel(for mark: Bookmark) -> String {
         let display = mark.settings.name.isEmpty ? mark.settings.address : mark.settings.name
         return mark.settings.login.isEmpty ? display : "\(display) (\(mark.settings.login))"
+    }
+
+    /// ⌃⌘<slot>; `nil` leaves the item without a key equivalent.
+    private func shortcut(for mark: Bookmark) -> KeyboardShortcut? {
+        guard let slot = mark.menuShortcutSlot,
+              let digit = String(slot).first else { return nil }
+        return KeyboardShortcut(KeyEquivalent(digit), modifiers: [.control, .command])
     }
 }
