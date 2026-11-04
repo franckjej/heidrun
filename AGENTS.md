@@ -41,7 +41,7 @@ adding/removing sources.
 ## Build, test, run
 
 Apple-platform CLIs (`xcodebuild`, `swift test`) are the canonical
-invocations; if you're driving a tool that wraps them (XcodeBuildMCP,
+invocations; if you're driving a tool that wraps them (MobileBuildMCP,
 the Xcode IDE, etc.), prefer the wrapper for structured output.
 
 ```bash

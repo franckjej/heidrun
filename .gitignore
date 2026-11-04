@@ -63,13 +63,14 @@ fastlane/test_output
 # we dont want the legacy code on git
 legacy/
 
-# Local-only AI / MCP / XcodeBuildMCP config (per-checkout)
+# Local-only AI / MCP / MobileBuildMCP config (per-checkout)
 .claude/
 CLAUDE.local.md
 AGENTS.local.md
 .mcp.json
 .swiftpm/
 .xcodebuildmcp/
+.mobilebuildmcp/
 .aider*
 .cursor/
 build/
