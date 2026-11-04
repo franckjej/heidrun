@@ -3,11 +3,11 @@ import CommonTools
 import HeidrunBookmarks
 
 /// "Bookmarks menu" group in the connect form: None / ⌃⌘1 … ⌃⌘9.
-/// Slots held by another bookmark show their owner, so the steal is visible.
+/// Taken slots show their owner, including the edited bookmark's own slot.
 struct MenuShortcutPicker: View {
     @Binding var slot: Int?
     let labelColumnWidth: CGFloat
-    /// Display name of the other bookmark holding a slot, if any.
+    /// Display name of the bookmark holding a slot, if any.
     let ownerName: (Int) -> String?
 
     var body: some View {

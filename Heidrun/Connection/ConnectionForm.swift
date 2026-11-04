@@ -442,9 +442,9 @@ struct ConnectionForm: View {
     }
 
     private func shortcutOwnerName(_ slot: Int) -> String? {
-        guard let owner = bookmarks.bookmarks.first(where: {
-            $0.menuShortcutSlot == slot && $0.id != selectedBookmarkID
-        }) else { return nil }
+        guard let owner = bookmarks.bookmarks.first(where: { $0.menuShortcutSlot == slot }) else {
+            return nil
+        }
         let trimmedName = owner.settings.name.trimmingCharacters(in: .whitespaces)
         return trimmedName.isEmpty ? owner.settings.address : trimmedName
     }
