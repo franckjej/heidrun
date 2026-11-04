@@ -326,7 +326,11 @@ final class BookmarkCellView: NSTableCellView {
         stack.alignment = .leading
         stack.spacing = 1
         // Hidden shortcut label is detached, so rows without one keep full width.
-        let content = NSStackView(views: [stack, shortcutLabel])
+        // Flexible spacer keeps every shortcut flush right, one- or two-line rows alike.
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.init(1), for: .horizontal)
+        spacer.setContentCompressionResistancePriority(.init(1), for: .horizontal)
+        let content = NSStackView(views: [stack, spacer, shortcutLabel])
         content.orientation = .horizontal
         content.alignment = .centerY
         content.spacing = 8
