@@ -19,26 +19,33 @@ public enum AutoReconnectOverride: String, Codable, Sendable, Hashable, CaseIter
 /// macOS Keychain via the host's `KeychainPasswordStore`, keyed by
 /// `(address, port, login)`.
 public struct Bookmark: Identifiable, Codable, Sendable, Hashable {
+    /// Valid Bookmarks-menu shortcut slots: ⌃⌘1 … ⌃⌘9.
+    public static let menuShortcutSlotRange = 1...9
+
     public let id: UUID
     public var settings: ConnectionSettings
     public var autoReconnect: AutoReconnectOverride
+    /// ⌃⌘<slot> in the Bookmarks menu; `nil` = no shortcut.
+    public var menuShortcutSlot: Int?
 
     public init(
         id: UUID = UUID(),
         settings: ConnectionSettings,
-        autoReconnect: AutoReconnectOverride = .inherit
+        autoReconnect: AutoReconnectOverride = .inherit,
+        menuShortcutSlot: Int? = nil
     ) {
         self.id = id
         self.settings = settings
         self.autoReconnect = autoReconnect
+        self.menuShortcutSlot = menuShortcutSlot
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, settings, autoReconnect
+        case id, settings, autoReconnect, menuShortcutSlot
     }
 
-    // Hand-written decoder so v1 JSON blobs (no `autoReconnect` key) load
-    // with the default value rather than throwing.
+    // Hand-written decoder so older blobs (no `autoReconnect` /
+    // `menuShortcutSlot` key) load with defaults rather than throwing.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(UUID.self, forKey: .id)
@@ -46,5 +53,7 @@ public struct Bookmark: Identifiable, Codable, Sendable, Hashable {
         self.autoReconnect = try container.decodeIfPresent(
             AutoReconnectOverride.self, forKey: .autoReconnect
         ) ?? .inherit
+        let slot = try container.decodeIfPresent(Int.self, forKey: .menuShortcutSlot)
+        self.menuShortcutSlot = slot.flatMap { Self.menuShortcutSlotRange.contains($0) ? $0 : nil }
     }
 }
