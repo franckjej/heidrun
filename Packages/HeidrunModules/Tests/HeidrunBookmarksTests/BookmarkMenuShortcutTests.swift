@@ -63,3 +63,107 @@ struct BookmarkMenuShortcutModelTests {
         #expect(decoded.menuShortcutSlot == nil)
     }
 }
+
+@Suite("BookmarkStore menu shortcut uniqueness")
+@MainActor
+struct BookmarkStoreMenuShortcutTests {
+
+    private let directoryURL: URL
+    private let suiteName: String
+    private let defaults: UserDefaults
+
+    init() {
+        suiteName = "BookmarkStoreMenuShortcutTests-\(UUID().uuidString)"
+        defaults = UserDefaults(suiteName: suiteName)!
+        directoryURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(suiteName, isDirectory: true)
+        try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+    }
+
+    private func makeStore() -> BookmarkStore {
+        BookmarkStore(defaults: defaults, bookmarksDirectoryURL: directoryURL)
+    }
+
+    private func teardown() {
+        defaults.removePersistentDomain(forName: suiteName)
+        let prefsPath = ("~/Library/Preferences/\(suiteName).plist" as NSString).expandingTildeInPath
+        try? FileManager.default.removeItem(atPath: prefsPath)
+        try? FileManager.default.removeItem(at: directoryURL)
+    }
+
+    private func makeBookmark(_ name: String, slot: Int? = nil) -> Bookmark {
+        Bookmark(
+            settings: ConnectionSettings(
+                name: name,
+                address: "\(name.lowercased()).example.com",
+                port: 5500,
+                nickname: "tester",
+                login: ""
+            ),
+            menuShortcutSlot: slot
+        )
+    }
+
+    @Test("add with a taken slot steals it and persists the loser")
+    func addSteals() {
+        defer { teardown() }
+        let store = makeStore()
+        let first = makeBookmark("Alpha", slot: 2)
+        let second = makeBookmark("Beta", slot: 2)
+        store.add(first)
+        store.add(second)
+        #expect(store.bookmarks.first { $0.id == first.id }?.menuShortcutSlot == nil)
+        #expect(store.bookmarks.first { $0.id == second.id }?.menuShortcutSlot == 2)
+        let reloaded = makeStore()
+        #expect(reloaded.bookmarks.first { $0.id == first.id }?.menuShortcutSlot == nil)
+    }
+
+    @Test("update with a taken slot steals it")
+    func updateSteals() {
+        defer { teardown() }
+        let store = makeStore()
+        let first = makeBookmark("Alpha", slot: 5)
+        var second = makeBookmark("Beta")
+        store.add(first)
+        store.add(second)
+        second.menuShortcutSlot = 5
+        store.update(second)
+        #expect(store.bookmarks.first { $0.id == first.id }?.menuShortcutSlot == nil)
+        #expect(store.bookmarks.first { $0.id == second.id }?.menuShortcutSlot == 5)
+    }
+
+    @Test("updating a bookmark to its own slot keeps it")
+    func updateOwnSlot() {
+        defer { teardown() }
+        let store = makeStore()
+        let first = makeBookmark("Alpha", slot: 1)
+        store.add(first)
+        store.update(first)
+        #expect(store.bookmarks.first?.menuShortcutSlot == 1)
+    }
+
+    @Test("replaceAll keeps the first duplicate in roster order")
+    func replaceAllNormalizes() {
+        defer { teardown() }
+        let store = makeStore()
+        let first = makeBookmark("Alpha", slot: 4)
+        let second = makeBookmark("Beta", slot: 4)
+        let third = makeBookmark("Gamma", slot: 7)
+        store.replaceAll(with: [first, second, third])
+        #expect(store.bookmarks.map(\.menuShortcutSlot) == [4, nil, 7])
+    }
+
+    @Test("load normalizes duplicates written straight to disk")
+    func loadNormalizes() throws {
+        defer { teardown() }
+        let first = makeBookmark("Alpha", slot: 9)
+        let second = makeBookmark("Beta", slot: 9)
+        for mark in [first, second] {
+            let url = directoryURL.appendingPathComponent("\(mark.id.uuidString).heidrunbookmark")
+            try JSONEncoder().encode(mark).write(to: url)
+        }
+        defaults.set([first.id.uuidString, second.id.uuidString], forKey: BookmarkStore.orderStorageKey)
+        let store = makeStore()
+        #expect(store.bookmarks.map(\.menuShortcutSlot) == [9, nil])
+    }
+}

@@ -47,11 +47,12 @@ public final class BookmarkStore {
         )
 
         let loaded = Self.loadFromDirectory(self.bookmarksDirectoryURL)
-        self.bookmarks = Self.applyStoredOrder(to: loaded, defaults: defaults)
+        self.bookmarks = Self.normalizedShortcutSlots(Self.applyStoredOrder(to: loaded, defaults: defaults))
     }
 
     /// Same-id existing entry → updates in place.
     public func add(_ bookmark: Bookmark) {
+        releaseShortcutSlot(claimedBy: bookmark)
         if let index = bookmarks.firstIndex(where: { $0.id == bookmark.id }) {
             bookmarks[index] = bookmark
         } else {
@@ -64,6 +65,7 @@ public final class BookmarkStore {
     /// No-op when no matching id — callers can `add` to insert.
     public func update(_ bookmark: Bookmark) {
         guard let index = bookmarks.firstIndex(where: { $0.id == bookmark.id }) else { return }
+        releaseShortcutSlot(claimedBy: bookmark)
         bookmarks[index] = bookmark
         writeFile(for: bookmark)
     }
@@ -122,8 +124,8 @@ public final class BookmarkStore {
         for mark in bookmarks {
             deleteFile(for: mark)
         }
-        bookmarks = replacements
-        for mark in replacements {
+        bookmarks = Self.normalizedShortcutSlots(replacements)
+        for mark in bookmarks {
             writeFile(for: mark)
         }
         persistOrder()
@@ -139,7 +141,7 @@ public final class BookmarkStore {
     /// files or direct-write imports.
     public func refreshFromDisk() {
         let loaded = Self.loadFromDirectory(bookmarksDirectoryURL)
-        bookmarks = Self.applyStoredOrder(to: loaded, defaults: defaults)
+        bookmarks = Self.normalizedShortcutSlots(Self.applyStoredOrder(to: loaded, defaults: defaults))
     }
 
     /// Move bookmarks identified by `ids` so their head lands at row
@@ -178,6 +180,27 @@ public final class BookmarkStore {
     }
 
     // MARK: Private
+
+    /// Clears `bookmark`'s slot from every other bookmark and persists them.
+    private func releaseShortcutSlot(claimedBy bookmark: Bookmark) {
+        guard let slot = bookmark.menuShortcutSlot else { return }
+        for index in bookmarks.indices
+        where bookmarks[index].id != bookmark.id && bookmarks[index].menuShortcutSlot == slot {
+            bookmarks[index].menuShortcutSlot = nil
+            writeFile(for: bookmarks[index])
+        }
+    }
+
+    /// First bookmark in roster order keeps a duplicated slot; later ones lose it.
+    private static func normalizedShortcutSlots(_ marks: [Bookmark]) -> [Bookmark] {
+        var takenSlots = Set<Int>()
+        return marks.map { mark in
+            guard let slot = mark.menuShortcutSlot, !takenSlots.insert(slot).inserted else { return mark }
+            var cleared = mark
+            cleared.menuShortcutSlot = nil
+            return cleared
+        }
+    }
 
     private func isSameBookmark(_ lhs: ConnectionSettings, _ rhs: ConnectionSettings) -> Bool {
         lhs.name == rhs.name
