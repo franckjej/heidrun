@@ -176,7 +176,8 @@ struct BookmarkTableView: NSViewRepresentable {
             cell.apply(contentSize: parent.contentSize)
             cell.configure(
                 title: mark.settings.name.isEmpty ? mark.settings.address : mark.settings.name,
-                subtitle: mark.settings.login
+                subtitle: mark.settings.login,
+                shortcut: mark.menuShortcutSlot.map { "⌃⌘\($0)" }
             )
             return cell
         }
@@ -290,6 +291,7 @@ final class BookmarkCellView: NSTableCellView {
     private let selectionView = NSView()
     private let nameLabel = NSTextField(labelWithString: "")
     private let loginLabel = NSTextField(labelWithString: "")
+    private let shortcutLabel = NSTextField(labelWithString: "")
     private var selected = false
     private var emphasized = true
     private var currentSize: ContentSize = .default
@@ -307,6 +309,11 @@ final class BookmarkCellView: NSTableCellView {
         nameLabel.font = .systemFont(ofSize: currentSize.bodyPointSize)
         loginLabel.lineBreakMode = .byTruncatingTail
         loginLabel.font = .systemFont(ofSize: currentSize.captionPointSize)
+        shortcutLabel.font = .systemFont(ofSize: currentSize.captionPointSize)
+        shortcutLabel.isHidden = true
+        // Name truncates before the shortcut does.
+        shortcutLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        shortcutLabel.setContentHuggingPriority(.required, for: .horizontal)
         if let image = NSImage(named: "BookmarkIcon") {
             image.isTemplate = true
             imageView = NSImageView(image: image)
@@ -318,8 +325,13 @@ final class BookmarkCellView: NSTableCellView {
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 1
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
+        // Hidden shortcut label is detached, so rows without one keep full width.
+        let content = NSStackView(views: [stack, shortcutLabel])
+        content.orientation = .horizontal
+        content.alignment = .centerY
+        content.spacing = 8
+        content.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(content)
         guard let imageView else { return }
         NSLayoutConstraint.activate([
             // 6pt pill inset so the rounded background breathes around
@@ -329,13 +341,12 @@ final class BookmarkCellView: NSTableCellView {
             selectionView.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             selectionView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
 
-            imageView.leadingAnchor.constraint(equalTo: stack.trailingAnchor, constant: 16),
+            imageView.leadingAnchor.constraint(equalTo: content.trailingAnchor, constant: 16),
             imageView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
             imageView.heightAnchor.constraint(equalToConstant: 32),
             imageView.widthAnchor.constraint(equalToConstant: 24),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: imageView.leadingAnchor, constant: -16),
-            stack.centerYAnchor.constraint(equalTo: centerYAnchor),
+            content.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            content.centerYAnchor.constraint(equalTo: centerYAnchor),
             imageView.centerYAnchor.constraint(equalTo: centerYAnchor)
         ])
         updateAppearance()
@@ -345,10 +356,12 @@ final class BookmarkCellView: NSTableCellView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(title: String, subtitle: String) {
+    func configure(title: String, subtitle: String, shortcut: String?) {
         nameLabel.stringValue = title
         loginLabel.stringValue = subtitle
         loginLabel.isHidden = subtitle.isEmpty
+        shortcutLabel.stringValue = shortcut ?? ""
+        shortcutLabel.isHidden = shortcut == nil
     }
 
     /// Recycled cells pick up the latest Appearance setting on render.
@@ -357,6 +370,7 @@ final class BookmarkCellView: NSTableCellView {
         currentSize = contentSize
         nameLabel.font = .systemFont(ofSize: contentSize.bodyPointSize)
         loginLabel.font = .systemFont(ofSize: contentSize.captionPointSize)
+        shortcutLabel.font = .systemFont(ofSize: contentSize.captionPointSize)
     }
 
     func setSelected(_ isSelected: Bool, emphasized isEmphasized: Bool) {
@@ -380,6 +394,7 @@ final class BookmarkCellView: NSTableCellView {
         let onEmphasized = selected && emphasized
         nameLabel.textColor = onEmphasized ? .white : .labelColor
         loginLabel.textColor = onEmphasized ? NSColor.white.withAlphaComponent(0.75) : .secondaryLabelColor
+        shortcutLabel.textColor = loginLabel.textColor
     }
 }
 
