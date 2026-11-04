@@ -692,6 +692,22 @@
         }
       }
     },
+    "Bookmarks menu" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen-Menü"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「ブックマーク」メニュー"
+          }
+        }
+      }
+    },
     "Bounce the Dock icon on new activity" : {
       "localizations" : {
         "de" : {
@@ -4157,6 +4173,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "終了時に接続していたサーバは、次回 Heidrun の起動時に、サーバごとに 1 つのウインドウで再度開かれます。"
+          }
+        }
+      }
+    },
+    "Shortcut" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tastenkürzel"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ショートカット"
           }
         }
       }
