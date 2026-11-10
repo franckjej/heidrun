@@ -92,6 +92,13 @@ enum AppStorageKeys {
     /// so isolated runs honor their own suite.
     static let confirmBeforeDisconnect = "Heidrun.confirmBeforeDisconnect"
 
+    /// Seconds before an unanswered quit prompt quits anyway; 0 = never.
+    /// Default `DisconnectConfirmation.defaultQuitAutoConfirmSeconds`.
+    static let quitAutoConfirmSeconds = "Heidrun.quitAutoConfirmSeconds"
+
+    /// Skip the quit prompt on system logout / restart / shutdown. Default on.
+    static let skipQuitConfirmOnSessionEnd = "Heidrun.skipQuitConfirmOnSessionEnd"
+
     /// Developer toggle: new connections attach a `PacketObserver` that
     /// funnels every wire transaction into `ProtocolConsoleStore`. Off by
     /// default — pure overhead when not debugging dialects.

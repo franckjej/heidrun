@@ -22,4 +22,19 @@ struct DisconnectConfirmationTests {
         #expect(DisconnectConfirmation.shouldConfirmQuit(enabled: false, hasLiveConnections: true) == false)
         #expect(DisconnectConfirmation.shouldConfirmQuit(enabled: false, hasLiveConnections: false) == false)
     }
+
+    @Test func systemLogoutRestartShutdownSkipThePrompt() {
+        for reason in ["logo", "rlgo", "rest", "shut", "rrst", "rsdn"] {
+            #expect(DisconnectConfirmation.isSystemSessionEnd(quitReason: fourCharCode(reason)))
+        }
+    }
+
+    @Test func plainQuitStillPrompts() {
+        #expect(!DisconnectConfirmation.isSystemSessionEnd(quitReason: nil))
+        #expect(!DisconnectConfirmation.isSystemSessionEnd(quitReason: fourCharCode("quit")))
+    }
+
+    private func fourCharCode(_ code: String) -> OSType {
+        code.utf8.reduce(0) { ($0 << 8) | OSType($1) }
+    }
 }

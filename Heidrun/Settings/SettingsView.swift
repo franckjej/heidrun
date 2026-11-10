@@ -42,7 +42,6 @@ struct SettingsView: View {
     @AppStorage(AppStorageKeys.sidebarBadges) private var sidebarBadges: Bool = true
     @AppStorage(AppStorageKeys.flashWindowTitle) private var flashWindowTitle: Bool = true
     @AppStorage(AppStorageKeys.reopenConnectionsOnLaunch) private var reopenConnectionsOnLaunch: Bool = true
-    @AppStorage(AppStorageKeys.confirmBeforeDisconnect) private var confirmBeforeDisconnect: Bool = true
     @AppStorage(AppStorageKeys.useBiometricPasswordProtection) private var useBiometricPasswordProtection: Bool = false
     @AppStorage(AppStorageKeys.enableProtocolConsole) private var enableProtocolConsole: Bool = false
     @AppStorage(AppStorageKeys.contentSize)
@@ -549,11 +548,7 @@ struct SettingsView: View {
                         isOn: $reopenConnectionsOnLaunch
                     )
                     caption("Servers you were connected to at quit are reopened the next time Heidrun starts — one window per server.")
-                    Toggle(
-                        "Warn before closing a connected window or quitting",
-                        isOn: $confirmBeforeDisconnect
-                    )
-                    caption("Asks for confirmation whenever closing a window or quitting Heidrun would disconnect you from a server.")
+                    DisconnectConfirmationSettings()
                 }
                 .padding(insidePadding)
                 .frame(maxWidth: .infinity, alignment: .leading)

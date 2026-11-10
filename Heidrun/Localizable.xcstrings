@@ -1782,6 +1782,22 @@
         }
       }
     },
+    "Don't ask when logging out, restarting or shutting down" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Abmelden, Neustarten oder Ausschalten nicht nachfragen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログアウト、再起動、システム終了時は確認しない"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "de" : {
@@ -2464,6 +2480,22 @@
         }
       }
     },
+    "If the quit prompt goes unanswered, Heidrun quits after this delay so it can't hold up a restart or update." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bleibt die Rückfrage beim Beenden unbeantwortet, beendet sich Heidrun nach dieser Zeit – so hält sie keinen Neustart und kein Update auf."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "終了の確認に応答がない場合、この時間が経過すると Heidrun は終了します。再起動やアップデートを妨げることはありません。"
+          }
+        }
+      }
+    },
     "Import bookmarks" : {
       "localizations" : {
         "de" : {
@@ -2660,6 +2692,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "名前"
+          }
+        }
+      }
+    },
+    "Never" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "しない"
           }
         }
       }
@@ -3383,6 +3431,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Heidrun を終了しますか？"
+          }
+        }
+      }
+    },
+    "Quit automatically after" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch beenden nach"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動終了までの時間"
+          }
+        }
+      }
+    },
+    "Quitting automatically in %@…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Heidrun wird in %@ automatisch beendet …"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@後に自動的に終了します…"
           }
         }
       }

@@ -91,16 +91,30 @@ final class HeidrunAppDelegate: NSObject, NSApplicationDelegate {
             forKey: AppStorageKeys.confirmBeforeDisconnect
         ) as? Bool ?? true
 
-        guard DisconnectConfirmation.shouldConfirmQuit(
-            enabled: enabled,
-            hasLiveConnections: liveCount > 0
-        ) else {
+        let defaults = AppDataEnvironment.defaults
+        let skipOnSessionEnd = defaults.object(
+            forKey: AppStorageKeys.skipQuitConfirmOnSessionEnd
+        ) as? Bool ?? true
+        let isSystemSessionEnd = skipOnSessionEnd && DisconnectConfirmation.isSystemSessionEnd(
+            quitReason: DisconnectConfirmation.currentQuitReason()
+        )
+        guard !isSystemSessionEnd,
+              DisconnectConfirmation.shouldConfirmQuit(
+                enabled: enabled,
+                hasLiveConnections: liveCount > 0
+              )
+        else {
             Self.isTerminating = true
             return .terminateNow
         }
 
         let confirmed = MainActor.assumeIsolated {
-            DisconnectConfirmationAlert.confirmQuit(liveConnectionCount: liveCount)
+            DisconnectConfirmationAlert.confirmQuit(
+                liveConnectionCount: liveCount,
+                autoConfirmSeconds: defaults.object(
+                    forKey: AppStorageKeys.quitAutoConfirmSeconds
+                ) as? Int ?? DisconnectConfirmation.defaultQuitAutoConfirmSeconds
+            )
         }
         guard confirmed else { return .terminateCancel }
         Self.isTerminating = true
