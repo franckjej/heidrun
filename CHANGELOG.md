@@ -5,6 +5,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-11-10
+
 ### Added
 - **Bookmark shortcuts:** assign ⌃⌘1–⌃⌘9 to a bookmark to open it from the Bookmarks menu; applies immediately and shows in the bookmark sidebar.
 - **Quit prompt auto-quits:** an unanswered quit confirmation quits after a countdown (default 30 s, Settings → Connection) and is skipped on logout, restart or shutdown.
