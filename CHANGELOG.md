@@ -5,6 +5,8 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.8.1] — 2026-11-12
+
 ### Changed
 - **Pinned certificate:** the connect form shows the full SHA-256 fingerprint; an ⓧ button forgets it.
 
