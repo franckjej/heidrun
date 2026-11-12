@@ -2346,18 +2346,18 @@
         }
       }
     },
-    "Forget" : {
+    "Forget pinned certificate" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vergessen"
+            "value" : "Angeheftetes Zertifikat entfernen"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "破棄"
+            "value" : "固定された証明書を消去"
           }
         }
       }
@@ -3187,18 +3187,18 @@
         }
       }
     },
-    "Pinned cert: %@…" : {
+    "Pinned certificate (SHA-256)" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Angeheftetes Zertifikat: %@…"
+            "value" : "Angeheftetes Zertifikat (SHA-256)"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "固定された証明書: %@…"
+            "value" : "固定された証明書（SHA-256）"
           }
         }
       }

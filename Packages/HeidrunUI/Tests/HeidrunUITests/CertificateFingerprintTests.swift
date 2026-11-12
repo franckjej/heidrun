@@ -17,4 +17,17 @@ struct CertificateFingerprintTests {
     func empty() {
         #expect(CertificateFingerprint.grouped("").isEmpty)
     }
+
+    @Test("a SHA-256 fingerprint splits into two rows of 16 pairs")
+    func linesSplitsSHA256() {
+        let hex = String(repeating: "ab", count: 32)
+        let rows = CertificateFingerprint.lines(hex).split(separator: "\n")
+        #expect(rows.count == 2)
+        #expect(rows.allSatisfy { $0 == String(repeating: "AB:", count: 15) + "AB" })
+    }
+
+    @Test("a short fingerprint stays on one line")
+    func linesShortInput() {
+        #expect(CertificateFingerprint.lines("aabb") == "AA:BB")
+    }
 }

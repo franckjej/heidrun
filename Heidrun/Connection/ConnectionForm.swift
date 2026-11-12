@@ -287,13 +287,26 @@ struct ConnectionForm: View {
                             Spacer(minLength: 0)
                         }
                         if useTLS, let pin = pinnedCertificateSHA256 {
-                            HStack(spacing: 8) {
-                                Text("Pinned cert: \(CertificateFingerprint.grouped(pin).prefix(17))…")
-                                    .font(.system(.caption, design: .monospaced))
+                            VStack(alignment: .leading, spacing: Spacing.xxxsmall.rawValue) {
+                                Text("Pinned certificate (SHA-256)")
+                                    .font(.caption)
                                     .foregroundStyle(.secondary)
-                                Button("Forget") { pinnedCertificateSHA256 = nil }
-                                    .controlSize(.small)
+                                HStack(alignment: .center, spacing: Spacing.xsmall.rawValue) {
+                                    Text(CertificateFingerprint.lines(pin))
+                                        .font(.system(.callout, design: .monospaced))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                        .minimumScaleFactor(0.7)
+                                    Spacer(minLength: 0)
+                                    Button {
+                                        pinnedCertificateSHA256 = nil
+                                    } label: {
+                                        Image(systemName: "xmark.circle")
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel("Forget pinned certificate")
                                     .help("Clear the trusted certificate; the next connection re-prompts. Save the bookmark to persist.")
+                                }
                             }
                         }
                     }
