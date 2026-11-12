@@ -5,6 +5,12 @@ project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Pinned certificate:** the connect form shows the full SHA-256 fingerprint; an ⓧ button forgets it.
+
+### Fixed
+- **Connect errors:** a server address that can't be resolved is reported as such, not as an untrusted certificate (heidrun-protocol 1.1.3).
+
 ## [1.8.0] — 2026-11-10
 
 ### Added

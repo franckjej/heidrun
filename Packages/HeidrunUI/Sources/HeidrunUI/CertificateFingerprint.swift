@@ -12,4 +12,15 @@ public enum CertificateFingerprint {
             }
             .joined(separator: ":")
     }
+
+    /// The full grouped fingerprint split into lines of `pairsPerLine`
+    /// pairs, so a SHA-256 (32 pairs) shows as two even rows.
+    public static func lines(_ hex: String, pairsPerLine: Int = 16) -> String {
+        let pairs = grouped(hex).split(separator: ":").map(String.init)
+        return stride(from: 0, to: pairs.count, by: max(pairsPerLine, 1))
+            .map { start in
+                pairs[start..<min(start + max(pairsPerLine, 1), pairs.count)].joined(separator: ":")
+            }
+            .joined(separator: "\n")
+    }
 }
